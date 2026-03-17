@@ -1,0 +1,21 @@
+/* ── Process icons (FontAwesome) ── */
+[class*="process-icon-"]::before {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    text-rendering: auto;
+    transform: translate(0, 0);
+    margin-right: .5rem;
+}
+
+.process-icon-search::before {
+    content: "\f002";
+}
+
+.process-icon-wrench::before {
+    content: "\f0ad";
+}
+
+.process-icon-stop::before {
+    content: "\f04d";
+}

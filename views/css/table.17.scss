@@ -1,0 +1,55 @@
+/**
+ * 2024 Adilis.
+ * Manage returns and exchanges easily and quickly
+ * @author Adilis <contact@adilis.fr>
+ * @copyright 2024 SAS Adilis
+ * @license http://www.adilis.fr
+ */
+#content.bootstrap .panel{
+
+  .panel-heading, .panel-footer {
+    background-color: #fff;
+    border-block: 0;
+  }
+
+  table.table {
+    font-size:.8rem;
+
+    thead {
+      th, th .title_box {
+        color: #000;
+        font-weight: bold;
+      }
+
+      tr:first-child th {
+        border-bottom: solid 0.125rem #25b9d7;
+      }
+
+      tr.filter th {
+        border-bottom: 1px solid #bbcdd2;
+        background-color: #FAFBFC;
+        vertical-align: middle;
+
+        input[type=text].filter,
+        select.filter {
+          border-color: #bbcdd2;
+        }
+
+      }
+    }
+
+    tbody > tr {
+      td {
+        border-bottom: 1px solid #bbcdd2;
+        font-size: .815rem;
+        color: #000;
+        border-bottom: 1px solid #bbcdd2;
+        padding: 0.4rem;
+      }
+
+      &.odd > td {
+        background-color: white;
+      }
+    }
+  }
+}

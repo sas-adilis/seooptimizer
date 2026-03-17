@@ -1,0 +1,11 @@
+config.xml
+config_*.xml
+/vendor/*
+!vendor/autoload.php
+!vendor/composer
+composer.lock
+.php_cs.cache
+/views/css/table.17.css.map
+/documents/*
+!documents/index.php
+!documents/.htaccess

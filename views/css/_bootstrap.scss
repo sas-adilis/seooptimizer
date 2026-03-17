@@ -1,0 +1,85 @@
+/* ── Overrides Bootstrap / PrestaShop ── */
+
+/* Navbar */
+.bootstrap .navbar-default {
+    background-color: #fff;
+    border: 1px solid #dbe6e9;
+    border-radius: 5px;
+    box-shadow: 0 0 4px 0 rgba(0, 0, 0, .06);
+}
+
+.bootstrap .navbar-default .navbar-nav > li > a {
+    color: #000;
+}
+
+.bootstrap .navbar-default i[class^="icon-"] {
+    color: $primary-color;
+}
+
+/* Switch */
+.bootstrap .prestashop-switch input:first-of-type:checked ~ .slide-button {
+    background: $primary-color;
+}
+
+/* Panel heading */
+#content.bootstrap .panel .panel-heading {
+    background-color: $primary-color;
+    color: #fff;
+}
+
+#content.bootstrap .panel .panel-heading i {
+    color: #fff;
+}
+
+/* Panel footer buttons */
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right {
+    background-color: $primary-color;
+    border-color: $primary-color;
+}
+
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right:hover {
+    background-color: $primary-color-hover;
+    border-color: $primary-color-hover;
+}
+
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right.btn-danger {
+    background-color: $danger-color;
+    border-color: $danger-color;
+}
+
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right.btn-danger:hover {
+    background-color: $danger-color-hover;
+    border-color: $danger-color-hover;
+}
+
+/* Tags */
+.bootstrap .tags .label-info {
+    background-color: $primary-color;
+    cursor: pointer;
+    display: inline-block;
+    padding: 6px 6px;
+}
+
+/* Alert info */
+.bootstrap .alert.alert-info {
+    background-color: transparent;
+    border: none;
+    color: $primary-color;
+}
+
+.bootstrap .alert.alert-info:before {
+    color: $primary-color;
+}
+
+.bootstrap .alert.alert-info.col-lg-offset-3 {
+    margin-left: 0;
+}
+
+/* Tabs */
+.tab {
+    height: auto !important;
+}
+
+.tab:not(.in) {
+    display: none;
+}

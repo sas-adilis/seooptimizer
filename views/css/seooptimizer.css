@@ -1,0 +1,693 @@
+@charset "UTF-8";
+/* ── SEO Optimizer — Back-office styles ── */ /* ── Variables ── */ /* ── Process icons (FontAwesome) ── */
+[class*=process-icon-]::before {
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+  font-size: inherit;
+  text-rendering: auto;
+  transform: translate(0, 0);
+  margin-right: 0.5rem;
+}
+
+.process-icon-search::before {
+  content: "\f002";
+}
+
+.process-icon-wrench::before {
+  content: "\f0ad";
+}
+
+.process-icon-stop::before {
+  content: "\f04d";
+}
+
+/* ── Overrides Bootstrap / PrestaShop ── */
+/* Navbar */
+.bootstrap .navbar-default {
+  background-color: #fff;
+  border: 1px solid #dbe6e9;
+  border-radius: 5px;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.bootstrap .navbar-default .navbar-nav > li > a {
+  color: #000;
+}
+
+.bootstrap .navbar-default i[class^=icon-] {
+  color: #05808B;
+}
+
+/* Switch */
+.bootstrap .prestashop-switch input:first-of-type:checked ~ .slide-button {
+  background: #05808B;
+}
+
+/* Panel heading */
+#content.bootstrap .panel .panel-heading {
+  background-color: #05808B;
+  color: #fff;
+}
+
+#content.bootstrap .panel .panel-heading i {
+  color: #fff;
+}
+
+/* Panel footer buttons */
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right {
+  background-color: #05808B;
+  border-color: #05808B;
+}
+
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right:hover {
+  background-color: #32707F;
+  border-color: #32707F;
+}
+
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right.btn-danger {
+  background-color: #d9534f;
+  border-color: #d9534f;
+}
+
+.bootstrap .panel .panel-footer .btn.btn-default.pull-right.btn-danger:hover {
+  background-color: #c9302c;
+  border-color: #c9302c;
+}
+
+/* Tags */
+.bootstrap .tags .label-info {
+  background-color: #05808B;
+  cursor: pointer;
+  display: inline-block;
+  padding: 6px 6px;
+}
+
+/* Alert info */
+.bootstrap .alert.alert-info {
+  background-color: transparent;
+  border: none;
+  color: #05808B;
+}
+
+.bootstrap .alert.alert-info:before {
+  color: #05808B;
+}
+
+.bootstrap .alert.alert-info.col-lg-offset-3 {
+  margin-left: 0;
+}
+
+/* Tabs */
+.tab {
+  height: auto !important;
+}
+
+.tab:not(.in) {
+  display: none;
+}
+
+/* ── Formulaires ── */
+/* Report forms (loading state) */
+form[id^=Report]:not(.loading) button.process-icon-stop {
+  display: none !important;
+}
+
+form[id^=Report].loading button.process-icon-download,
+form[id^=Report].loading button.process-icon-refresh {
+  display: none;
+}
+
+form[id^=Report] .panel-footer {
+  text-align: center;
+  padding: 16px 20px;
+}
+
+form[id^=Report] .panel-footer .btn {
+  margin: 0 4px;
+}
+
+/* Textarea */
+textarea {
+  max-height: 350px;
+}
+
+/* Grid layout pour les formulaires de configuration */
+@media (min-width: 1200px) {
+  #FormRedirectionConfiguration_form .form-wrapper,
+  #FormIndexationConfiguration_form .form-wrapper {
+    max-width: 100%;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  #FormRedirectionConfiguration_form .form-wrapper .control-label,
+  #FormRedirectionConfiguration_form .form-wrapper .control-label + .col-lg-8,
+  #FormIndexationConfiguration_form .form-wrapper .control-label,
+  #FormIndexationConfiguration_form .form-wrapper .control-label + .col-lg-8 {
+    width: 100%;
+    text-align: left;
+  }
+  #FormRedirectionConfiguration_form .form-wrapper .control-label + .col-lg-8,
+  #FormIndexationConfiguration_form .form-wrapper .control-label + .col-lg-8 {
+    display: flex;
+    flex-direction: column;
+  }
+  #FormRedirectionConfiguration_form .form-wrapper .control-label + .col-lg-8 .switch,
+  #FormIndexationConfiguration_form .form-wrapper .control-label + .col-lg-8 .switch {
+    order: 2;
+    margin-top: 0;
+  }
+  #FormIndexationConfiguration_form .form-wrapper {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+/* Tooltip labels */
+.form-wrapper .label-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.form-wrapper .label-tooltip::after {
+  font-family: "Material Icons", Arial, sans-serif;
+  font-size: 19px;
+  color: #25b9d7;
+  content: "\e88e";
+}
+
+/* HTML form group */
+.form-group-html .col-lg-8 {
+  padding-top: 7px;
+}
+
+/* Priorities & frequencies */
+.form-group-priorities-frequencies .form-group {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Report legacy (.report / .table-report) ── */
+.report .report__title,
+.report .report__progress,
+.report .report__result {
+  font-size: 0.9rem;
+}
+
+.report .report__progress {
+  white-space: nowrap;
+}
+
+.report .report__progress .progress {
+  display: inline-block;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.report .report__separator {
+  /* border: 1px dashed rgba(0, 0, 0, 0.1);
+   flex-basis: 0;
+   flex-grow: 1;
+   max-width: 100%;*/
+}
+
+/* Table report */
+.bootstrap .table.table-report thead > tr > th {
+  padding: 8px 18px;
+  border-bottom: solid 1px #000;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td {
+  border-bottom: 0;
+  padding: 8px 18px;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td.report__title,
+.bootstrap .table.table-report tbody > tr.report > td.report__result {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress {
+  display: flex;
+  gap: 1rem;
+  white-space: nowrap;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-value {
+  font-size: 0.8rem;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-percentage {
+  position: relative;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-percentage .progress-bar {
+  min-width: 0;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-percentage .progress-bar.bg-info {
+  background-color: #05808B;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-percentage .progress-bar.bg-success {
+  background-color: #72c279;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-percentage .progress-bar.progress-bar-striped {
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td .report__progress .report__progress-percentage .progress-bar.progress-bar-animated {
+  -webkit-animation: progress-bar-stripes 1s linear infinite;
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+.bootstrap .table.table-report tbody > tr.report > td.report__separator {
+  width: 100%;
+}
+
+/* ── Report card (.seoo-report) ── */
+.seoo-report {
+  background: #fff;
+  overflow: hidden;
+}
+
+/* KPI cards */
+.seoo-report__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.seoo-report__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 18px;
+  background: #f5f5f4;
+  border-radius: 8px;
+}
+
+.seoo-report__kpi--danger .seoo-report__kpi-value {
+  color: #991b1b;
+}
+
+.seoo-report__kpi--warning .seoo-report__kpi-value {
+  color: #92400e;
+}
+
+.seoo-report__kpi-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: none;
+}
+
+.seoo-report__kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+
+/* Table */
+.seoo-report__table {
+  width: 100%;
+  border: 1px solid #e8e8e8;
+}
+
+.seoo-report__thead {
+  display: grid;
+  gap: 0;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #fafafa;
+}
+
+.seoo-report__th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+}
+
+.seoo-report__th--result,
+.seoo-report__th--fixed {
+  text-align: center;
+}
+
+/* Row */
+.seoo-report__row {
+  display: grid;
+  gap: 0;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f3f3f3;
+  transition: background 0.15s;
+}
+
+.seoo-report__row:last-child {
+  border-bottom: 0;
+}
+
+.seoo-report__row:hover {
+  background: #fafbfc;
+}
+
+/* Entity cell */
+.seoo-report__cell--entity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.seoo-report__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f0f5f5;
+  color: #05808B;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.seoo-report__entity-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.seoo-report__entity-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.seoo-report__entity-count {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Progress cell */
+.seoo-report__cell--progress {
+  padding: 0 20px;
+}
+
+.seoo-report__bar-wrap {
+  margin-bottom: 4px;
+}
+
+.seoo-report__bar-wrap .progress {
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.seoo-report__bar-wrap .progress-bar {
+  border-radius: 3px;
+  min-width: 0;
+  transition: width 0.4s ease;
+}
+
+.seoo-report__bar-wrap .progress-bar.bg-success {
+  background-color: #22c55e;
+}
+
+.seoo-report__bar-wrap .progress-bar.bg-processing {
+  background-color: #92400e;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+.seoo-report__bar-wrap .progress-bar.progress-bar-striped {
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+}
+
+.seoo-report__bar-wrap .progress-bar.progress-bar-animated {
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+.seoo-report__status-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.seoo-report__status-label {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.seoo-report__progress-value {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Result cell */
+.seoo-report__cell--result {
+  text-align: center;
+}
+
+.seoo-report__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.seoo-report__badge--success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.seoo-report__badge--danger {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Fixed cell */
+.seoo-report__cell--fixed {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Grid columns: 3 cols sans fixed, 4 cols avec fixed */
+.seoo-report__thead,
+.seoo-report__row {
+  grid-template-columns: 200px 1fr 90px;
+}
+
+.seoo-report--with-fixed .seoo-report__thead,
+.seoo-report--with-fixed .seoo-report__row {
+  grid-template-columns: 200px 1fr 90px 80px;
+}
+
+/* ── Panel intro (.seoo-panel-intro) ── */
+.seoo-panel-intro {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  background: rgba(5, 128, 139, 0.1);
+  background: linear-gradient(-90deg, rgba(5, 128, 139, 0.1) 0%, rgb(255, 255, 255) 68%);
+}
+.seoo-panel-intro .seoo-panel-intro__visual {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seoo-panel-intro .seoo-panel-intro__visual img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.seoo-panel-intro .seoo-panel-intro__content {
+  flex: 1;
+  min-width: 0;
+}
+.seoo-panel-intro .seoo-panel-intro__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+.seoo-panel-intro .seoo-panel-intro__title i {
+  color: #05808B;
+  margin-right: 8px;
+  font-size: 16px;
+}
+.seoo-panel-intro .seoo-panel-intro__desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+.seoo-panel-intro .seoo-panel-intro__actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.seoo-panel-intro .seoo-panel-intro__actions .btn {
+  white-space: nowrap;
+}
+.seoo-panel-intro + .panel-body {
+  padding-top: 0;
+}
+
+/* ── Audit (.seoo-audit) ── */
+.seoo-audit .panel > .panel-heading {
+  display: none;
+}
+
+.seoo-audit .panel > .panel-footer {
+  display: none;
+}
+
+.seoo-audit__desc {
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.seoo-audit__progress-wrap {
+  margin: 16px 0;
+}
+
+.seoo-audit__progress-wrap .progress {
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.seoo-audit__progress-wrap .progress-bar {
+  border-radius: 3px;
+  min-width: 0;
+  transition: width 0.4s ease;
+}
+
+.seoo-audit__results {
+  margin-top: 24px;
+}
+
+.seoo-audit__results-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #e8e8e8;
+  border-top: 1px solid #e8e8e8;
+  margin-top: 40px;
+  margin-left: -16px;
+  padding: 16px;
+  width: calc(100% + 32px);
+  background: rgba(5, 128, 139, 0.1);
+  background: linear-gradient(-90deg, rgba(5, 128, 139, 0.1) 0%, rgb(255, 255, 255) 68%);
+}
+
+.seoo-audit__results-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.seoo-audit__results-title {
+  font-size: 20px !important;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.seoo-audit__table {
+  font-size: 13px;
+}
+
+.seoo-audit__table thead th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 10px 12px;
+}
+
+.seoo-audit__th-severity {
+  width: 24px;
+}
+
+.seoo-audit__table tbody tr {
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.seoo-audit__table tbody td {
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+.seoo-audit__url-cell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seoo-audit__url-cell a {
+  color: #05808B;
+  text-decoration: none;
+}
+
+.seoo-audit__url-cell a:hover {
+  text-decoration: underline;
+}
+
+.seoo-audit__severity-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.seoo-audit__severity-dot--critical {
+  background: #dc2626;
+}
+
+.seoo-audit__severity-dot--warning {
+  background: #f59e0b;
+}
+
+.seoo-audit__severity-dot--info {
+  background: #6b7280;
+}
+
+.seoo-audit__start-btn .process-icon-search::before {
+  margin-right: 6px;
+}
+
+/*# sourceMappingURL=seooptimizer.css.map */

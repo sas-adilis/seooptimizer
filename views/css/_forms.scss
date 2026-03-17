@@ -1,0 +1,85 @@
+/* ── Formulaires ── */
+
+/* Report forms (loading state) */
+form[id^="Report"]:not(.loading) button.process-icon-stop {
+    display: none !important;
+}
+
+form[id^="Report"].loading button.process-icon-download,
+form[id^="Report"].loading button.process-icon-refresh {
+    display: none;
+}
+
+form[id^="Report"] .panel-footer {
+    text-align: center;
+    padding: 16px 20px;
+}
+
+form[id^="Report"] .panel-footer .btn {
+    margin: 0 4px;
+}
+
+/* Textarea */
+textarea {
+    max-height: 350px;
+}
+
+/* Grid layout pour les formulaires de configuration */
+@media (min-width: 1200px) {
+    #FormRedirectionConfiguration_form .form-wrapper,
+    #FormIndexationConfiguration_form .form-wrapper {
+        max-width: 100%;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #FormRedirectionConfiguration_form .form-wrapper .control-label,
+    #FormRedirectionConfiguration_form .form-wrapper .control-label + .col-lg-8,
+    #FormIndexationConfiguration_form .form-wrapper .control-label,
+    #FormIndexationConfiguration_form .form-wrapper .control-label + .col-lg-8 {
+        width: 100%;
+        text-align: left;
+    }
+
+    #FormRedirectionConfiguration_form .form-wrapper .control-label + .col-lg-8,
+    #FormIndexationConfiguration_form .form-wrapper .control-label + .col-lg-8 {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #FormRedirectionConfiguration_form .form-wrapper .control-label + .col-lg-8 .switch,
+    #FormIndexationConfiguration_form .form-wrapper .control-label + .col-lg-8 .switch {
+        order: 2;
+        margin-top: 0;
+    }
+
+    #FormIndexationConfiguration_form .form-wrapper {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+/* Tooltip labels */
+.form-wrapper .label-tooltip {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+.form-wrapper .label-tooltip::after {
+    font-family: "Material Icons", Arial, sans-serif;
+    font-size: 19px;
+    color: #25b9d7;
+    content: "\e88e";
+}
+
+/* HTML form group */
+.form-group-html .col-lg-8 {
+    padding-top: 7px;
+}
+
+/* Priorities & frequencies */
+.form-group-priorities-frequencies .form-group {
+    display: flex;
+    align-items: center;
+}

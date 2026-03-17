@@ -1,0 +1,42 @@
+/**
+ * 2024 Adilis.
+ * Manage returns and exchanges easily and quickly
+ * @author Adilis <contact@adilis.fr>
+ * @copyright 2024 SAS Adilis
+ * @license http://www.adilis.fr
+ */
+#content.bootstrap .panel .panel-heading, #content.bootstrap .panel .panel-footer {
+  background-color: #fff;
+  border-block: 0;
+}
+#content.bootstrap .panel table.table {
+  font-size: 0.8rem;
+}
+#content.bootstrap .panel table.table thead th, #content.bootstrap .panel table.table thead th .title_box {
+  color: #000;
+  font-weight: bold;
+}
+#content.bootstrap .panel table.table thead tr:first-child th {
+  border-bottom: solid 0.125rem #25b9d7;
+}
+#content.bootstrap .panel table.table thead tr.filter th {
+  border-bottom: 1px solid #bbcdd2;
+  background-color: #FAFBFC;
+  vertical-align: middle;
+}
+#content.bootstrap .panel table.table thead tr.filter th input[type=text].filter,
+#content.bootstrap .panel table.table thead tr.filter th select.filter {
+  border-color: #bbcdd2;
+}
+#content.bootstrap .panel table.table tbody > tr td {
+  border-bottom: 1px solid #bbcdd2;
+  font-size: 0.815rem;
+  color: #000;
+  border-bottom: 1px solid #bbcdd2;
+  padding: 0.4rem;
+}
+#content.bootstrap .panel table.table tbody > tr.odd > td {
+  background-color: white;
+}
+
+/*# sourceMappingURL=table.17.css.map */

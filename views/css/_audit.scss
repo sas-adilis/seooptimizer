@@ -1,0 +1,130 @@
+/* ── Audit (.seoo-audit) ── */
+
+.seoo-audit .panel > .panel-heading {
+    display: none;
+}
+
+.seoo-audit .panel > .panel-footer {
+    display: none;
+}
+
+.seoo-audit__desc {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.seoo-audit__progress-wrap {
+    margin: 16px 0;
+}
+
+.seoo-audit__progress-wrap .progress {
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e7eb;
+    margin-bottom: 0;
+    box-shadow: none;
+}
+
+.seoo-audit__progress-wrap .progress-bar {
+    border-radius: 3px;
+    min-width: 0;
+    transition: width 0.4s ease;
+}
+
+.seoo-audit__results {
+    margin-top: 24px;
+}
+
+.seoo-audit__results-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #e8e8e8;
+    border-top: 1px solid #e8e8e8;
+    margin-top: 40px;
+    margin-left: -16px;
+    padding: 16px;
+    width: calc(100% + 32px);
+    background: rgba(5, 128, 139, 0.1);
+    background: linear-gradient(-90deg, rgba(5, 128, 139, .1) 0%, rgba(255, 255, 255, 1) 68%);
+}
+
+.seoo-audit__results-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.seoo-audit__results-title {
+    font-size: 20px !important;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.seoo-audit__table {
+    font-size: 13px;
+}
+
+.seoo-audit__table thead th {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 10px 12px;
+}
+
+.seoo-audit__th-severity {
+    width: 24px;
+}
+
+.seoo-audit__table tbody tr {
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.seoo-audit__table tbody td {
+    padding: 10px 12px;
+    vertical-align: middle;
+}
+
+.seoo-audit__url-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seoo-audit__url-cell a {
+    color: $primary-color;
+    text-decoration: none;
+}
+
+.seoo-audit__url-cell a:hover {
+    text-decoration: underline;
+}
+
+.seoo-audit__severity-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.seoo-audit__severity-dot--critical {
+    background: #dc2626;
+}
+
+.seoo-audit__severity-dot--warning {
+    background: #f59e0b;
+}
+
+.seoo-audit__severity-dot--info {
+    background: #6b7280;
+}
+
+.seoo-audit__start-btn .process-icon-search::before {
+    margin-right: 6px;
+}

@@ -1,0 +1,24 @@
+.bootstrap .nav-tabs > li {
+  & > a {
+    padding: 0.9375rem 1.25rem;
+    border: 0;
+    border-top: 3px solid transparent;
+    border-radius: 0;
+    color: #6c868e;
+    font-size: 0.85rem;
+    margin-right: 0;
+    font-weight: 400;
+
+    &:hover {
+      color: #25b9d7;
+      border: 0;
+      border-top: 3px solid transparent;
+    }
+  }
+
+  &.active > a, &.active > a:focus, &.active > a:hover {
+    border-top: 3px solid #25b9d7;
+    color: #000000;
+  }
+
+}
