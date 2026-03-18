@@ -115,51 +115,6 @@
                             {l s='Sitemap' mod='seooptimizer'}
                         </a>
                     </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                            <i class="icon-search"></i>
-                            {l s='Scans' mod='seooptimizer'} <span class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a href="#tab-report-unsecured-links" role="button" data-toggle="collapse">
-                                    <i class="icon-unlock"></i>
-                                    {l s='Unsecured links' mod='seooptimizer'}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#tab-report-not-found-links" role="button" data-toggle="collapse">
-                                    <i class="icon-unlink"></i>
-                                    {l s='Links leading to a 404' mod='seooptimizer'}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#tab-report-redirect-links" role="button" data-toggle="collapse">
-                                    <i class="icon-share"></i>
-                                    {l s='Links with redirections' mod='seooptimizer'}
-                                </a>
-                            </li>
-                            <li role="separator" class="divider"></li>
-                            <li>
-                                <a href="#tab-report-title-length" role="button" data-toggle="collapse">
-                                    <i class="icon-text-width"></i>
-                                    {l s='Title length' mod='seooptimizer'}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#tab-report-meta-title-length" role="button" data-toggle="collapse">
-                                    <i class="icon-align-left"></i>
-                                    {l s='Meta title length' mod='seooptimizer'}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#tab-report-missing-image-legend" role="button" data-toggle="collapse">
-                                    <i class="icon-picture"></i>
-                                    {l s='Missing image legend' mod='seooptimizer'}
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
                     <li>
                         <a href="#tab-rich-snippets" role="button" data-toggle="collapse">
                             <i class="icon-star"></i>
@@ -360,12 +315,6 @@
             {$data_list_pages_not_found}
         </div>
         <div id="tab-robots-txt" class="tab collapse">{$form_robots_txt}</div>
-        <div id="tab-report-unsecured-links" class="tab collapse">{$report_unsecured_links}</div>
-        <div id="tab-report-not-found-links" class="tab collapse">
-            {$report_not_found_links}
-            {$form_not_found_links_fix}
-        </div>
-        <div id="tab-report-redirect-links" class="tab collapse">{$report_redirected_links}</div>
         <div id="tab-canonical-urls" class="tab collapse">{$form_canonical_urls}</div>
         <div id="tab-indexations" class="tab collapse">
             <div class="panel">
@@ -396,12 +345,6 @@
         </div>
         <div id="tab-verification-code" class="tab collapse">{$form_verification_code}</div>
         <div id="tab-settings" class="tab collapse">{$form_settings}</div>
-        <div id="tab-report-title-length" class="tab collapse">{$report_title_length}</div>
-        <div id="tab-report-meta-title-length" class="tab collapse">{$report_meta_title_length}</div>
-        <div id="tab-report-missing-image-legend" class="tab collapse">
-            {$report_missing_image_legend}
-            {$form_missing_image_legend_fix}
-        </div>
         <div id="tab-rich-snippets" class="tab collapse">
             {$form_rich_snippets}
             {$form_social_meta_data}

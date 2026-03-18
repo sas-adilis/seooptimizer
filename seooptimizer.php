@@ -146,21 +146,13 @@ class SeoOptimizer extends Module
             Adilis\SeoOptimizer\Form\FormIndexationRule::class,
             Adilis\SeoOptimizer\Form\FormRichSnippets::class,
             Adilis\SeoOptimizer\Form\FormSocial::class,
-            Adilis\SeoOptimizer\Form\FormMissingImageLegendFix::class,
             Adilis\SeoOptimizer\Form\FormSitemap::class,
             Adilis\SeoOptimizer\Form\FormSocialMetaData::class,
-            Adilis\SeoOptimizer\Form\FormNotFoundLinksFix::class,
             Adilis\SeoOptimizer\Form\FormLinkObfuscator::class,
 
             Adilis\SeoOptimizer\Content\DataList\DataListRedirections::class,
-            Adilis\SeoOptimizer\Content\Report\ReportTitleLength::class,
-            Adilis\SeoOptimizer\Content\Report\ReportMetaTitleLength::class,
             Adilis\SeoOptimizer\Content\DataList\DataListIndexationRules::class,
             Adilis\SeoOptimizer\Content\DataList\DataListPagesNotFound::class,
-            Adilis\SeoOptimizer\Content\Report\ReportUnsecuredLinks::class,
-            Adilis\SeoOptimizer\Content\Report\ReportRedirectedLinks::class,
-            Adilis\SeoOptimizer\Content\Report\ReportNotFoundLinks::class,
-            Adilis\SeoOptimizer\Content\Report\ReportMissingImageLegend::class,
         ];
 
         foreach ($content_class as $class) {

@@ -7,14 +7,14 @@ namespace Composer\Autoload;
 class ComposerStaticInit34a8909ba6646a3b73a73bb1e69834dd
 {
     public static $prefixLengthsPsr4 = array (
-        'A' => 
+        'A' =>
         array (
             'Adilis\\SeoOptimizer\\' => 20,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Adilis\\SeoOptimizer\\' => 
+        'Adilis\\SeoOptimizer\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
@@ -44,39 +44,17 @@ class ComposerStaticInit34a8909ba6646a3b73a73bb1e69834dd
         'Adilis\\SeoOptimizer\\Content\\DataList\\DataListInterface' => __DIR__ . '/../..' . '/src/Content/DataList/DataListInterface.php',
         'Adilis\\SeoOptimizer\\Content\\DataList\\DataListPagesNotFound' => __DIR__ . '/../..' . '/src/Content/DataList/DataListPagesNotFound.php',
         'Adilis\\SeoOptimizer\\Content\\DataList\\DataListRedirections' => __DIR__ . '/../..' . '/src/Content/DataList/DataListRedirections.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\Report' => __DIR__ . '/../..' . '/src/Content/Report/Report.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportInterface' => __DIR__ . '/../..' . '/src/Content/Report/ReportInterface.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportMetaTitleLength' => __DIR__ . '/../..' . '/src/Content/Report/ReportMetaTitleLength.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportMissingImageLegend' => __DIR__ . '/../..' . '/src/Content/Report/ReportMissingImageLegend.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportNotFoundLinks' => __DIR__ . '/../..' . '/src/Content/Report/ReportNotFoundLinks.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportRedirectedLinks' => __DIR__ . '/../..' . '/src/Content/Report/ReportRedirectedLinks.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportTitleLength' => __DIR__ . '/../..' . '/src/Content/Report/ReportTitleLength.php',
-        'Adilis\\SeoOptimizer\\Content\\Report\\ReportUnsecuredLinks' => __DIR__ . '/../..' . '/src/Content/Report/ReportUnsecuredLinks.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\AbstractCrawlerObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/AbstractCrawlerObserver.php',
-        'Adilis\\SeoOptimizer\\CrawlerObserver\\CrawlerObserverInterface' => __DIR__ . '/../..' . '/src/CrawlerObserver/CrawlerObserverInterface.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\BrokenLinksObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/BrokenLinksObserver.php',
-        'Adilis\\SeoOptimizer\\CrawlerObserver\\DuplicateH1' => __DIR__ . '/../..' . '/src/CrawlerObserver/DuplicateH1.php',
-        'Adilis\\SeoOptimizer\\CrawlerObserver\\InternalLinksObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/InternalLinksObserver.php',
+        'Adilis\\SeoOptimizer\\CrawlerObserver\\CrawlerObserverInterface' => __DIR__ . '/../..' . '/src/CrawlerObserver/CrawlerObserverInterface.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\HeadingHierarchyObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/HeadingHierarchyObserver.php',
+        'Adilis\\SeoOptimizer\\CrawlerObserver\\InternalLinksObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/InternalLinksObserver.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\MetaTagsObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/MetaTagsObserver.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\MissingAltAttributeObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/MissingAltAttributeObserver.php',
-        'Adilis\\SeoOptimizer\\CrawlerObserver\\ResponseTimeObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/ResponseTimeObserver.php',
+        'Adilis\\SeoOptimizer\\CrawlerObserver\\PageLoadTimeObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/PageLoadTimeObserver.php',
+        'Adilis\\SeoOptimizer\\CrawlerObserver\\PageWeightObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/PageWeightObserver.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\TextRatioObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/TextRatioObserver.php',
         'Adilis\\SeoOptimizer\\CrawlerObserver\\UnsecuredLinksAuditObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/UnsecuredLinksAuditObserver.php',
-        'Adilis\\SeoOptimizer\\CrawlerObserver\\UnsecuredLinksObserver' => __DIR__ . '/../..' . '/src/CrawlerObserver/UnsecuredLinksObserver.php',
-        'Adilis\\SeoOptimizer\\CustomHelperList' => __DIR__ . '/../..' . '/src/CustomHelperList.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionAbstract' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionAbstract.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionCategory' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionCategory.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionCms' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionCms.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionCmsCategory' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionCmsCategory.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionImage' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionImage.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionInterface' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionInterface.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionLoader' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionLoader.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionManufacturer' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionManufacturer.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionMeta' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionMeta.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionProduct' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionProduct.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionSimpleBlogCategory' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionSimpleBlogCategory.php',
-        'Adilis\\SeoOptimizer\\EntityDefinition\\EntityDefinitionSimpleBlogPost' => __DIR__ . '/../..' . '/src/EntityDefinition/EntityDefinitionSimpleBlogPost.php',
         'Adilis\\SeoOptimizer\\Events\\AbstractDeleteRedirect' => __DIR__ . '/../..' . '/src/Events/AbstractDeleteRedirect.php',
         'Adilis\\SeoOptimizer\\Events\\CategoryDeleteRedirect' => __DIR__ . '/../..' . '/src/Events/CategoryDeleteRedirect.php',
         'Adilis\\SeoOptimizer\\Events\\DeleteRedirectInterface' => __DIR__ . '/../..' . '/src/Events/DeleteRedirectInterface.php',
@@ -89,8 +67,6 @@ class ComposerStaticInit34a8909ba6646a3b73a73bb1e69834dd
         'Adilis\\SeoOptimizer\\Form\\FormIndexationRule' => __DIR__ . '/../..' . '/src/Form/FormIndexationRule.php',
         'Adilis\\SeoOptimizer\\Form\\FormInterface' => __DIR__ . '/../..' . '/src/Form/FormInterface.php',
         'Adilis\\SeoOptimizer\\Form\\FormLinkObfuscator' => __DIR__ . '/../..' . '/src/Form/FormLinkObfuscator.php',
-        'Adilis\\SeoOptimizer\\Form\\FormMissingImageLegendFix' => __DIR__ . '/../..' . '/src/Form/FormMissingImageLegendFix.php',
-        'Adilis\\SeoOptimizer\\Form\\FormNotFoundLinksFix' => __DIR__ . '/../..' . '/src/Form/FormNotFoundLinksFix.php',
         'Adilis\\SeoOptimizer\\Form\\FormRedirection' => __DIR__ . '/../..' . '/src/Form/FormRedirection.php',
         'Adilis\\SeoOptimizer\\Form\\FormRedirectionEdit' => __DIR__ . '/../..' . '/src/Form/FormRedirectionEdit.php',
         'Adilis\\SeoOptimizer\\Form\\FormRedirectionImport' => __DIR__ . '/../..' . '/src/Form/FormRedirectionImport.php',
@@ -106,8 +82,7 @@ class ComposerStaticInit34a8909ba6646a3b73a73bb1e69834dd
         'Adilis\\SeoOptimizer\\Pages\\PagesAggregator' => __DIR__ . '/../..' . '/src/Pages/PagesAggregator.php',
         'Adilis\\SeoOptimizer\\Pages\\SinglePageAuditor' => __DIR__ . '/../..' . '/src/Pages/SinglePageAuditor.php',
         'Adilis\\SeoOptimizer\\RichSnippetSearcher' => __DIR__ . '/../..' . '/src/RichSnippetSearcher.php',
-        'Adilis\\SeoOptimizer\\ShopCrawler' => __DIR__ . '/../..' . '/src/ShopCrawler.php',
-        'Adilis\\SeoOptimizer\\ShopPageIndexer' => __DIR__ . '/../..' . '/src/ShopPageIndexer.php',
+        'Adilis\\SeoOptimizer\\Score\\SeoScoreCalculator' => __DIR__ . '/../..' . '/src/Score/SeoScoreCalculator.php',
         'Adilis\\SeoOptimizer\\SitemapIndexer\\CategoryIndexer' => __DIR__ . '/../..' . '/src/SitemapIndexer/CategoryIndexer.php',
         'Adilis\\SeoOptimizer\\SitemapIndexer\\CmsCategoryIndexer' => __DIR__ . '/../..' . '/src/SitemapIndexer/CmsCategoryIndexer.php',
         'Adilis\\SeoOptimizer\\SitemapIndexer\\CmsIndexer' => __DIR__ . '/../..' . '/src/SitemapIndexer/CmsIndexer.php',
