@@ -88,4 +88,17 @@ class AuditBrokenLinks implements AuditInterface
 
         return $results;
     }
+
+    public function getScoreImpact(): array
+    {
+        return [
+            'critical' => 20,
+            'warning' => 10,
+        ];
+    }
+
+    public function getScoreWeight(): int
+    {
+        return 25;
+    }
 }

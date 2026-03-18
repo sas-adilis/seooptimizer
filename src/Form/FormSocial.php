@@ -57,6 +57,7 @@ class FormSocial extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Social addresses'),
                     'icon' => 'icon-cloud',
+                    'description' => $this->l('Configure your social network URLs. These are used for rich snippets (structured data) and social metadata to improve your visibility on social platforms.'),
                 ],
                 'input' => $inputs,
                 'submit' => [

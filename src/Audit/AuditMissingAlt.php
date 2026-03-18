@@ -90,4 +90,17 @@ class AuditMissingAlt implements AuditInterface
 
         return $results;
     }
+
+    public function getScoreImpact(): array
+    {
+        return [
+            'critical' => 5,
+            'warning' => 2,
+        ];
+    }
+
+    public function getScoreWeight(): int
+    {
+        return 15;
+    }
 }

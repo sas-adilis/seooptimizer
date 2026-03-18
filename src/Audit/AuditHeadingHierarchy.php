@@ -28,7 +28,7 @@ class AuditHeadingHierarchy implements AuditInterface
 
     public function getVisual(): string
     {
-        return 'panda-indexation.png';
+        return 'panda-headings.png';
     }
 
     /**
@@ -90,5 +90,18 @@ class AuditHeadingHierarchy implements AuditInterface
         }
 
         return $results;
+    }
+
+    public function getScoreImpact(): array
+    {
+        return [
+            'critical' => 30,
+            'warning' => 10,
+        ];
+    }
+
+    public function getScoreWeight(): int
+    {
+        return 20;
     }
 }

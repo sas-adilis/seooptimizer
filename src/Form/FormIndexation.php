@@ -12,9 +12,9 @@ class FormIndexation extends FormAbstract implements FormInterface
         return $this->renderForm([
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Indexations'),
-                    'icon' => 'icon-database',
-                    'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-indexation.png',
+                    'title' => $this->l('Configuration'),
+                    'icon' => 'icon-cogs',
+                    'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-configure.png',
                     'description' => $this->l('Control how search engines index your pages. Set noindex, redirect or return 404 for supplier, manufacturer, store and sitemap pages.'),
                 ],
                 'input' => [

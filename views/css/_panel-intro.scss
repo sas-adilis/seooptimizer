@@ -66,4 +66,15 @@
     }
 }
 
+/* Standalone panel-intro (only child of .panel) */
+.panel > .seoo-panel-intro:only-child {
+    border-bottom: 0;
+}
+
+/* CSV import help */
+.seoo-csv-help__table {
+    max-width: 600px;
+    margin: 10px 0;
+}
+
 

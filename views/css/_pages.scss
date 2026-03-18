@@ -1,0 +1,173 @@
+/* ── Pages overview (.seoo-pages) ── */
+
+.seoo-pages__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.seoo-pages__filter {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.seoo-pages__table {
+    font-size: 13px;
+
+    thead th {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        border-bottom: 1px solid #e8e8e8;
+        padding: 10px 12px;
+    }
+
+    tbody tr.seoo-pages__row {
+        cursor: pointer;
+        border-bottom: 1px solid #f3f3f3;
+        transition: background 0.15s;
+
+        &:hover {
+            background: #fafbfc;
+        }
+
+        &.seoo-pages__row--expanded {
+            background: #f7f8fa;
+
+            .seoo-pages__chevron {
+                transform: rotate(90deg);
+            }
+        }
+    }
+
+    tbody td {
+        padding: 10px 12px;
+        vertical-align: middle;
+    }
+}
+
+.seoo-pages__expand-cell {
+    width: 30px;
+    text-align: center;
+}
+
+.seoo-pages__chevron {
+    font-size: 11px;
+    color: #9ca3af;
+    transition: transform 0.2s;
+}
+
+.seoo-pages__url-cell {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    a {
+        color: $primary-color;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+/* Severity badges */
+.seoo-pages__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &--critical {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    &--warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    &--none {
+        color: #d1d5db;
+        font-weight: 400;
+    }
+}
+
+/* Detail / issues row */
+.seoo-pages__detail-row > td {
+    padding: 0 !important;
+    background: #fafbfc;
+}
+
+.seoo-pages__issues {
+    padding: 12px 16px 12px 42px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.seoo-pages__issue {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+
+    &--critical {
+        background: rgba(220, 38, 38, 0.04);
+    }
+
+    &--warning {
+        background: rgba(217, 119, 6, 0.04);
+    }
+}
+
+.seoo-pages__issue-severity {
+    flex-shrink: 0;
+}
+
+.seoo-pages__issue-audit {
+    flex-shrink: 0;
+    font-weight: 600;
+    font-size: 12px;
+    color: #6b7280;
+    min-width: 160px;
+
+    i {
+        color: $primary-color;
+        margin-right: 4px;
+    }
+}
+
+.seoo-pages__issue-message {
+    color: #374151;
+}
+
+/* Re-audit button */
+.seoo-pages__reaudit-btn {
+    &.loading {
+        pointer-events: none;
+        opacity: 0.6;
+
+        i {
+            animation: seoo-spin 1s linear infinite;
+        }
+    }
+}
+
+@keyframes seoo-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

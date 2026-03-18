@@ -13,6 +13,7 @@ class FormSocialMetaData extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Metadata social'),
                     'icon' => 'icon-rss',
+                    'description' => $this->l('Enable Open Graph and Twitter Card metadata to control how your pages appear when shared on social networks.'),
                 ],
                 'input' => [
                     [

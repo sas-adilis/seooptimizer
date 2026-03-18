@@ -4,6 +4,7 @@ namespace Adilis\SeoOptimizer\Audit;
 
 use Adilis\SeoOptimizer\CacheManager;
 use Adilis\SeoOptimizer\CrawlerObserver\CrawlerObserverInterface;
+use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
 use Adilis\SeoOptimizer\SitemapIndexer\SitemapIndexer;
 
 class AuditRunner
@@ -97,6 +98,14 @@ class AuditRunner
         $kpiDefinitions = $this->audit->getKpiDefinitions();
         $kpis = $this->computeKpis($kpiDefinitions, $results, $crawledPages, $totalPages, $customKpis);
 
+        // Compute score for this audit
+        $scoreCalculator = new SeoScoreCalculator();
+        $auditScore = $scoreCalculator->computeForAudit($this->audit);
+
+        // Generate HelperList for results
+        $resultList = new AuditResultList($this->audit);
+        $resultListHtml = $resultList->render();
+
         $context = \Context::getContext();
         $context->smarty->assign([
             'audit_key' => $this->audit->getKey(),
@@ -107,10 +116,11 @@ class AuditRunner
             'audit_module_path' => __PS_BASE_URI__ . 'modules/seooptimizer/',
             'audit_total_pages' => $totalPages,
             'audit_crawled_pages' => $crawledPages,
-            'audit_results' => $results,
-            'audit_columns' => $this->audit->getResultColumns(),
+            'audit_results_count' => count($results),
+            'audit_result_list_html' => $resultListHtml,
             'audit_items' => $items,
             'audit_kpis' => $kpis,
+            'audit_score' => $auditScore,
             'audit_is_complete' => isset($state['status']) && $state['status'] === 'complete',
             'audit_percentage' => $totalPages > 0 ? round(($crawledPages / $totalPages) * 100) : 0,
         ]);
@@ -322,6 +332,42 @@ class AuditRunner
                 }
                 $this->state['custom_kpis']['heavy_count'] += $observer->getHeavyCount();
             }
+
+            // Text ratio KPIs
+            if (method_exists($observer, 'getLowCount')) {
+                if (!isset($this->state['custom_kpis']['low_count'])) {
+                    $this->state['custom_kpis']['low_count'] = 0;
+                }
+                $this->state['custom_kpis']['low_count'] += $observer->getLowCount();
+            }
+
+            // Internal links KPIs
+            if (method_exists($observer, 'getNoOutgoingCount')) {
+                if (!isset($this->state['custom_kpis']['no_outgoing_count'])) {
+                    $this->state['custom_kpis']['no_outgoing_count'] = 0;
+                }
+                $this->state['custom_kpis']['no_outgoing_count'] += $observer->getNoOutgoingCount();
+            }
+            if (method_exists($observer, 'getFewOutgoingCount')) {
+                if (!isset($this->state['custom_kpis']['few_outgoing_count'])) {
+                    $this->state['custom_kpis']['few_outgoing_count'] = 0;
+                }
+                $this->state['custom_kpis']['few_outgoing_count'] += $observer->getFewOutgoingCount();
+            }
+
+            // Meta tags KPIs
+            if (method_exists($observer, 'getWarningCount')) {
+                if (!isset($this->state['custom_kpis']['warning_count'])) {
+                    $this->state['custom_kpis']['warning_count'] = 0;
+                }
+                $this->state['custom_kpis']['warning_count'] += $observer->getWarningCount();
+            }
+            if (method_exists($observer, 'getCriticalCount')) {
+                if (!isset($this->state['custom_kpis']['critical_count'])) {
+                    $this->state['custom_kpis']['critical_count'] = 0;
+                }
+                $this->state['custom_kpis']['critical_count'] += $observer->getCriticalCount();
+            }
         }
 
         $newResults = $this->audit->formatResults($observerResults);
@@ -493,6 +539,12 @@ class AuditRunner
             $this->state['custom_kpis'] ?? []
         );
 
+        $auditScore = ['score' => 0, 'grade' => '-', 'grade_color' => 'gray'];
+        if ($status === 'done') {
+            $scoreCalculator = new SeoScoreCalculator();
+            $auditScore = $scoreCalculator->computeForAudit($this->audit);
+        }
+
         echo json_encode([
             'status' => $status,
             'audit' => [
@@ -504,6 +556,7 @@ class AuditRunner
                     : 0,
                 'kpis' => $kpis,
                 'items' => $this->state['items'],
+                'score' => $auditScore,
             ],
         ]);
         exit;

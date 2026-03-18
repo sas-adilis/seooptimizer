@@ -20,6 +20,11 @@ class FormRedirectionImport extends FormAbstract implements FormInterface
                     ],
                     'input' => [
                         [
+                            'type' => 'description',
+                            'name' => 'csv_format_help',
+                            'content' => $this->getCsvFormatHelp(),
+                        ],
+                        [
                             'type' => 'file',
                             'name' => 'file',
                             'label' => $this->l('Select your CSV file to import'),
@@ -59,6 +64,16 @@ class FormRedirectionImport extends FormAbstract implements FormInterface
                 'separator' => \Tools::getValue('separator', self::SEPARATOR_SEMICOLON),
             ]
         );
+    }
+
+    private function getCsvFormatHelp(): string
+    {
+        $smarty = \Context::getContext()->smarty;
+        $smarty->assign([
+            'csv_example_url' => __PS_BASE_URI__ . 'modules/seooptimizer/examples/redirections-example.csv',
+        ]);
+
+        return $smarty->fetch(Utils::getModulePath() . 'views/templates/admin/csv-import-help.tpl');
     }
 
     /**

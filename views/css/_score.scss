@@ -1,0 +1,288 @@
+/* ── Score system (.seoo-score / .seoo-dashboard-score) ── */
+
+/* Grade colors */
+$grade-excellent: #059669;
+$grade-good: #16a34a;
+$grade-fair: #65a30d;
+$grade-warning: #d97706;
+$grade-poor: #dc2626;
+$grade-critical: #991b1b;
+
+/* ── Dashboard score ── */
+
+.seoo-dashboard-score {
+    display: flex;
+    gap: 32px;
+    padding: 32px;
+    margin-bottom: 20px;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 5px;
+}
+
+.seoo-dashboard-score__global {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Score ring */
+.seoo-score-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 6px solid #e5e7eb;
+    text-align: center;
+
+    &--excellent { border-color: $grade-excellent; }
+    &--good { border-color: $grade-good; }
+    &--fair { border-color: $grade-fair; }
+    &--warning { border-color: $grade-warning; }
+    &--poor { border-color: $grade-poor; }
+    &--critical { border-color: $grade-critical; }
+}
+
+.seoo-score-ring__grade {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+    color: #1a1a1a;
+}
+
+.seoo-score-ring__value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.seoo-score-ring__label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+}
+
+/* Audit score cards in dashboard */
+.seoo-dashboard-score__audits {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.seoo-dashboard-score__audit {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: #fafafa;
+    border-radius: 8px;
+    border-left: 4px solid #e5e7eb;
+
+    &--excellent { border-left-color: $grade-excellent; }
+    &--good { border-left-color: $grade-good; }
+    &--fair { border-left-color: $grade-fair; }
+    &--warning { border-left-color: $grade-warning; }
+    &--poor { border-left-color: $grade-poor; }
+    &--critical { border-left-color: $grade-critical; }
+}
+
+.seoo-dashboard-score__audit-grade {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a1a;
+    min-width: 36px;
+    text-align: center;
+}
+
+.seoo-dashboard-score__audit-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 0;
+}
+
+.seoo-dashboard-score__audit-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+
+    i {
+        color: $primary-color;
+        margin-right: 6px;
+    }
+}
+
+.seoo-dashboard-score__audit-value {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.seoo-dashboard-score__audit-bar {
+    width: 80px;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.seoo-dashboard-score__audit-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+
+    .seoo-dashboard-score__audit--excellent & { background: $grade-excellent; }
+    .seoo-dashboard-score__audit--good & { background: $grade-good; }
+    .seoo-dashboard-score__audit--fair & { background: $grade-fair; }
+    .seoo-dashboard-score__audit--warning & { background: $grade-warning; }
+    .seoo-dashboard-score__audit--poor & { background: $grade-poor; }
+    .seoo-dashboard-score__audit--critical & { background: $grade-critical; }
+}
+
+/* ── Score KPI in audit card ── */
+
+.seoo-report__kpi--score {
+    position: relative;
+    text-align: center;
+    border: 2px solid #e5e7eb;
+
+    &.seoo-report__kpi--score-excellent { border-color: $grade-excellent; background: rgba($grade-excellent, 0.05); }
+    &.seoo-report__kpi--score-good { border-color: $grade-good; background: rgba($grade-good, 0.05); }
+    &.seoo-report__kpi--score-fair { border-color: $grade-fair; background: rgba($grade-fair, 0.05); }
+    &.seoo-report__kpi--score-warning { border-color: $grade-warning; background: rgba($grade-warning, 0.05); }
+    &.seoo-report__kpi--score-poor { border-color: $grade-poor; background: rgba($grade-poor, 0.05); }
+    &.seoo-report__kpi--score-critical { border-color: $grade-critical; background: rgba($grade-critical, 0.05); }
+
+    .seoo-score__grade {
+        font-size: 28px;
+        font-weight: 800;
+    }
+}
+
+.seoo-report__kpi-sub {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+/* ── Grade badge (inline) ── */
+
+.seoo-grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: #9ca3af;
+
+    &--excellent { background: $grade-excellent; }
+    &--good { background: $grade-good; }
+    &--fair { background: $grade-fair; }
+    &--warning { background: $grade-warning; }
+    &--poor { background: $grade-poor; }
+    &--critical { background: $grade-critical; }
+}
+
+/* ── Mini score (table cells) ── */
+
+.seoo-mini-score {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+
+    &--good {
+        color: $grade-good;
+        background: rgba($grade-good, 0.1);
+    }
+    &--warning {
+        color: $grade-warning;
+        background: rgba($grade-warning, 0.1);
+    }
+    &--critical {
+        color: $grade-critical;
+        background: rgba($grade-critical, 0.1);
+    }
+    &--na {
+        color: #d1d5db;
+    }
+}
+
+/* ── Pages score table ── */
+
+.seoo-pages-score-table {
+    font-size: 13px;
+
+    th {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #6b7280;
+        border-bottom: 1px solid #e8e8e8;
+        padding: 10px 12px;
+    }
+
+    td {
+        padding: 8px 12px;
+        vertical-align: middle;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #f3f3f3;
+    }
+
+    tbody tr:hover {
+        background: #fafbfc;
+    }
+}
+
+.seoo-pages-score-table__th-grade {
+    width: 50px;
+}
+
+.seoo-pages-score-table__th-score {
+    width: 60px;
+    text-align: center;
+}
+
+.seoo-pages-score-table__th-audit {
+    width: 40px;
+}
+
+.seoo-pages-score-table__url {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    a {
+        color: $primary-color;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.seoo-pages-score-table__score {
+    text-align: center;
+    font-weight: 600;
+}

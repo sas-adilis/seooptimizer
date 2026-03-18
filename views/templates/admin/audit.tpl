@@ -20,7 +20,7 @@
                         data-audit-action="runAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}">
                     <i class="process-icon-search"></i> {l s='Start audit' mod='seooptimizer'}
                 </button>
-                {if $audit_is_complete && $audit_results|count > 0}
+                {if $audit_is_complete && $audit_results_count > 0}
                     <button type="button"
                             class="btn btn-default seoo-audit__csv-btn"
                             data-audit-action="exportCsvAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}">
@@ -33,6 +33,14 @@
         <div class="panel-body">
             <div class="seoo-report" id="{$audit_key|escape:'htmlall':'UTF-8'}_report">
                 <div class="seoo-report__kpis">
+                    {if isset($audit_score) && $audit_score.grade != '-'}
+                        <div class="seoo-report__kpi seoo-report__kpi--score seoo-report__kpi--score-{$audit_score.grade_color|escape:'htmlall':'UTF-8'}"
+                             data-audit-score="{$audit_key|escape:'htmlall':'UTF-8'}">
+                            <span class="seoo-report__kpi-label">{l s='Score' mod='seooptimizer'}</span>
+                            <span class="seoo-report__kpi-value seoo-score__grade">{$audit_score.grade|escape:'htmlall':'UTF-8'}</span>
+                            <span class="seoo-report__kpi-sub">{$audit_score.score|escape:'htmlall':'UTF-8'}/100</span>
+                        </div>
+                    {/if}
                     {foreach $audit_kpis as $kpi}
                         <div class="seoo-report__kpi {if $kpi.danger}seoo-report__kpi--danger{elseif $kpi.warning}seoo-report__kpi--warning{/if}">
                             <span class="seoo-report__kpi-label">{$kpi.label|escape:'htmlall':'UTF-8'}</span>
@@ -41,13 +49,13 @@
                     {/foreach}
                 </div>
 
-                {if $audit_items|count > 0}
-                    <div class="seoo-report__table">
-                        <div class="seoo-report__thead">
-                            <div class="seoo-report__th seoo-report__th--entity">{l s='Entity' mod='seooptimizer'}</div>
-                            <div class="seoo-report__th seoo-report__th--progress">{l s='Progression' mod='seooptimizer'}</div>
-                            <div class="seoo-report__th seoo-report__th--result">{l s='Result' mod='seooptimizer'}</div>
-                        </div>
+                <div class="seoo-report__table seoo-audit__progress-table" style="display:none;">
+                    <div class="seoo-report__thead">
+                        <div class="seoo-report__th seoo-report__th--entity">{l s='Entity' mod='seooptimizer'}</div>
+                        <div class="seoo-report__th seoo-report__th--progress">{l s='Progression' mod='seooptimizer'}</div>
+                        <div class="seoo-report__th seoo-report__th--result">{l s='Result' mod='seooptimizer'}</div>
+                    </div>
+                    {if $audit_items|count > 0}
                         {foreach $audit_items as $type_key => $item}
                             <div class="seoo-report__row" data-audit-item="{$type_key|escape:'htmlall':'UTF-8'}">
                                 <div class="seoo-report__cell seoo-report__cell--entity">
@@ -89,42 +97,13 @@
                                 </div>
                             </div>
                         {/foreach}
-                    </div>
-                {/if}
+                    {/if}
+                </div>
             </div>
 
-            {if $audit_results|count > 0}
+            {if $audit_results_count > 0 && $audit_result_list_html}
                 <div class="seoo-audit__results">
-                    <div class="seoo-audit__results-header">
-                        <img src="{$audit_module_path|escape:'htmlall':'UTF-8'}views/img/panda-details.png" alt="" class="seoo-audit__results-img">
-                        <h4 class="seoo-audit__results-title">{l s='Audit details' mod='seooptimizer'}</h4>
-                    </div>
-                    <table class="table seoo-audit__table">
-                        <thead>
-                        <tr>
-                            <th class="seoo-audit__th-severity"></th>
-                            <th>{l s='Page' mod='seooptimizer'}</th>
-                            {foreach $audit_columns as $col_key => $col_label}
-                                <th>{$col_label|escape:'htmlall':'UTF-8'}</th>
-                            {/foreach}
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {foreach $audit_results as $row}
-                            <tr class="seoo-audit__result-row seoo-audit__result-row--{$row.severity|escape:'htmlall':'UTF-8'}">
-                                <td class="seoo-audit__severity-cell">
-                                    <span class="seoo-audit__severity-dot seoo-audit__severity-dot--{$row.severity|escape:'htmlall':'UTF-8'}"></span>
-                                </td>
-                                <td class="seoo-audit__url-cell">
-                                    <a href="{$row.url|escape:'htmlall':'UTF-8'}" target="_blank" rel="noopener">{$row.url|escape:'htmlall':'UTF-8'}</a>
-                                </td>
-                                {foreach $audit_columns as $col_key => $col_label}
-                                    <td>{if isset($row[$col_key])}{$row[$col_key]|escape:'htmlall':'UTF-8'}{/if}</td>
-                                {/foreach}
-                            </tr>
-                        {/foreach}
-                        </tbody>
-                    </table>
+                    {$audit_result_list_html nofilter}
                 </div>
             {/if}
         </div>

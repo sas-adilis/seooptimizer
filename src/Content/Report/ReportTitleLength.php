@@ -22,8 +22,8 @@ class ReportTitleLength extends Report implements ReportInterface
                 }
                 $value = $row[$field] ?? '';
                 if (
-                    strlen($value) < (int) \Configuration::get('SEO_OPTIMIZER_TITLE_MIN_LENGTH')
-                    || strlen($value) > (int) \Configuration::get('SEO_OPTIMIZER_TITLE_MAX_LENGTH')
+                    strlen($value) < (int) \Configuration::get('SEOO_TITLE_MIN_LENGTH')
+                    || strlen($value) > (int) \Configuration::get('SEOO_TITLE_MAX_LENGTH')
                 ) {
                     $founded_elements[] = [
                         'id_primary' => $row[$definition->getPrimaryKey()],

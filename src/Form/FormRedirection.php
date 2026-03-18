@@ -11,10 +11,10 @@ class FormRedirection extends FormAbstract implements FormInterface
         return $this->renderForm([
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Redirections'),
-                    'icon' => 'icon-share',
-                    'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-redirections.png',
-                    'description' => $this->l('Manage 301 and 302 redirections. Redirect old URLs to new ones to preserve your SEO ranking and avoid 404 errors.'),
+                    'title' => $this->l('Configuration'),
+                    'icon' => 'icon-cogs',
+                    'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-configure.png',
+                    'description' => $this->l('Configure automatic redirection behavior when products or categories are deactivated or deleted.'),
                 ],
                 'input' => [
                     [

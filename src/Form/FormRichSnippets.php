@@ -42,12 +42,8 @@ class FormRichSnippets extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Rich snippets'),
                     'icon' => 'icon-star',
+                    'description' => $this->l('Rich snippets display enhanced information in Google search results (ratings, prices, availability). Configure structured data markup to improve your click-through rates.'),
                 ],
-                'description' => sprintf(
-                    $this->l('Rich snippets are enhanced search results in Google that provide additional information beyond the standard title and description, such as ratings, images, or event details, to make search results more informative and attractive to users. They are implemented using structured data markup, which helps search engines understand the content of a page and display these enriched elements in search results. This can improve click-through rates by making the listing more appealing. To validate if your web pages are eligible for rich snippets, you can use %sGoogle’s Rich Results Test tool%s.'),
-                    '<a href="https://search.google.com/test/rich-results" target="_blank">',
-                        '</a>'
-                ),
                 'input' => [
                     [
                         'type' => 'switch',

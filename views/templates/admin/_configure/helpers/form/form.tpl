@@ -1,11 +1,13 @@
 {extends file="helpers/form/form.tpl"}
 
 {block name="legend"}
-    {if isset($field.visual) && $field.visual}
+    {if (isset($field.visual) && $field.visual) || (isset($field.description) && $field.description)}
         <div class="seoo-panel-intro">
-            <div class="seoo-panel-intro__visual">
-                <img src="{$field.visual|escape:'htmlall':'UTF-8'}" alt="{$field.title|escape:'htmlall':'UTF-8'}">
-            </div>
+            {if isset($field.visual) && $field.visual}
+                <div class="seoo-panel-intro__visual">
+                    <img src="{$field.visual|escape:'htmlall':'UTF-8'}" alt="{$field.title|escape:'htmlall':'UTF-8'}">
+                </div>
+            {/if}
             <div class="seoo-panel-intro__content">
                 <h3 class="seoo-panel-intro__title">
                     {if isset($field.icon)}<i class="{$field.icon}"></i>{/if}

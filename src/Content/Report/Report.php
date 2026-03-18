@@ -152,8 +152,8 @@ abstract class Report implements ReportInterface
                 'legend' => [
                     'title' => $title,
                     'icon' => $icon,
+                    'description' => $this->getDescription(),
                 ],
-                'desc' => $this->getDescription(),
                 'input' => [
                     [
                         'type' => 'report',

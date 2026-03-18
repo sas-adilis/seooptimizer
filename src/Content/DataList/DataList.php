@@ -101,10 +101,8 @@ abstract class DataList implements DataListInterface
         $this->helper->currentIndex = \AdminController::$currentIndex . '&configure=seooptimizer';
         $this->helper->no_link = true;
         $this->helper->shopLinkType = '';
-        $this->helper->simple_header = false;
-        $this->helper->show_toolbar = true;
-        $this->helper->title = $this->getTitle();
-        $this->helper->title_icon = $this->getIcon();
+        $this->helper->simple_header = true;
+        $this->helper->show_toolbar = false;
         $this->helper->_default_pagination = 20;
         $this->helper->tpl_vars = [
             'link' => $context->link,

@@ -17,8 +17,8 @@ class FormSitemap extends FormAbstract implements FormInterface
                     'title' => $this->l('Sitemap configuration'),
                     'icon' => 'icon-sitemap',
                     'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-sitemap.png',
+                    'description' => $this->l('The sitemap is a file where you can list the web pages of your site to tell Google and other search engines about the organization of your site content. Search engine web crawlers like Googlebot read this file to more intelligently crawl your site.'),
                 ],
-                'desc' => $this->l('The sitemap is a file where you can list the web pages of your site to tell Google and other search engines about the organization of your site content. Search engine web crawlers like Googlebot read this file to more intelligently crawl your site.'),
                 'input' => [
                     [
                         'type' => 'switch',

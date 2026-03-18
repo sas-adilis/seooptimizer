@@ -52,11 +52,14 @@ class AuditPageWeight implements AuditInterface
      */
     public function getKpiDefinitions(): array
     {
+        $thresholdLight = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_LIGHT') ?: 1024;
+        $thresholdHeavy = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_HEAVY') ?: 3072;
+
         return [
             ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'light_count', 'label' => 'Light', 'type' => 'custom'],
-            ['key' => 'moderate_count', 'label' => 'Moderate', 'type' => 'custom', 'warning_if_positive' => true],
-            ['key' => 'heavy_count', 'label' => 'Heavy', 'type' => 'custom', 'danger_if_positive' => true],
+            ['key' => 'light_count', 'label' => 'Light (< ' . $this->formatSize($thresholdLight) . ')', 'type' => 'custom'],
+            ['key' => 'moderate_count', 'label' => 'Moderate (' . $this->formatSize($thresholdLight) . '-' . $this->formatSize($thresholdHeavy) . ')', 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'heavy_count', 'label' => 'Heavy (> ' . $this->formatSize($thresholdHeavy) . ')', 'type' => 'custom', 'danger_if_positive' => true],
         ];
     }
 
@@ -123,6 +126,19 @@ class AuditPageWeight implements AuditInterface
      * @param int $kb
      * @return string
      */
+    public function getScoreImpact(): array
+    {
+        return [
+            'critical' => 40,
+            'warning' => 15,
+        ];
+    }
+
+    public function getScoreWeight(): int
+    {
+        return 20;
+    }
+
     private function formatSize(int $kb): string
     {
         if ($kb >= 1024) {

@@ -10,15 +10,36 @@
 
 .bootstrap .navbar-default .navbar-nav > li > a {
     color: #000;
+    text-decoration: none !important;
 }
 
 .bootstrap .navbar-default i[class^="icon-"] {
     color: $primary-color;
 }
 
+/* Navbar separator */
+.bootstrap .navbar-default .navbar-nav > li.seoo-navbar-separator {
+    border-left: 1px solid #dbe6e9;
+    margin: 8px 4px;
+    padding: 0;
+}
+
 /* Switch */
 .bootstrap .prestashop-switch input:first-of-type:checked ~ .slide-button {
     background: $primary-color;
+}
+
+/* Tables */
+#content.bootstrap .panel table.table thead tr:first-child th {
+    border-bottom: solid 0.125rem $primary-color;
+}
+
+#content.bootstrap .panel table.table thead tr.filter {
+    background: rgba(5, 128, 139, 0.1);
+    background: linear-gradient(-90deg, rgba(5, 128, 139, 0.1) 0%, rgb(255, 255, 255) 68%, rgba(5, 128, 139, 0.1) 100%);
+    th {
+        background-color: transparent;
+    }
 }
 
 /* Panel heading */
@@ -35,6 +56,7 @@
 .bootstrap .panel .panel-footer .btn.btn-default.pull-right {
     background-color: $primary-color;
     border-color: $primary-color;
+    color: #fff;
 }
 
 .bootstrap .panel .panel-footer .btn.btn-default.pull-right:hover {
@@ -82,4 +104,51 @@
 
 .tab:not(.in) {
     display: none;
+}
+
+/* ── Fused panels: all panels inside a tab form a single visual block ── */
+
+/* Reset all panels inside tabs: no margin, no radius */
+#seooptimizer .tab .panel {
+    margin-bottom: 0;
+    border-radius: 0;
+    border-top: 0;
+}
+
+/* First panel in each tab: restore top border + round top corners */
+#seooptimizer .tab > .panel:first-child,
+#seooptimizer .tab > form:first-child > .panel,
+#seooptimizer .tab > .seoo-audit:first-child .panel:first-child,
+#seooptimizer .tab > .collapse:first-child .panel:first-child {
+    border-top: 1px solid #dbe6e9;
+    border-radius: 5px 5px 0 0;
+}
+
+/* Last panel in each tab: round bottom corners + spacing after */
+#seooptimizer .tab > .panel:last-child,
+#seooptimizer .tab > form:last-child > .panel,
+#seooptimizer .tab > .seoo-audit:last-child .panel:last-child,
+#seooptimizer .tab > .collapse:last-child .panel:last-child {
+    border-radius: 0 0 5px 5px;
+    margin-bottom: 20px;
+}
+
+/* Only panel: full border-radius */
+#seooptimizer .tab > .panel:only-child,
+#seooptimizer .tab > .seoo-audit:only-child .panel:only-child {
+    border-top: 1px solid #dbe6e9;
+    border-radius: 5px;
+}
+
+/* Collapsed containers should be invisible — panels after them keep border-top hidden */
+#seooptimizer .tab > .collapse:not(.in) + .panel,
+#seooptimizer .tab > .collapse:not(.in) + form > .panel,
+#seooptimizer .tab > .collapse:not(.in) + .collapse:not(.in) + .panel,
+#seooptimizer .tab > .collapse:not(.in) + .collapse:not(.in) + form > .panel {
+    border-top: 0;
+}
+
+/* When a collapse is open (.in), its inner panel needs top border as separator */
+#seooptimizer .tab > .collapse.in .panel {
+    border-top: 1px solid #dbe6e9;
 }

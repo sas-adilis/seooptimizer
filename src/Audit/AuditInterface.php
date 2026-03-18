@@ -49,4 +49,20 @@ interface AuditInterface
      * @return array
      */
     public function formatResults(array $observerResults): array;
+
+    /**
+     * Score penalty per issue severity.
+     * Key = severity name, Value = points deducted from 100.
+     *
+     * @return array<string, int>
+     */
+    public function getScoreImpact(): array;
+
+    /**
+     * Weight of this audit in the global score (0-100).
+     * All weights across audits should ideally sum to 100.
+     *
+     * @return int
+     */
+    public function getScoreWeight(): int;
 }

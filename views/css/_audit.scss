@@ -33,17 +33,17 @@
 }
 
 .seoo-audit__results {
-    margin-top: 24px;
+    margin-top: 0;
 }
 
 .seoo-audit__results-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 25px;
+    margin-bottom: 0;
     border-bottom: 1px solid #e8e8e8;
     border-top: 1px solid #e8e8e8;
-    margin-top: 40px;
+    margin-top: 0;
     margin-left: -16px;
     padding: 16px;
     width: calc(100% + 32px);
@@ -123,6 +123,23 @@
 
 .seoo-audit__severity-dot--info {
     background: #6b7280;
+}
+
+/* HelperList inside audit results — remove double panel nesting */
+.seoo-audit__results .panel {
+    margin-bottom: 0;
+    border: 0;
+    box-shadow: none;
+}
+
+.seoo-audit__results .panel .panel-heading {
+    margin: 0 -16px;
+    padding: 16px;
+    border-top: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    border-radius: 0;
+    background: rgba(5, 128, 139, 0.1);
+    background: linear-gradient(-90deg, rgba(5, 128, 139, .1) 0%, rgba(255, 255, 255, 1) 68%);
 }
 
 .seoo-audit__start-btn .process-icon-search::before {

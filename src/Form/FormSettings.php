@@ -13,32 +13,34 @@ class FormSettings extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Configuration'),
                     'icon' => 'icon-cogs',
+                    'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-configure.png',
+                    'description' => $this->l('Configure SEO Optimizer settings: title and meta description length thresholds, page load time and weight thresholds for audits.'),
                 ],
                 'input' => [
                     [
                         'type' => 'text',
-                        'name' => 'SEO_OPTIMIZER_TITLE_MIN_LENGTH',
+                        'name' => 'SEOO_TITLE_MIN_LENGTH',
                         'label' => $this->l('Page title minimum length'),
                         'desc' => $this->l('Enter the minimum length required for a page title. Default is 50'),
                         'required' => true,
                     ],
                     [
                         'type' => 'text',
-                        'name' => 'SEO_OPTIMIZER_TITLE_MAX_LENGTH',
+                        'name' => 'SEOO_TITLE_MAX_LENGTH',
                         'label' => $this->l('Page title maximum length'),
                         'desc' => $this->l('Enter the maximum length required for a page title. Default is 70'),
                         'required' => true,
                     ],
                     [
                         'type' => 'text',
-                        'name' => 'SEO_OPTIMIZER_META_TITLE_MIN_LENGTH',
+                        'name' => 'SEOO_META_TITLE_MIN_LENGTH',
                         'label' => $this->l('Page meta title minimum length'),
                         'desc' => $this->l('Enter the minimum length required for a page title. Default is 140'),
                         'required' => true,
                     ],
                     [
                         'type' => 'text',
-                        'name' => 'SEO_OPTIMIZER_META_TITLE_MAX_LENGTH',
+                        'name' => 'SEOO_META_TITLE_MAX_LENGTH',
                         'label' => $this->l('Page meta title maximum length'),
                         'desc' => $this->l('Enter the maximum length required for a page meta title. Default is 170'),
                         'required' => true,
@@ -85,6 +87,27 @@ class FormSettings extends FormAbstract implements FormInterface
                         'suffix' => 'KB',
                         'required' => true,
                     ],
+                    [
+                        'type' => 'html',
+                        'name' => 'separator_text',
+                        'html_content' => '<hr><h4><i class="icon-font"></i> ' . $this->l('Text content thresholds') . '</h4>',
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'SEOO_TEXT_THRESHOLD_LOW',
+                        'label' => $this->l('Insufficient threshold (words)'),
+                        'desc' => $this->l('Pages with fewer words than this value are considered insufficient. Default: 100'),
+                        'suffix' => 'words',
+                        'required' => true,
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'SEOO_TEXT_THRESHOLD_GOOD',
+                        'label' => $this->l('Good threshold (words)'),
+                        'desc' => $this->l('Pages with more words than this value are considered good. Between insufficient and good = improvable. Default: 300'),
+                        'suffix' => 'words',
+                        'required' => true,
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -93,14 +116,16 @@ class FormSettings extends FormAbstract implements FormInterface
                 ],
             ],
         ], [
-            'SEO_OPTIMIZER_TITLE_MIN_LENGTH' => Utils::getValOrConf('SEO_OPTIMIZER_TITLE_MIN_LENGTH'),
-            'SEO_OPTIMIZER_TITLE_MAX_LENGTH' => Utils::getValOrConf('SEO_OPTIMIZER_TITLE_MAX_LENGTH'),
-            'SEO_OPTIMIZER_META_TITLE_MIN_LENGTH' => Utils::getValOrConf('SEO_OPTIMIZER_META_TITLE_MIN_LENGTH'),
-            'SEO_OPTIMIZER_META_TITLE_MAX_LENGTH' => Utils::getValOrConf('SEO_OPTIMIZER_META_TITLE_MAX_LENGTH'),
+            'SEOO_TITLE_MIN_LENGTH' => Utils::getValOrConf('SEOO_TITLE_MIN_LENGTH'),
+            'SEOO_TITLE_MAX_LENGTH' => Utils::getValOrConf('SEOO_TITLE_MAX_LENGTH'),
+            'SEOO_META_TITLE_MIN_LENGTH' => Utils::getValOrConf('SEOO_META_TITLE_MIN_LENGTH'),
+            'SEOO_META_TITLE_MAX_LENGTH' => Utils::getValOrConf('SEOO_META_TITLE_MAX_LENGTH'),
             'SEOO_PERF_THRESHOLD_GOOD' => Utils::getValOrConf('SEOO_PERF_THRESHOLD_GOOD'),
             'SEOO_PERF_THRESHOLD_SLOW' => Utils::getValOrConf('SEOO_PERF_THRESHOLD_SLOW'),
             'SEOO_WEIGHT_THRESHOLD_LIGHT' => Utils::getValOrConf('SEOO_WEIGHT_THRESHOLD_LIGHT'),
             'SEOO_WEIGHT_THRESHOLD_HEAVY' => Utils::getValOrConf('SEOO_WEIGHT_THRESHOLD_HEAVY'),
+            'SEOO_TEXT_THRESHOLD_LOW' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_LOW'),
+            'SEOO_TEXT_THRESHOLD_GOOD' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_GOOD'),
         ]);
     }
 
@@ -109,14 +134,16 @@ class FormSettings extends FormAbstract implements FormInterface
      */
     public function postProcess()
     {
-        \Configuration::updateValue('SEO_OPTIMIZER_TITLE_MIN_LENGTH', (int) \Tools::getValue('SEO_OPTIMIZER_TITLE_MIN_LENGTH'));
-        \Configuration::updateValue('SEO_OPTIMIZER_TITLE_MAX_LENGTH', (int) \Tools::getValue('SEO_OPTIMIZER_TITLE_MAX_LENGTH'));
-        \Configuration::updateValue('SEO_OPTIMIZER_META_TITLE_MIN_LENGTH', (int) \Tools::getValue('SEO_OPTIMIZER_META_TITLE_MIN_LENGTH'));
-        \Configuration::updateValue('SEO_OPTIMIZER_META_TITLE_MAX_LENGTH', (int) \Tools::getValue('SEO_OPTIMIZER_META_TITLE_MAX_LENGTH'));
+        \Configuration::updateValue('SEOO_TITLE_MIN_LENGTH', (int) \Tools::getValue('SEOO_TITLE_MIN_LENGTH'));
+        \Configuration::updateValue('SEOO_TITLE_MAX_LENGTH', (int) \Tools::getValue('SEOO_TITLE_MAX_LENGTH'));
+        \Configuration::updateValue('SEOO_META_TITLE_MIN_LENGTH', (int) \Tools::getValue('SEOO_META_TITLE_MIN_LENGTH'));
+        \Configuration::updateValue('SEOO_META_TITLE_MAX_LENGTH', (int) \Tools::getValue('SEOO_META_TITLE_MAX_LENGTH'));
         \Configuration::updateValue('SEOO_PERF_THRESHOLD_GOOD', (int) \Tools::getValue('SEOO_PERF_THRESHOLD_GOOD'));
         \Configuration::updateValue('SEOO_PERF_THRESHOLD_SLOW', (int) \Tools::getValue('SEOO_PERF_THRESHOLD_SLOW'));
         \Configuration::updateValue('SEOO_WEIGHT_THRESHOLD_LIGHT', (int) \Tools::getValue('SEOO_WEIGHT_THRESHOLD_LIGHT'));
         \Configuration::updateValue('SEOO_WEIGHT_THRESHOLD_HEAVY', (int) \Tools::getValue('SEOO_WEIGHT_THRESHOLD_HEAVY'));
+        \Configuration::updateValue('SEOO_TEXT_THRESHOLD_LOW', (int) \Tools::getValue('SEOO_TEXT_THRESHOLD_LOW'));
+        \Configuration::updateValue('SEOO_TEXT_THRESHOLD_GOOD', (int) \Tools::getValue('SEOO_TEXT_THRESHOLD_GOOD'));
         \Tools::redirectAdmin(Utils::getConfigFormUrl(4));
     }
 }

@@ -318,6 +318,8 @@ $(document).ready(() => {
     initSitemapFields();
     initAuditButtons();
     initAuditCsvButtons();
+    initPagesPanel();
+    initFullAudit();
 
     $('button[data-ajax-action]').on('click', function(e) {
         e.preventDefault();
@@ -519,6 +521,9 @@ function initAuditButtons() {
         $progressWrap.show();
         $bar.css('width', '0%').removeClass('bg-success').addClass('bg-processing');
 
+        // Show the progress table
+        $audit.find('.seoo-audit__progress-table').show();
+
         runAuditBatch(action, true, $audit, $btn);
     });
 }
@@ -603,5 +608,242 @@ function runAuditBatch(action, firstProcess, $audit, $btn) {
         error: function() {
             $btn.prop('disabled', false).html('<i class="process-icon-search"></i> Start audit');
         }
+    });
+}
+
+function initFullAudit() {
+    var $btn = $('#seoo-full-audit-btn');
+    var $panel = $('#seoo-full-audit');
+    var $itemsContainer = $('#seoo-full-audit-items');
+
+    $btn.on('click', function(e) {
+        e.preventDefault();
+        if ($btn.hasClass('loading')) return;
+
+        $btn.addClass('loading').prop('disabled', true).html('<i class="icon-refresh" style="animation:seoo-spin 1s linear infinite"></i> Crawling...');
+        $panel.show();
+        $itemsContainer.html('');
+
+        runFullAuditBatch(true);
+    });
+
+    function runFullAuditBatch(firstProcess) {
+        $.ajax({
+            type: 'POST',
+            url: SeoOptimizerAjaxUrl,
+            data: {
+                ajax: 1,
+                action: 'runFullAudit',
+                first_process: firstProcess
+            },
+            dataType: 'json',
+            success: function(result) {
+                if (!result || !result.audit) {
+                    resetBtn();
+                    return;
+                }
+
+                var audit = result.audit;
+
+                // Render/update items
+                if (audit.items) {
+                    renderFullAuditItems(audit.items);
+                }
+
+                if (result.status === 'success') {
+                    setTimeout(function() {
+                        runFullAuditBatch(false);
+                    }, 100);
+                } else if (result.status === 'done') {
+                    resetBtn();
+                    // Reload after short delay to refresh all audit data
+                    setTimeout(function() {
+                        document.location.reload();
+                    }, 1000);
+                }
+            },
+            error: function() {
+                resetBtn();
+            }
+        });
+    }
+
+    function renderFullAuditItems(items) {
+        var html = '';
+        $.each(items, function(typeKey, item) {
+            html += '<div class="seoo-report__row" data-full-audit-item="' + typeKey + '">'
+                + '<div class="seoo-report__cell seoo-report__cell--entity">'
+                + '<span class="seoo-report__icon"><i class="' + item.icon + '"></i></span>'
+                + '<span class="seoo-report__entity-info">'
+                + '<strong class="seoo-report__entity-name">' + item.label + '</strong>'
+                + '<span class="seoo-report__entity-count">' + item.total + ' pages</span>'
+                + '</span>'
+                + '</div>'
+                + '<div class="seoo-report__cell seoo-report__cell--progress">'
+                + '<div class="seoo-report__bar-wrap">'
+                + '<div class="progress report__progress-percentage">'
+                + '<div class="progress-bar ' + (item.percentage === 100 ? 'bg-success' : item.percentage > 0 ? 'bg-processing progress-bar-striped progress-bar-animated' : '') + '"'
+                + ' role="progressbar" aria-valuenow="' + item.percentage + '" aria-valuemin="0" aria-valuemax="100"'
+                + ' style="width:' + item.percentage + '%"></div>'
+                + '</div></div>'
+                + '<div class="seoo-report__status-line">'
+                + '<span class="seoo-report__status-label">' + (item.status === 'done' ? 'Done' : item.status === 'processing' ? 'In progress' : 'Waiting') + '</span>'
+                + '<span class="seoo-report__progress-value">' + item.crawled + ' / ' + item.total + '</span>'
+                + '</div>'
+                + '</div>'
+                + '<div class="seoo-report__cell seoo-report__cell--result">'
+                + '<span class="seoo-report__badge ' + (item.issues_count > 0 ? 'seoo-report__badge--danger' : 'seoo-report__badge--success') + '">'
+                + item.issues_count
+                + '</span>'
+                + '</div>'
+                + '</div>';
+        });
+        $itemsContainer.html(html);
+    }
+
+    function resetBtn() {
+        $btn.removeClass('loading').prop('disabled', false).html('<i class="process-icon-search"></i> Start full audit');
+    }
+}
+
+function initPagesPanel() {
+    // Expand/collapse rows
+    $(document).on('click', '.seoo-pages__row', function(e) {
+        if ($(e.target).closest('.seoo-pages__reaudit-btn').length) return;
+        if ($(e.target).closest('a').length) return;
+
+        var $row = $(this);
+        var url = $row.data('url');
+        var $detail = $('tr[data-detail-for="' + url + '"]');
+
+        if (!$detail.length) return;
+
+        var isExpanded = $row.hasClass('seoo-pages__row--expanded');
+        $row.toggleClass('seoo-pages__row--expanded', !isExpanded);
+        $detail.toggle(!isExpanded);
+    });
+
+    // URL filter
+    $('#seoo-pages-search').on('input', function() {
+        filterPagesTable();
+    });
+
+    // Severity filter
+    $('#seoo-pages-severity-filter').on('change', function() {
+        filterPagesTable();
+    });
+
+    function filterPagesTable() {
+        var search = ($('#seoo-pages-search').val() || '').toLowerCase();
+        var severity = $('#seoo-pages-severity-filter').val();
+
+        $('#seoo-pages-table tbody .seoo-pages__row').each(function() {
+            var $row = $(this);
+            var url = ($row.data('url') || '').toLowerCase();
+            var critical = parseInt($row.data('critical')) || 0;
+            var warning = parseInt($row.data('warning')) || 0;
+            var total = parseInt($row.data('total')) || 0;
+
+            var matchSearch = !search || url.indexOf(search) !== -1;
+            var matchSeverity = true;
+
+            if (severity === 'critical') matchSeverity = critical > 0;
+            else if (severity === 'warning') matchSeverity = warning > 0;
+            else if (severity === 'clean') matchSeverity = total === 0;
+
+            var show = matchSearch && matchSeverity;
+            $row.toggle(show);
+
+            var $detail = $('tr[data-detail-for="' + $row.data('url') + '"]');
+            if (!show) {
+                $detail.hide();
+                $row.removeClass('seoo-pages__row--expanded');
+            }
+        });
+    }
+
+    // Re-audit single page
+    $(document).on('click', '.seoo-pages__reaudit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $btn = $(this);
+        var url = $btn.data('url');
+
+        if ($btn.hasClass('loading')) return;
+
+        $btn.addClass('loading');
+
+        $.ajax({
+            type: 'POST',
+            url: SeoOptimizerAjaxUrl,
+            data: {
+                ajax: 1,
+                action: 'reauditPage',
+                url: url
+            },
+            dataType: 'json',
+            success: function(result) {
+                $btn.removeClass('loading');
+
+                if (result.status === 'success' && result.page) {
+                    var page = result.page;
+                    var $row = $btn.closest('.seoo-pages__row');
+
+                    // Update badge counts
+                    var cells = $row.find('td');
+                    $(cells[2]).html(page.critical > 0
+                        ? '<span class="seoo-pages__badge seoo-pages__badge--critical">' + page.critical + '</span>'
+                        : '<span class="seoo-pages__badge seoo-pages__badge--none">0</span>');
+                    $(cells[3]).html(page.warning > 0
+                        ? '<span class="seoo-pages__badge seoo-pages__badge--warning">' + page.warning + '</span>'
+                        : '<span class="seoo-pages__badge seoo-pages__badge--none">0</span>');
+                    $(cells[4]).html(page.total > 0
+                        ? '<strong>' + page.total + '</strong>'
+                        : '<span style="color:#16a34a;">0</span>');
+
+                    $row.data('critical', page.critical);
+                    $row.data('warning', page.warning);
+                    $row.data('total', page.total);
+
+                    // Update detail row
+                    var $detail = $('tr[data-detail-for="' + url + '"]');
+                    if (page.issues && page.issues.length > 0) {
+                        var html = '';
+                        page.issues.forEach(function(issue) {
+                            html += '<div class="seoo-pages__issue seoo-pages__issue--' + issue.severity + '">'
+                                + '<span class="seoo-pages__issue-severity"><span class="seoo-audit__severity-dot seoo-audit__severity-dot--' + issue.severity + '"></span></span>'
+                                + '<span class="seoo-pages__issue-audit"><i class="' + issue.audit_icon + '"></i> ' + issue.audit + '</span>'
+                                + '<span class="seoo-pages__issue-message">' + issue.message + '</span>'
+                                + '</div>';
+                        });
+
+                        if ($detail.length) {
+                            $detail.find('.seoo-pages__issues').html(html);
+                        } else {
+                            $row.after('<tr class="seoo-pages__detail-row" data-detail-for="' + url + '" style="display:none;"><td colspan="6"><div class="seoo-pages__issues">' + html + '</div></td></tr>');
+                        }
+
+                        // Show chevron if not already there
+                        if (!$row.find('.seoo-pages__chevron').length) {
+                            $row.find('.seoo-pages__expand-cell').html('<i class="icon-chevron-right seoo-pages__chevron"></i>');
+                        }
+                    } else {
+                        if ($detail.length) {
+                            $detail.remove();
+                        }
+                        $row.find('.seoo-pages__expand-cell').html('');
+                        $row.removeClass('seoo-pages__row--expanded');
+                    }
+
+                    // Flash green
+                    $row.css('background', '#dcfce7');
+                    setTimeout(function() { $row.css('background', ''); }, 1500);
+                }
+            },
+            error: function() {
+                $btn.removeClass('loading');
+            }
+        });
     });
 }

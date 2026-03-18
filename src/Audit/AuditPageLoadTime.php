@@ -47,11 +47,14 @@ class AuditPageLoadTime implements AuditInterface
      */
     public function getKpiDefinitions(): array
     {
+        $thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 750;
+        $thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1000;
+
         return [
             ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'good_count', 'label' => 'Good', 'type' => 'custom'],
-            ['key' => 'medium_count', 'label' => 'Medium', 'type' => 'custom', 'warning_if_positive' => true],
-            ['key' => 'slow_count', 'label' => 'Slow', 'type' => 'custom', 'danger_if_positive' => true],
+            ['key' => 'good_count', 'label' => 'Good (< ' . $thresholdGood . ' ms)', 'type' => 'custom'],
+            ['key' => 'medium_count', 'label' => 'Medium (' . $thresholdGood . '-' . $thresholdSlow . ' ms)', 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'slow_count', 'label' => 'Slow (> ' . $thresholdSlow . ' ms)', 'type' => 'custom', 'danger_if_positive' => true],
         ];
     }
 
@@ -113,5 +116,18 @@ class AuditPageLoadTime implements AuditInterface
         });
 
         return $results;
+    }
+
+    public function getScoreImpact(): array
+    {
+        return [
+            'critical' => 40,
+            'warning' => 15,
+        ];
+    }
+
+    public function getScoreWeight(): int
+    {
+        return 20;
     }
 }

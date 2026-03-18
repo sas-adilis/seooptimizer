@@ -13,8 +13,9 @@ class FormCanonicalUrls extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Canonical URLs'),
                     'icon' => 'icon-code',
+                    'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-canonical.png',
+                    'description' => $this->l('Canonical URLs help manage duplicate content by designating a preferred version of a webpage, consolidating link equity and improving visibility in search results.'),
                 ],
-                'description' => $this->l('Canonical URLs are important for SEO as they help manage duplicate content by designating a preferred version of a webpage. This allows search engines to understand which page to index and rank, consolidating link equity to the canonical page and improving its visibility in search results. By using canonical URLs, webmasters can prevent confusion among search engines, ensuring that only the most relevant page is prioritized for indexing, which ultimately enhances the site’s overall search performance.'),
                 'input' => [
                     [
                         'type' => 'switch',

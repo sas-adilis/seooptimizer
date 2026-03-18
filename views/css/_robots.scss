@@ -1,0 +1,233 @@
+/* ── Robots.txt editor (.seoo-robots) ── */
+
+/* Preset grid */
+.seoo-robots__presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.seoo-robots__preset {
+    border: 2px solid #e0e3e9;
+    border-radius: 8px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    position: relative;
+
+    &:hover {
+        border-color: $primary-color;
+        background: rgba(5, 128, 139, 0.03);
+    }
+
+    &--active {
+        border-color: $primary-color;
+        background: rgba(5, 128, 139, 0.06);
+        box-shadow: 0 0 0 3px rgba(5, 128, 139, 0.12);
+    }
+}
+
+.seoo-robots__preset-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: $primary-color;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.seoo-robots__preset-icon {
+    margin-bottom: 8px;
+}
+
+.seoo-robots__preset-name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.seoo-robots__preset-desc {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* Editor toolbar */
+.seoo-robots__editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #f7f8fa;
+    border: 1px solid #e0e3e9;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+}
+
+.seoo-robots__editor-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.seoo-robots__editor-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.seoo-robots__status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+
+    &--ok { background: #16a34a; }
+    &--warn { background: #d97706; }
+    &--error { background: #dc2626; }
+}
+
+/* Editor textarea */
+.seoo-robots__editor {
+    width: 100%;
+    min-height: 340px;
+    max-height: 600px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    border: 1px solid #e0e3e9;
+    border-radius: 0 0 6px 6px;
+    color: #2c3e50;
+    resize: vertical;
+    outline: none;
+    tab-size: 4;
+
+    &:focus {
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(5, 128, 139, 0.1);
+    }
+}
+
+/* Validation panel */
+.seoo-robots__validation {
+    margin-top: 16px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e0e3e9;
+}
+
+.seoo-robots__validation-header {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &--ok { background: #dcfce7; color: #15803d; }
+    &--warn { background: #fef3c7; color: #92400e; }
+    &--error { background: #fef2f2; color: #991b1b; }
+}
+
+.seoo-robots__validation-items {
+    padding: 10px 16px;
+    background: #fafafa;
+}
+
+.seoo-robots__validation-item {
+    padding: 6px 0;
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    i { flex-shrink: 0; margin-top: 1px; }
+}
+
+/* URL Tester */
+.seoo-robots__url-tester {
+    margin-top: 20px;
+    padding: 18px;
+    background: #f7f8fa;
+    border-radius: 6px;
+    border: 1px solid #e0e3e9;
+
+    h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+
+        i { color: $primary-color; margin-right: 6px; }
+    }
+}
+
+.seoo-robots__url-tester-desc {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 10px;
+}
+
+.seoo-robots__url-tester-row {
+    display: flex;
+    gap: 8px;
+
+    input {
+        flex: 1;
+        padding: 9px 14px;
+        border: 1px solid #d0d4da;
+        border-radius: 5px;
+        font-size: 13px;
+        outline: none;
+
+        &:focus { border-color: $primary-color; }
+    }
+}
+
+.seoo-robots__test-result {
+    margin-top: 10px;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 4px;
+
+    code {
+        background: rgba(0, 0, 0, 0.06);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+    }
+
+    &--allowed {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    &--blocked {
+        background: #fef2f2;
+        color: #991b1b;
+    }
+}
+
+/* Actions */
+.seoo-robots__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e8e8e8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .seoo-robots__presets {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

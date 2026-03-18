@@ -48,15 +48,18 @@ class SeoOptimizer extends Module
             'SEOO_SITEMAP_PAGE_REDIRECTION' => '',
             'SEOO_CODE_VERIFICATION_GOOGLE' => '',
             'SEOO_CODE_VERIFICATION_BING' => '',
-            'SEO_OPTIMIZER_TITLE_MIN_LENGTH' => 50,
-            'SEO_OPTIMIZER_TITLE_MAX_LENGTH' => 70,
-            'SEO_OPTIMIZER_META_TITLE_MIN_LENGTH' => 140,
-            'SEO_OPTIMIZER_META_TITLE_MAX_LENGTH' => 170,
+            'SEOO_CODE_VERIFICATION_PINTEREST' => '',
+            'SEOO_TITLE_MIN_LENGTH' => 50,
+            'SEOO_TITLE_MAX_LENGTH' => 70,
+            'SEOO_META_TITLE_MIN_LENGTH' => 140,
+            'SEOO_META_TITLE_MAX_LENGTH' => 170,
             'SEOO_SITEMAP_PER_PAGE' => 1000,
             'SEOO_PERF_THRESHOLD_GOOD' => 750,
             'SEOO_PERF_THRESHOLD_SLOW' => 1000,
             'SEOO_WEIGHT_THRESHOLD_LIGHT' => 1024,
             'SEOO_WEIGHT_THRESHOLD_HEAVY' => 3072,
+            'SEOO_TEXT_THRESHOLD_LOW' => 100,
+            'SEOO_TEXT_THRESHOLD_GOOD' => 300,
 
         ];
     }
@@ -120,10 +123,21 @@ class SeoOptimizer extends Module
      */
     public function getContent()
     {
+        // Dispatch AJAX calls
+        if ((int) Tools::getValue('ajax')) {
+            $action = Tools::getValue('action');
+            if (!empty($action)) {
+                $method = 'ajaxProcess' . ucfirst($action);
+                if (method_exists($this, $method)) {
+                    return $this->$method();
+                }
+            }
+        }
+
         $content_class = [
+            Adilis\SeoOptimizer\Form\FormRedirectionEdit::class,
             Adilis\SeoOptimizer\Form\FormRedirection::class,
             Adilis\SeoOptimizer\Form\FormRedirectionImport::class,
-            Adilis\SeoOptimizer\Form\FormRedirection::class,
             Adilis\SeoOptimizer\Form\FormRobotsTxt::class,
             Adilis\SeoOptimizer\Form\FormCanonicalUrls::class,
             Adilis\SeoOptimizer\Form\FormIndexation::class,
@@ -160,12 +174,91 @@ class SeoOptimizer extends Module
             new Adilis\SeoOptimizer\Audit\AuditBrokenLinks(),
             new Adilis\SeoOptimizer\Audit\AuditPageLoadTime(),
             new Adilis\SeoOptimizer\Audit\AuditPageWeight(),
+            new Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks(),
+            new Adilis\SeoOptimizer\Audit\AuditMetaTags(),
+            new Adilis\SeoOptimizer\Audit\AuditInternalLinks(),
+            new Adilis\SeoOptimizer\Audit\AuditTextRatio(),
         ];
         foreach ($audits as $audit) {
             (new Adilis\SeoOptimizer\Audit\AuditRunner($audit))->process();
         }
 
+        $scoreCalculator = new Adilis\SeoOptimizer\Score\SeoScoreCalculator();
+        $seoScores = $scoreCalculator->compute();
+
+        // Pages overview
+        $pagesAggregator = new Adilis\SeoOptimizer\Pages\PagesAggregator();
+        $pagesData = $pagesAggregator->aggregate();
+        $totalCritical = 0;
+        $totalWarnings = 0;
+        $pagesWithIssues = 0;
+        foreach ($pagesData as $p) {
+            $totalCritical += $p['critical'];
+            $totalWarnings += $p['warning'];
+            if ($p['total'] > 0) {
+                $pagesWithIssues++;
+            }
+        }
+
+        // Full audit state for progress table
+        $fullAuditState = Adilis\SeoOptimizer\Pages\FullAuditRunner::getState();
+        $fullAuditItems = [];
+        if ($fullAuditState && isset($fullAuditState['items'])) {
+            $fullAuditItems = $fullAuditState['items'];
+        }
+
+        // Assign pages variables first so pages.tpl can be rendered
+        $this->context->smarty->assign([
+            'seoo_module_path' => $this->_path,
+            'seoo_pages_data' => $pagesData,
+            'seoo_pages_has_data' => $pagesAggregator->hasData(),
+            'seoo_pages_total' => count($pagesData),
+            'seoo_pages_with_issues' => $pagesWithIssues,
+            'seoo_pages_critical' => $totalCritical,
+            'seoo_pages_warnings' => $totalWarnings,
+            'seoo_pages_clean' => count($pagesData) - $pagesWithIssues,
+            'seoo_full_audit_items' => $fullAuditItems,
+            'seoo_full_audit_complete' => $fullAuditState && isset($fullAuditState['status']) && $fullAuditState['status'] === 'complete',
+        ]);
+
+        $this->context->smarty->assign([
+            'seoo_scores' => $seoScores,
+            'seoo_export_redirections_url' => $this->context->link->getAdminLink(
+                'AdminModules',
+                true,
+                [],
+                ['configure' => $this->name, 'exportdata_list_redirections' => 1]
+            ),
+            'seoo_pages_html' => $this->context->smarty->fetch($this->getLocalPath() . 'views/templates/admin/pages.tpl'),
+        ]);
+
         return $this->context->smarty->fetch($this->getLocalPath() . 'views/templates/admin/configure.tpl');
+    }
+
+    /**
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    public function ajaxProcessRunFullAudit()
+    {
+        $firstProcess = Tools::getValue('first_process') === 'true';
+        $runner = new Adilis\SeoOptimizer\Pages\FullAuditRunner();
+        $runner->run($firstProcess);
+    }
+
+    public function ajaxProcessReauditPage()
+    {
+        $url = Tools::getValue('url');
+        if (empty($url) || !Validate::isUrl($url)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid URL']);
+            exit;
+        }
+
+        $auditor = new Adilis\SeoOptimizer\Pages\SinglePageAuditor();
+        $result = $auditor->auditUrl($url);
+
+        echo json_encode($result);
+        exit;
     }
 
     /**

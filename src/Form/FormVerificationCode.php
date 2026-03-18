@@ -13,6 +13,7 @@ class FormVerificationCode extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Verification code configuration'),
                     'icon' => 'icon-code',
+                    'description' => $this->l('Add verification codes from Google, Bing and Pinterest to prove ownership of your website in their webmaster tools.'),
                 ],
                 'input' => [
                     [

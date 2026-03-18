@@ -13,8 +13,8 @@ class FormLinkObfuscator extends FormAbstract implements FormInterface
                 'legend' => [
                     'title' => $this->l('Link obfuscation'),
                     'icon' => 'icon-link',
+                    'description' => $this->l('Link obfuscation is an SEO technique used to hide or alter the appearance of URLs on a website, making them less detectable by search engine bots while maintaining their functionality for users. This method is often employed to strategically manage the distribution of SEO value, or “link juice,” across a site. By obfuscating links, webmasters can direct search engine crawlers away from less important pages and towards more relevant ones, thereby optimizing the site’s internal linking structure and improving the visibility of key pages in search results.'),
                 ],
-                'description' => $this->l('Link obfuscation is an SEO technique used to hide or alter the appearance of URLs on a website, making them less detectable by search engine bots while maintaining their functionality for users. This method is often employed to strategically manage the distribution of SEO value, or “link juice,” across a site. By obfuscating links, webmasters can direct search engine crawlers away from less important pages and towards more relevant ones, thereby optimizing the site’s internal linking structure and improving the visibility of key pages in search results.'),
                 'input' => [
                     [
                         'type' => 'switch',
