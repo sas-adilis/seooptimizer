@@ -58,7 +58,7 @@ class FormRobotsTxt extends FormAbstract implements FormInterface
             'seoo_robots_token' => \Tools::getAdminTokenLite('AdminModules'),
             'seoo_robots_live_url' => $shopUrl . '/robots.txt',
             'seoo_shop_url' => $shopUrl,
-            'seoo_robots_history' => $this->getHistory(),
+            'seoo_robots_history_html' => $this->renderHistoryList(),
         ]);
 
         return $context->smarty->fetch(
@@ -123,6 +123,12 @@ class FormRobotsTxt extends FormAbstract implements FormInterface
         $restoreFile = \Tools::getValue('restoreRobots');
         if ($restoreFile) {
             $this->processRestore($restoreFile);
+        }
+
+        // Handle delete from history
+        $deleteFile = \Tools::getValue('deleteRobotsHistory');
+        if ($deleteFile) {
+            $this->processDeleteHistory($deleteFile);
         }
 
         parent::process();
@@ -337,13 +343,128 @@ Disallow: /
 
 # Sitemap ready for launch
 Sitemap: __SHOP_URL__/sitemap.xml',
+
         ];
+    }
+
+    /**
+     * @param string $filename
+     */
+    private function processDeleteHistory(string $filename)
+    {
+        $context = \Context::getContext();
+        $safeFilename = basename($filename);
+
+        if ($safeFilename !== $filename || strpos($filename, '..') !== false) {
+            $context->controller->errors[] = $this->l('Invalid filename.');
+            return;
+        }
+
+        try {
+            CacheManager::delete($safeFilename);
+        } catch (\PrestaShopException $e) {
+            $context->controller->errors[] = $this->l('An error occurred while deleting the backup.');
+            return;
+        }
+
+        \Tools::redirectAdmin(Utils::getConfigFormUrl(4));
+    }
+
+    /**
+     * @return string
+     */
+    private function renderHistoryList(): string
+    {
+        $history = $this->getHistoryData();
+
+        if (empty($history)) {
+            return '';
+        }
+
+        $helper = new \HelperList();
+        $helper->simple_header = true;
+        $helper->show_toolbar = false;
+        $helper->no_link = true;
+        $helper->token = \Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex = \AdminController::$currentIndex . '&configure=seooptimizer';
+        $helper->identifier = 'file';
+        $helper->table = 'robots_history';
+        $helper->id = 'robots_history';
+        $helper->_default_pagination = 10;
+        $helper->_pagination = [10, 20];
+        $helper->listTotal = count($history);
+        $helper->actions = [];
+        $helper->bulk_actions = [];
+
+        $helper->tpl_vars = [
+            'link' => \Context::getContext()->link,
+        ];
+
+        $baseUrl = \AdminController::$currentIndex
+            . '&configure=seooptimizer&token=' . \Tools::getAdminTokenLite('AdminModules');
+
+        $fieldsList = [
+            'date' => [
+                'title' => $this->l('Date'),
+                'type' => 'text',
+                'orderby' => false,
+            ],
+            'file' => [
+                'title' => $this->l('File'),
+                'type' => 'text',
+                'orderby' => false,
+            ],
+            'size' => [
+                'title' => $this->l('Size'),
+                'type' => 'text',
+                'orderby' => false,
+                'align' => 'right',
+            ],
+            'actions_html' => [
+                'title' => $this->l('Actions'),
+                'type' => 'text',
+                'orderby' => false,
+                'search' => false,
+                'align' => 'right',
+                'callback_object' => self::class,
+                'callback' => 'displayHistoryActions',
+            ],
+        ];
+
+        foreach ($history as $i => &$row) {
+            $row['id_robots_history'] = $i + 1;
+            $row['actions_html'] = $row['file'];
+        }
+        unset($row);
+
+        return $helper->generateList($history, $fieldsList);
     }
 
     /**
      * @return array<int, array<string, string>>
      */
-    private function getHistory(): array
+    /**
+     * @param string $filename
+     * @return string
+     */
+    public static function displayHistoryActions(string $filename): string
+    {
+        $baseUrl = \AdminController::$currentIndex
+            . '&configure=seooptimizer&token=' . \Tools::getAdminTokenLite('AdminModules');
+        $safeFile = htmlspecialchars($filename, ENT_QUOTES, 'UTF-8');
+        $urlFile = urlencode($filename);
+
+        return '<a href="' . $baseUrl . '&restoreRobots=' . $urlFile . '" class="btn btn-default btn-xs"'
+            . ' onclick="return confirm(\'Restore this backup?\')">'
+            . '<i class="icon-undo"></i> ' . 'Restore'
+            . '</a> '
+            . '<a href="' . $baseUrl . '&deleteRobotsHistory=' . $urlFile . '" class="btn btn-default btn-xs"'
+            . ' onclick="return confirm(\'Delete this backup?\')">'
+            . '<i class="icon-trash"></i>'
+            . '</a>';
+    }
+
+    private function getHistoryData(): array
     {
         $cacheDir = _PS_ROOT_DIR_ . '/var/cache/seooptimizer/';
         $history = [];
@@ -357,21 +478,21 @@ Sitemap: __SHOP_URL__/sitemap.xml',
             return $history;
         }
 
-        // Sort by modification time descending
         usort($files, function ($a, $b) {
             return filemtime($b) - filemtime($a);
         });
 
-        // Limit to 10 entries
-        $files = array_slice($files, 0, 10);
+        $files = array_slice($files, 0, 20);
 
         foreach ($files as $file) {
             $filename = basename($file);
             $mtime = filemtime($file);
+            $size = filesize($file);
 
             $history[] = [
                 'file' => $filename,
                 'date' => date('d/m/Y H:i:s', $mtime),
+                'size' => $size > 1024 ? round($size / 1024, 1) . ' KB' : $size . ' B',
             ];
         }
 

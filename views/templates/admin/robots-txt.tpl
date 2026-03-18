@@ -12,6 +12,9 @@
                 <p class="seoo-panel-intro__desc">{l s='Edit the content of your robots.txt file. Choose a preset adapted to your shop, then customize it if needed.' mod='seooptimizer'}</p>
             </div>
             <div class="seoo-panel-intro__actions">
+                <a href="{$seoo_robots_form_action|escape:'htmlall':'UTF-8'}&submitFormRobotsTxtReset=1&token={$seoo_robots_token|escape:'htmlall':'UTF-8'}" class="btn btn-default" onclick="return confirm('{l s="This will regenerate the robots.txt using PrestaShop defaults. Continue?" mod="seooptimizer" js=1}');">
+                    <i class="icon-refresh"></i> {l s='Reset to PrestaShop default' mod='seooptimizer'}
+                </a>
                 <a href="{$seoo_robots_live_url|escape:'htmlall':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
                     <i class="icon-external-link"></i> {l s='View live file' mod='seooptimizer'}
                 </a>
@@ -54,6 +57,12 @@
                 </div>
                 <textarea name="SEOO_ROBOTS_TXT" id="seooRobotsEditor" class="seoo-robots__editor" spellcheck="false">{$seoo_robots_content|escape:'htmlall':'UTF-8'}</textarea>
 
+                <div class="seoo-robots__save-bar">
+                    <button type="submit" name="submitFormRobotsTxt" class="btn btn-default" style="background:#05808B;border-color:#05808B;color:#fff;">
+                        <i class="icon-save"></i> {l s='Save' mod='seooptimizer'}
+                    </button>
+                </div>
+
                 <div class="seoo-robots__validation" id="seooRobotsValidation">
                     <div class="seoo-robots__validation-header seoo-robots__validation-header--ok" id="seooRobotsValidationHeader">
                     </div>
@@ -73,19 +82,11 @@
                     <div id="seooRobotsTestResult" class="seoo-robots__test-result" style="display:none;"></div>
                 </div>
 
-                <div class="seoo-robots__actions">
-                    <button type="submit" name="submitFormRobotsTxt" class="btn btn-default pull-right" style="background:#05808B;border-color:#05808B;color:#fff;">
-                        <i class="icon-save"></i> {l s='Save' mod='seooptimizer'}
-                    </button>
-                    <button type="submit" name="submitFormRobotsTxtReset" class="btn btn-default">
-                        <i class="icon-refresh"></i> {l s='Reset to PrestaShop default' mod='seooptimizer'}
-                    </button>
-                </div>
             </form>
         </div>
     </div>
 
-    {if $seoo_robots_history|count > 0}
+    {if $seoo_robots_history_html}
         <div class="panel">
             <div class="seoo-panel-intro">
                 <div class="seoo-panel-intro__visual">
@@ -99,29 +100,8 @@
                     <p class="seoo-panel-intro__desc">{l s='Previous versions of your robots.txt file. You can restore any backup with one click.' mod='seooptimizer'}</p>
                 </div>
             </div>
-            <div class="panel-body" style="padding:0;">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>{l s='Date' mod='seooptimizer'}</th>
-                            <th>{l s='File' mod='seooptimizer'}</th>
-                            <th class="text-right">{l s='Actions' mod='seooptimizer'}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {foreach $seoo_robots_history as $entry}
-                            <tr>
-                                <td>{$entry.date|escape:'htmlall':'UTF-8'}</td>
-                                <td><code>{$entry.file|escape:'htmlall':'UTF-8'}</code></td>
-                                <td class="text-right">
-                                    <a href="{$seoo_robots_form_action|escape:'htmlall':'UTF-8'}&restoreRobots={$entry.file|escape:'url':'UTF-8'}&token={$seoo_robots_token|escape:'htmlall':'UTF-8'}" class="btn btn-default btn-xs">
-                                        <i class="icon-undo"></i> {l s='Restore' mod='seooptimizer'}
-                                    </a>
-                                </td>
-                            </tr>
-                        {/foreach}
-                    </tbody>
-                </table>
+            <div class="seoo-robots__history-list">
+                {$seoo_robots_history_html nofilter}
             </div>
         </div>
     {/if}

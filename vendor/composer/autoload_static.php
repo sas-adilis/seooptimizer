@@ -67,6 +67,7 @@ class ComposerStaticInit34a8909ba6646a3b73a73bb1e69834dd
         'Adilis\\SeoOptimizer\\Form\\FormIndexationRule' => __DIR__ . '/../..' . '/src/Form/FormIndexationRule.php',
         'Adilis\\SeoOptimizer\\Form\\FormInterface' => __DIR__ . '/../..' . '/src/Form/FormInterface.php',
         'Adilis\\SeoOptimizer\\Form\\FormLinkObfuscator' => __DIR__ . '/../..' . '/src/Form/FormLinkObfuscator.php',
+        'Adilis\\SeoOptimizer\\Form\\FormLlmsTxt' => __DIR__ . '/../..' . '/src/Form/FormLlmsTxt.php',
         'Adilis\\SeoOptimizer\\Form\\FormRedirection' => __DIR__ . '/../..' . '/src/Form/FormRedirection.php',
         'Adilis\\SeoOptimizer\\Form\\FormRedirectionEdit' => __DIR__ . '/../..' . '/src/Form/FormRedirectionEdit.php',
         'Adilis\\SeoOptimizer\\Form\\FormRedirectionImport' => __DIR__ . '/../..' . '/src/Form/FormRedirectionImport.php',

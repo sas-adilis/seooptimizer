@@ -104,6 +104,12 @@
                         </a>
                     </li>
                     <li>
+                        <a href="#tab-llms-txt" role="button" data-toggle="collapse">
+                            <i class="icon-file-text"></i>
+                            {l s='llms.txt' mod='seooptimizer'}
+                        </a>
+                    </li>
+                    <li>
                         <a href="#tab-canonical-urls" role="button" data-toggle="collapse">
                             <i class="icon-code"></i>
                             {l s='Canonical Urls' mod='seooptimizer'}
@@ -315,6 +321,7 @@
             {$data_list_pages_not_found}
         </div>
         <div id="tab-robots-txt" class="tab collapse">{$form_robots_txt}</div>
+        <div id="tab-llms-txt" class="tab collapse">{$form_llms_txt}</div>
         <div id="tab-canonical-urls" class="tab collapse">{$form_canonical_urls}</div>
         <div id="tab-indexations" class="tab collapse">
             <div class="panel">

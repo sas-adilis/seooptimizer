@@ -139,6 +139,7 @@ class SeoOptimizer extends Module
             Adilis\SeoOptimizer\Form\FormRedirection::class,
             Adilis\SeoOptimizer\Form\FormRedirectionImport::class,
             Adilis\SeoOptimizer\Form\FormRobotsTxt::class,
+            Adilis\SeoOptimizer\Form\FormLlmsTxt::class,
             Adilis\SeoOptimizer\Form\FormCanonicalUrls::class,
             Adilis\SeoOptimizer\Form\FormIndexation::class,
             Adilis\SeoOptimizer\Form\FormVerificationCode::class,

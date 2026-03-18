@@ -52,6 +52,7 @@ return array(
     'Adilis\\SeoOptimizer\\Form\\FormIndexationRule' => $baseDir . '/src/Form/FormIndexationRule.php',
     'Adilis\\SeoOptimizer\\Form\\FormInterface' => $baseDir . '/src/Form/FormInterface.php',
     'Adilis\\SeoOptimizer\\Form\\FormLinkObfuscator' => $baseDir . '/src/Form/FormLinkObfuscator.php',
+    'Adilis\\SeoOptimizer\\Form\\FormLlmsTxt' => $baseDir . '/src/Form/FormLlmsTxt.php',
     'Adilis\\SeoOptimizer\\Form\\FormRedirection' => $baseDir . '/src/Form/FormRedirection.php',
     'Adilis\\SeoOptimizer\\Form\\FormRedirectionEdit' => $baseDir . '/src/Form/FormRedirectionEdit.php',
     'Adilis\\SeoOptimizer\\Form\\FormRedirectionImport' => $baseDir . '/src/Form/FormRedirectionImport.php',
