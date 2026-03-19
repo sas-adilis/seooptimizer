@@ -18,6 +18,7 @@
                             <li><a href="#tab-audit-heading-hierarchy" role="button" data-toggle="collapse"><i class="icon-header"></i> {l s='Heading hierarchy (H1-H6)' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-missing-alt" role="button" data-toggle="collapse"><i class="icon-picture"></i> {l s='Missing image alt' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-broken-links" role="button" data-toggle="collapse"><i class="icon-unlink"></i> {l s='Broken links (404)' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-redirected-links" role="button" data-toggle="collapse"><i class="icon-share"></i> {l s='Redirected links' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-page-load-time" role="button" data-toggle="collapse"><i class="icon-dashboard"></i> {l s='Page load time' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-page-weight" role="button" data-toggle="collapse"><i class="icon-hdd-o"></i> {l s='Page weight' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-unsecured-links" role="button" data-toggle="collapse"><i class="icon-unlock"></i> {l s='Unsecured links (HTTP)' mod='seooptimizer'}</a></li>
@@ -220,6 +221,7 @@
         <div id="tab-audit-heading-hierarchy" class="tab collapse">{$audit_heading_hierarchy}</div>
         <div id="tab-audit-missing-alt" class="tab collapse">{$audit_missing_alt}</div>
         <div id="tab-audit-broken-links" class="tab collapse">{$audit_broken_links}</div>
+        <div id="tab-audit-redirected-links" class="tab collapse">{$audit_redirected_links}</div>
         <div id="tab-audit-page-load-time" class="tab collapse">{$audit_page_load_time}</div>
         <div id="tab-audit-page-weight" class="tab collapse">{$audit_page_weight}</div>
         <div id="tab-audit-unsecured-links" class="tab collapse">{$audit_unsecured_links}</div>

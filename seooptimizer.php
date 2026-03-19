@@ -16,6 +16,9 @@ class SeoOptimizer extends Module
 {
     const MAX_ELEMENTS_PER_PROCESS = 1000;
 
+    /** @var string */
+    public $secure_key;
+
     private $report = [];
     private $start_process_time = 0;
     /**
@@ -27,7 +30,7 @@ class SeoOptimizer extends Module
     {
         $this->name = 'seooptimizer';
         $this->tab = 'seo';
-        $this->version = '1.4.0';
+        $this->version = '1.4.1';
         $this->author = 'Adilis';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -36,6 +39,8 @@ class SeoOptimizer extends Module
         ];
 
         parent::__construct();
+
+        $this->secure_key = (string) Configuration::get('SEOO_SECURE_KEY');
 
         $this->displayName = $this->l('SEO Optimizer');
         $this->description = $this->l('Optimize your SEO');
@@ -78,6 +83,10 @@ class SeoOptimizer extends Module
             Configuration::updateValue($key, $value);
         }
 
+        if (!Configuration::get('SEOO_SECURE_KEY')) {
+            Configuration::updateValue('SEOO_SECURE_KEY', bin2hex(random_bytes(16)));
+        }
+
         return
             parent::install()
             && $this->registerHook('backOfficeHeader')
@@ -109,6 +118,8 @@ class SeoOptimizer extends Module
         foreach ($this->configurations as $key => $value) {
             Configuration::deleteByName($key);
         }
+
+        Configuration::deleteByName('SEOO_SECURE_KEY');
 
         return parent::uninstall();
     }
@@ -229,6 +240,7 @@ class SeoOptimizer extends Module
             new Adilis\SeoOptimizer\Audit\AuditBrokenLinks(),
             new Adilis\SeoOptimizer\Audit\AuditPageLoadTime(),
             new Adilis\SeoOptimizer\Audit\AuditPageWeight(),
+            new Adilis\SeoOptimizer\Audit\AuditRedirectedLinks(),
             new Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks(),
             new Adilis\SeoOptimizer\Audit\AuditMetaTags(),
             new Adilis\SeoOptimizer\Audit\AuditInternalLinks(),

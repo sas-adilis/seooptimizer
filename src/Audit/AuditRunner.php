@@ -130,6 +130,7 @@ class AuditRunner
             'audit_is_complete' => $run && $run['status'] === 'complete',
             'audit_is_interrupted' => $run && $run['status'] === 'running',
             'audit_percentage' => $totalPages > 0 ? round(($crawledPages / $totalPages) * 100) : 0,
+            'audit_last_scan_date' => $run && $run['status'] === 'complete' && !empty($run['date_upd']) ? \Tools::displayDate($run['date_upd'], true) : '',
         ]);
 
         return $context->smarty->fetch(
@@ -358,6 +359,7 @@ class AuditRunner
             'getHeavyCount' => 'heavy_count',
             'getWarningCount' => 'warning_count',
             'getCriticalCount' => 'critical_count',
+            'getRedirectedCount' => 'redirected_count',
             'getNoOutgoingCount' => 'no_outgoing_count',
             'getFewOutgoingCount' => 'few_outgoing_count',
             'getLowCount' => 'low_count',

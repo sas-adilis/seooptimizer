@@ -13,6 +13,7 @@ use Adilis\SeoOptimizer\Audit\AuditInternalLinks;
 use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
 use Adilis\SeoOptimizer\Audit\AuditMetaTags;
 use Adilis\SeoOptimizer\Audit\AuditMissingAlt;
+use Adilis\SeoOptimizer\Audit\AuditRedirectedLinks;
 use Adilis\SeoOptimizer\Audit\AuditPageLoadTime;
 use Adilis\SeoOptimizer\Audit\AuditPageWeight;
 use Adilis\SeoOptimizer\Audit\AuditTextRatio;
@@ -31,6 +32,7 @@ class PagesAggregator
             new AuditHeadingHierarchy(),
             new AuditMissingAlt(),
             new AuditBrokenLinks(),
+            new AuditRedirectedLinks(),
             new AuditPageLoadTime(),
             new AuditPageWeight(),
             new AuditUnsecuredLinks(),

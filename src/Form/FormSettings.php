@@ -19,9 +19,9 @@ class FormSettings extends FormAbstract implements FormInterface
         ]);
 
         $auditKeys = [
-            'heading_hierarchy', 'missing_alt', 'broken_links', 'page_load_time',
-            'page_weight', 'unsecured_links', 'meta_tags', 'internal_links',
-            'text_ratio', 'keyword_check',
+            'heading_hierarchy', 'missing_alt', 'broken_links', 'redirected_links',
+            'page_load_time', 'page_weight', 'unsecured_links', 'meta_tags',
+            'internal_links', 'text_ratio', 'keyword_check',
         ];
 
         $cronUrls = [];

@@ -43,6 +43,9 @@
                         <i class="icon-download"></i> {l s='Export CSV' mod='seooptimizer'}
                     </button>
                 {/if}
+                {if $audit_last_scan_date}
+                    <span class="seoo-panel-intro__last-scan"><i class="icon-clock-o"></i> {l s='Last scan:' mod='seooptimizer'} {$audit_last_scan_date|escape:'htmlall':'UTF-8'}</span>
+                {/if}
             </div>
         </div>
 

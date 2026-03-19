@@ -41,6 +41,7 @@ class AuditRunStorage
             'custom_kpis' => $row['custom_kpis_json'] ? json_decode($row['custom_kpis_json'], true) : [],
             'urls' => $row['urls_json'] ? json_decode($row['urls_json'], true) : [],
             'date' => $row['date_add'],
+            'date_upd' => $row['date_upd'],
         ];
     }
 
