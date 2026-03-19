@@ -119,8 +119,8 @@
                                     {/if}
                                 </td>
                                 <td class="text-right">
-                                    <button type="button" class="btn btn-default btn-xs seoo-pages__reaudit-btn" data-url="{$page.url|escape:'htmlall':'UTF-8'}" title="{l s='Re-audit this page' mod='seooptimizer'}">
-                                        <i class="icon-refresh"></i>
+                                    <button type="button" class="btn btn-default btn-sm seoo-pages__reaudit-btn" data-url="{$page.url|escape:'htmlall':'UTF-8'}" title="{l s='Re-audit this page' mod='seooptimizer'}">
+                                        <i class="icon-refresh"></i>&nbsp;{l s='ReRe-audit' mod='seooptimizer'}
                                     </button>
                                 </td>
                             </tr>

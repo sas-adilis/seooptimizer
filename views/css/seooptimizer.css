@@ -1480,4 +1480,54 @@ textarea {
   }
 }
 
+/* ── Validation icons (used by robots-txt.js / llms-txt.js) ── */
+.seoo-validation-icon {
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+}
+.seoo-validation-icon--ok::before {
+  content: "\f00c";
+  color: #16a34a;
+}
+.seoo-validation-icon--warn::before {
+  content: "\f071";
+  color: #d97706;
+}
+.seoo-validation-icon--err::before {
+  content: "\f00d";
+  color: #dc2626;
+}
+
+/* ── HelperList cell styles ── */
+.seoo-cell-severity {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.seoo-cell-score {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+}
+.seoo-cell-empty {
+  color: #9ca3af;
+}
+.seoo-cell-zone {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 1px;
+  border-radius: 3px;
+  font-size: 11px;
+  background: #e5e7eb;
+  color: #374151;
+}
+.seoo-cell-zone--missing {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 /*# sourceMappingURL=seooptimizer.css.map */

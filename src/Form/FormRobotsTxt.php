@@ -17,23 +17,27 @@ class FormRobotsTxt extends FormAbstract implements FormInterface
     private static $presets = [
         'standard' => [
             'name' => 'Standard',
-            'icon' => '<i class="icon-shield" style="font-size:28px;color:#05808B;"></i>',
+            'icon_class' => 'icon-shield',
+            'icon_color' => '#05808B',
             'desc' => 'Suits most PrestaShop shops',
             'recommended' => '1',
         ],
         'strict' => [
             'name' => 'Strict',
-            'icon' => '<i class="icon-lock" style="font-size:28px;color:#05808B;"></i>',
+            'icon_class' => 'icon-lock',
+            'icon_color' => '#05808B',
             'desc' => 'Large catalogs with faceted navigation',
         ],
         'multilang' => [
             'name' => 'Multilingual',
-            'icon' => '<i class="icon-globe" style="font-size:28px;color:#05808B;"></i>',
+            'icon_class' => 'icon-globe',
+            'icon_color' => '#05808B',
             'desc' => 'Multi-language shops with hreflang',
         ],
         'maintenance' => [
             'name' => 'Pre-launch',
-            'icon' => '<i class="icon-warning" style="font-size:28px;color:#d97706;"></i>',
+            'icon_class' => 'icon-warning',
+            'icon_color' => '#d97706',
             'desc' => 'Blocks the entire site before going live',
         ],
     ];
@@ -52,7 +56,6 @@ class FormRobotsTxt extends FormAbstract implements FormInterface
             'seoo_module_path' => __PS_BASE_URI__ . 'modules/seooptimizer/',
             'seoo_robots_content' => $robots_txt_content,
             'seoo_robots_presets' => self::$presets,
-            'seoo_robots_presets_js' => json_encode($this->getPresetsContent()),
             'seoo_robots_form_action' => $context->link->getAdminLink(
                 'AdminModules',
                 true,
@@ -191,6 +194,14 @@ class FormRobotsTxt extends FormAbstract implements FormInterface
         }
 
         return $content;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getPresetsContentPublic(): array
+    {
+        return $this->getPresetsContent();
     }
 
     /**
@@ -455,17 +466,17 @@ Sitemap: __SHOP_URL__/sitemap.xml',
     {
         $baseUrl = \AdminController::$currentIndex
             . '&configure=seooptimizer&token=' . \Tools::getAdminTokenLite('AdminModules');
-        $safeFile = htmlspecialchars($filename, ENT_QUOTES, 'UTF-8');
         $urlFile = urlencode($filename);
 
-        return '<a href="' . $baseUrl . '&restoreRobots=' . $urlFile . '" class="btn btn-default btn-xs"'
-            . ' onclick="return confirm(\'Restore this backup?\')">'
-            . '<i class="icon-undo"></i> ' . 'Restore'
-            . '</a> '
-            . '<a href="' . $baseUrl . '&deleteRobotsHistory=' . $urlFile . '" class="btn btn-default btn-xs"'
-            . ' onclick="return confirm(\'Delete this backup?\')">'
-            . '<i class="icon-trash"></i>'
-            . '</a>';
+        $smarty = \Context::getContext()->smarty;
+        $smarty->assign([
+            'cell_restore_url' => $baseUrl . '&restoreRobots=' . $urlFile,
+            'cell_delete_url' => $baseUrl . '&deleteRobotsHistory=' . $urlFile,
+        ]);
+
+        return $smarty->fetch(
+            _PS_MODULE_DIR_ . 'seooptimizer/views/templates/admin/helpers/cells/history_actions.tpl'
+        );
     }
 
     private function getHistoryData(): array

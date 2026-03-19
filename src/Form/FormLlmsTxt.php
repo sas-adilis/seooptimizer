@@ -17,23 +17,27 @@ class FormLlmsTxt extends FormAbstract implements FormInterface
     private static $presets = [
         'ecommerce' => [
             'name' => 'E-commerce',
-            'icon' => '<i class="icon-shopping-cart" style="font-size:28px;color:#05808B;"></i>',
+            'icon_class' => 'icon-shopping-cart',
+            'icon_color' => '#05808B',
             'desc' => 'Standard for online shops with products and categories',
             'recommended' => '1',
         ],
         'minimal' => [
             'name' => 'Minimal',
-            'icon' => '<i class="icon-minus-circle" style="font-size:28px;color:#05808B;"></i>',
+            'icon_class' => 'icon-minus-circle',
+            'icon_color' => '#05808B',
             'desc' => 'Basic info only, limits content exposure',
         ],
         'detailed' => [
             'name' => 'Detailed',
-            'icon' => '<i class="icon-list-alt" style="font-size:28px;color:#05808B;"></i>',
+            'icon_class' => 'icon-list-alt',
+            'icon_color' => '#05808B',
             'desc' => 'Full documentation with all sections',
         ],
         'block' => [
             'name' => 'Block AI',
-            'icon' => '<i class="icon-ban-circle" style="font-size:28px;color:#d97706;"></i>',
+            'icon_class' => 'icon-ban-circle',
+            'icon_color' => '#d97706',
             'desc' => 'Opt-out from AI training and indexing',
         ],
     ];
@@ -53,7 +57,6 @@ class FormLlmsTxt extends FormAbstract implements FormInterface
             'seoo_module_path' => __PS_BASE_URI__ . 'modules/seooptimizer/',
             'seoo_llms_content' => $content,
             'seoo_llms_presets' => self::$presets,
-            'seoo_llms_presets_js' => json_encode($this->getPresetsContent($shopName, $shopUrl)),
             'seoo_llms_form_action' => $context->link->getAdminLink(
                 'AdminModules',
                 true,
@@ -281,14 +284,15 @@ class FormLlmsTxt extends FormAbstract implements FormInterface
             . '&configure=seooptimizer&token=' . \Tools::getAdminTokenLite('AdminModules');
         $urlFile = urlencode($filename);
 
-        return '<a href="' . $baseUrl . '&restoreLlms=' . $urlFile . '" class="btn btn-default btn-xs"'
-            . ' onclick="return confirm(\'Restore this backup?\')">'
-            . '<i class="icon-undo"></i> Restore'
-            . '</a> '
-            . '<a href="' . $baseUrl . '&deleteLlmsHistory=' . $urlFile . '" class="btn btn-default btn-xs"'
-            . ' onclick="return confirm(\'Delete this backup?\')">'
-            . '<i class="icon-trash"></i>'
-            . '</a>';
+        $smarty = \Context::getContext()->smarty;
+        $smarty->assign([
+            'cell_restore_url' => $baseUrl . '&restoreLlms=' . $urlFile,
+            'cell_delete_url' => $baseUrl . '&deleteLlmsHistory=' . $urlFile,
+        ]);
+
+        return $smarty->fetch(
+            _PS_MODULE_DIR_ . 'seooptimizer/views/templates/admin/helpers/cells/history_actions.tpl'
+        );
     }
 
     /**
@@ -343,6 +347,17 @@ class FormLlmsTxt extends FormAbstract implements FormInterface
         }
 
         return '';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getPresetsContentPublic(): array
+    {
+        $shopName = \Configuration::get('PS_SHOP_NAME');
+        $shopUrl = rtrim(\Context::getContext()->shop->getBaseURL(true), '/');
+
+        return $this->getPresetsContent($shopName, $shopUrl);
     }
 
     /**

@@ -126,7 +126,9 @@ class AuditRunner
             'audit_items' => [],
             'audit_kpis' => $kpis,
             'audit_score' => $auditScore,
+            'audit_status' => $run ? $run['status'] : 'none',
             'audit_is_complete' => $run && $run['status'] === 'complete',
+            'audit_is_interrupted' => $run && $run['status'] === 'running',
             'audit_percentage' => $totalPages > 0 ? round(($crawledPages / $totalPages) * 100) : 0,
         ]);
 

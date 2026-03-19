@@ -35,7 +35,7 @@
                         {if isset($preset.recommended) && $preset.recommended}
                             <span class="seoo-robots__preset-badge">{l s='Recommended' mod='seooptimizer'}</span>
                         {/if}
-                        <div class="seoo-robots__preset-icon">{$preset.icon nofilter}</div>
+                        <div class="seoo-robots__preset-icon"><i class="{$preset.icon_class|escape:'htmlall':'UTF-8'}" style="font-size:28px;color:{$preset.icon_color|escape:'htmlall':'UTF-8'}"></i></div>
                         <div class="seoo-robots__preset-name">{$preset.name|escape:'htmlall':'UTF-8'}</div>
                         <div class="seoo-robots__preset-desc">{$preset.desc|escape:'htmlall':'UTF-8'}</div>
                     </div>
@@ -152,109 +152,3 @@ Disallow: /</pre>
         </div>
     </div>
 </div>
-
-<script>
-(function() {
-    var presets = {$seoo_llms_presets_js nofilter};
-
-    var presetCards = document.querySelectorAll('[data-llms-preset]');
-    presetCards.forEach(function(card) {
-        card.addEventListener('click', function() {
-            var presetKey = card.getAttribute('data-llms-preset');
-            if (!presets[presetKey]) return;
-
-            presetCards.forEach(function(c) { c.classList.remove('seoo-robots__preset--active'); });
-            card.classList.add('seoo-robots__preset--active');
-
-            document.getElementById('seooLlmsEditor').value = presets[presetKey];
-            validateLlms();
-        });
-    });
-
-    function validateLlms() {
-        var content = document.getElementById('seooLlmsEditor').value;
-        var items = [];
-        var level = 'ok';
-
-        if (/^# .+/m.test(content)) {
-            items.push({ type: 'ok', text: '{l s="Title present (# ...)" mod="seooptimizer" js=1}' });
-        } else {
-            items.push({ type: 'err', text: '{l s="Missing title — add a line starting with # followed by your site name" mod="seooptimizer" js=1}' });
-            level = 'error';
-        }
-
-        if (/^> .+/m.test(content)) {
-            items.push({ type: 'ok', text: '{l s="Description present (> ...)" mod="seooptimizer" js=1}' });
-        } else {
-            items.push({ type: 'warn', text: '{l s="Missing description — add a line starting with > followed by a short description" mod="seooptimizer" js=1}' });
-            if (level === 'ok') level = 'warn';
-        }
-
-        var sections = content.match(/^## .+/gm);
-        if (sections && sections.length > 0) {
-            items.push({ type: 'ok', text: sections.length + ' {l s="section(s) found" mod="seooptimizer" js=1}' });
-        } else {
-            items.push({ type: 'warn', text: '{l s="No sections found — add ## Section headings" mod="seooptimizer" js=1}' });
-            if (level === 'ok') level = 'warn';
-        }
-
-        var links = content.match(/^- \[.+\]\(.+\)/gm);
-        if (links && links.length > 0) {
-            items.push({ type: 'ok', text: links.length + ' {l s="link(s) declared" mod="seooptimizer" js=1}' });
-        } else {
-            items.push({ type: 'warn', text: '{l s="No links found — add links with - [Text](url): description" mod="seooptimizer" js=1}' });
-            if (level === 'ok') level = 'warn';
-        }
-
-        var brokenLinks = content.match(/^- \[[^\]]*\]\(\s*\)/gm);
-        if (brokenLinks && brokenLinks.length > 0) {
-            items.push({ type: 'err', text: brokenLinks.length + ' {l s="link(s) with empty URL" mod="seooptimizer" js=1}' });
-            level = 'error';
-        }
-
-        updateValidation(level, items);
-    }
-
-    function updateValidation(level, items) {
-        var header = document.getElementById('seooLlmsValidationHeader');
-        var container = document.getElementById('seooLlmsValidationItems');
-        var dot = document.getElementById('seooLlmsStatusDot');
-        var statusText = document.getElementById('seooLlmsStatusText');
-
-        var okCount = 0, warnCount = 0, errCount = 0;
-        items.forEach(function(i) {
-            if (i.type === 'ok') okCount++;
-            else if (i.type === 'warn') warnCount++;
-            else errCount++;
-        });
-
-        header.className = 'seoo-robots__validation-header seoo-robots__validation-header--' + level;
-
-        if (level === 'error') {
-            header.textContent = errCount + ' {l s="error(s) detected" mod="seooptimizer" js=1}';
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--error';
-            statusText.textContent = errCount + ' {l s="error(s)" mod="seooptimizer" js=1}';
-        } else if (level === 'warn') {
-            header.textContent = warnCount + ' {l s="warning(s)" mod="seooptimizer" js=1}';
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--warn';
-            statusText.textContent = warnCount + ' {l s="warning(s)" mod="seooptimizer" js=1}';
-        } else {
-            header.textContent = okCount + ' {l s="checks passed" mod="seooptimizer" js=1}';
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--ok';
-            statusText.textContent = '{l s="Valid" mod="seooptimizer" js=1}';
-        }
-
-        var html = '';
-        items.forEach(function(i) {
-            var icon = i.type === 'ok' ? '<i class="icon-check" style="color:#16a34a"></i>' :
-                       i.type === 'warn' ? '<i class="icon-warning" style="color:#d97706"></i>' :
-                       '<i class="icon-times" style="color:#dc2626"></i>';
-            html += '<div class="seoo-robots__validation-item">' + icon + ' ' + i.text + '</div>';
-        });
-        container.innerHTML = html;
-    }
-
-    document.getElementById('seooLlmsEditor').addEventListener('input', validateLlms);
-    validateLlms();
-})();
-</script>

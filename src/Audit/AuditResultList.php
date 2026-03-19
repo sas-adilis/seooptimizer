@@ -312,16 +312,9 @@ class AuditResultList
      */
     public static function displaySeverityBadge($severity): string
     {
-        $colors = [
-            'critical' => '#dc2626',
-            'warning' => '#f59e0b',
-            'info' => '#6b7280',
-            'good' => '#16a34a',
-        ];
-        $color = isset($colors[$severity]) ? $colors[$severity] : '#6b7280';
-
-        return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
-            . $color . '" title="' . htmlspecialchars($severity, ENT_QUOTES, 'UTF-8') . '"></span>';
+        return self::renderCellTemplate('severity_badge', [
+            'cell_severity' => $severity,
+        ]);
     }
 
     /**
@@ -335,9 +328,10 @@ class AuditResultList
             $display = substr($url, 0, 77) . '...';
         }
 
-        return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
-            . '" target="_blank" rel="noopener" title="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
-            . '">' . htmlspecialchars($display, ENT_QUOTES, 'UTF-8') . '</a>';
+        return self::renderCellTemplate('truncated_url', [
+            'cell_url' => $url,
+            'cell_display' => $display,
+        ]);
     }
 
     /**
@@ -346,18 +340,10 @@ class AuditResultList
      */
     public static function displayScoreBadge($score): string
     {
-        $value = (int) $score;
-        if ($value >= 80) {
-            $color = '#16a34a';
-        } elseif ($value >= 50) {
-            $color = '#f59e0b';
-        } else {
-            $color = '#dc2626';
-        }
-
-        return '<span style="display:inline-block;padding:2px 8px;border-radius:3px;color:#fff;'
-            . 'font-weight:600;font-size:12px;background:' . $color . '">'
-            . htmlspecialchars($score, ENT_QUOTES, 'UTF-8') . '</span>';
+        return self::renderCellTemplate('score_badge', [
+            'cell_score_value' => (int) $score,
+            'cell_score_label' => $score,
+        ]);
     }
 
     /**
@@ -366,19 +352,14 @@ class AuditResultList
      */
     public static function displayZonesList($zones): string
     {
-        if (empty($zones) || $zones === '-' || $zones === 'None') {
-            return '<span style="color:#9ca3af">' . htmlspecialchars($zones, ENT_QUOTES, 'UTF-8') . '</span>';
-        }
+        $zonesArray = (!empty($zones) && $zones !== '-' && $zones !== 'None')
+            ? array_map('trim', explode(',', $zones))
+            : [];
 
-        $parts = array_map('trim', explode(',', $zones));
-        $badges = [];
-        foreach ($parts as $part) {
-            $badges[] = '<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:3px;'
-                . 'font-size:11px;background:#e5e7eb;color:#374151">'
-                . htmlspecialchars($part, ENT_QUOTES, 'UTF-8') . '</span>';
-        }
-
-        return implode(' ', $badges);
+        return self::renderCellTemplate('zones_list', [
+            'cell_zones' => $zones,
+            'cell_zones_array' => $zonesArray,
+        ]);
     }
 
     /**
@@ -387,18 +368,30 @@ class AuditResultList
      */
     public static function displayMissingZones($zones): string
     {
-        if (empty($zones) || $zones === '-') {
-            return '<span style="color:#9ca3af">-</span>';
+        $zonesArray = (!empty($zones) && $zones !== '-')
+            ? array_map('trim', explode(',', $zones))
+            : [];
+
+        return self::renderCellTemplate('missing_zones', [
+            'cell_zones' => $zones,
+            'cell_zones_array' => $zonesArray,
+        ]);
+    }
+
+    /**
+     * @param string $template
+     * @param array<string, mixed> $vars
+     * @return string
+     */
+    private static function renderCellTemplate(string $template, array $vars): string
+    {
+        $smarty = \Context::getContext()->smarty;
+        foreach ($vars as $key => $value) {
+            $smarty->assign($key, $value);
         }
 
-        $parts = array_map('trim', explode(',', $zones));
-        $badges = [];
-        foreach ($parts as $part) {
-            $badges[] = '<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:3px;'
-                . 'font-size:11px;background:#fee2e2;color:#991b1b">'
-                . htmlspecialchars($part, ENT_QUOTES, 'UTF-8') . '</span>';
-        }
-
-        return implode(' ', $badges);
+        return $smarty->fetch(
+            _PS_MODULE_DIR_ . 'seooptimizer/views/templates/admin/helpers/cells/' . $template . '.tpl'
+        );
     }
 }

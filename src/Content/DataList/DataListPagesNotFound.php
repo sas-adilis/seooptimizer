@@ -93,6 +93,7 @@ class DataListPagesNotFound extends DataList implements DataListInterface
         $limit = null
     ) {
         $list = parent::getList($order_by, $order_way, $start, $limit);
+        $smarty = \Context::getContext()->smarty;
         foreach ($list as $key => $item) {
             $url_params = [
                 'controller' => 'AdminModules',
@@ -100,10 +101,9 @@ class DataListPagesNotFound extends DataList implements DataListInterface
                 'create_redirection_from_404' => (int) $item['id_seooptimizer_log_404'],
                 'show_tab' => 'tab-redirects',
             ];
-            $list[$key]['redirect'] = sprintf(
-                '<a href="%s"><i class="icon-share"></i> %s</a>',
-                \Context::getContext()->link->getAdminLink('AdminModules', true, [], $url_params),
-                $this->l('Create a redirection')
+            $smarty->assign('cell_redirect_url', \Context::getContext()->link->getAdminLink('AdminModules', true, [], $url_params));
+            $list[$key]['redirect'] = $smarty->fetch(
+                _PS_MODULE_DIR_ . 'seooptimizer/views/templates/admin/helpers/cells/redirect_link.tpl'
             );
         }
 

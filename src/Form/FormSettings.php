@@ -12,7 +12,27 @@ class FormSettings extends FormAbstract implements FormInterface
 {
     public function getContent(): string
     {
-        return $this->renderForm([
+        $module = \Module::getInstanceByName(Utils::MODULE_NAME);
+        $context = \Context::getContext();
+        $cronBaseUrl = $context->link->getModuleLink(Utils::MODULE_NAME, 'cron', [
+            'token' => $module->secure_key,
+        ]);
+
+        $auditKeys = [
+            'heading_hierarchy', 'missing_alt', 'broken_links', 'page_load_time',
+            'page_weight', 'unsecured_links', 'meta_tags', 'internal_links',
+            'text_ratio', 'keyword_check',
+        ];
+
+        $cronUrls = [];
+        $cronUrls[] = ['label' => $this->l('Full audit (all)'), 'url' => $cronBaseUrl . '&audit=all'];
+        foreach ($auditKeys as $key) {
+            $cronUrls[] = ['label' => $key, 'url' => $cronBaseUrl . '&audit=' . $key];
+        }
+
+        $context->smarty->assign('seoo_cron_urls', $cronUrls);
+
+        return $this->renderCronSection() . $this->renderForm([
             'form' => [
                 'legend' => [
                     'title' => $this->l('Configuration'),
@@ -131,6 +151,16 @@ class FormSettings extends FormAbstract implements FormInterface
             'SEOO_TEXT_THRESHOLD_LOW' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_LOW'),
             'SEOO_TEXT_THRESHOLD_GOOD' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_GOOD'),
         ]);
+    }
+
+    /**
+     * @return string
+     */
+    private function renderCronSection(): string
+    {
+        return \Context::getContext()->smarty->fetch(
+            _PS_MODULE_DIR_ . 'seooptimizer/views/templates/admin/cron-urls.tpl'
+        );
     }
 
     /**

@@ -320,6 +320,7 @@ $(document).ready(() => {
     initAuditCsvButtons();
     initPagesPanel();
     initFullAudit();
+    initCopyButtons();
 
     $('button[data-ajax-action]').on('click', function(e) {
         e.preventDefault();
@@ -508,27 +509,74 @@ function initAuditCsvButtons() {
     });
 }
 
+var auditPaused = {};
+
 function initAuditButtons() {
+    // Start or resume audit
     $('.seoo-audit__start-btn').on('click', function(e) {
         e.preventDefault();
-        const $btn = $(this);
-        const action = $btn.data('audit-action');
-        const $audit = $btn.closest('.seoo-audit');
-        const $progressWrap = $audit.find('.seoo-audit__progress-wrap');
-        const $bar = $audit.find('[data-audit-bar]');
+        var $btn = $(this);
+        var action = $btn.data('audit-action');
+        var $audit = $btn.closest('.seoo-audit');
+        var auditKey = $btn.data('audit-key');
+        var isResume = auditPaused[auditKey] === true;
 
-        $btn.prop('disabled', true).text('Crawling...');
-        $progressWrap.show();
-        $bar.css('width', '0%').removeClass('bg-success').addClass('bg-processing');
+        startAuditUI($audit, $btn);
 
-        // Show the progress table
-        $audit.find('.seoo-audit__progress-table').show();
+        if (isResume) {
+            runAuditBatch(action, false, $audit, $btn);
+        } else {
+            $audit.find('.seoo-audit__progress-table .seoo-report__row').remove();
+            $audit.find('.seoo-audit__error-msg').remove();
+            runAuditBatch(action, true, $audit, $btn);
+        }
+    });
 
-        runAuditBatch(action, true, $audit, $btn);
+    // Resume interrupted audit
+    $('.seoo-audit__resume-btn').on('click', function(e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var action = $btn.data('audit-action');
+        var $audit = $btn.closest('.seoo-audit');
+        var $startBtn = $audit.find('.seoo-audit__start-btn');
+
+        startAuditUI($audit, $startBtn);
+        $btn.hide();
+        runAuditBatch(action, false, $audit, $startBtn);
+    });
+
+    // Pause audit
+    $('.seoo-audit__pause-btn').on('click', function(e) {
+        e.preventDefault();
+        var auditKey = $(this).data('audit-key');
+        auditPaused[auditKey] = true;
+        $(this).hide();
+
+        var $audit = $(this).closest('.seoo-audit');
+        var $startBtn = $audit.find('.seoo-audit__start-btn');
+        $startBtn.prop('disabled', false).html('<i class="icon-play"></i> Resume');
     });
 }
 
+function startAuditUI($audit, $btn) {
+    var auditKey = $btn.data('audit-key');
+    auditPaused[auditKey] = false;
+
+    $btn.prop('disabled', true).text('Crawling...');
+    $audit.find('.seoo-audit__progress-table').show();
+    $audit.find('.seoo-audit__results').hide();
+    $audit.find('.seoo-audit__pause-btn').show();
+    $audit.find('.seoo-audit__resume-btn').hide();
+    $audit.find('.seoo-audit__csv-btn').hide();
+}
+
 function runAuditBatch(action, firstProcess, $audit, $btn) {
+    var auditKey = $btn.data('audit-key');
+
+    if (auditPaused[auditKey]) {
+        return;
+    }
+
     $.ajax({
         type: 'POST',
         url: SeoOptimizerAjaxUrl,
@@ -540,16 +588,16 @@ function runAuditBatch(action, firstProcess, $audit, $btn) {
         dataType: 'json',
         success: function(result) {
             if (!result || !result.audit) {
-                $btn.prop('disabled', false).html('<i class="process-icon-search"></i> Start audit');
+                auditErrorUI($audit, $btn);
                 return;
             }
 
-            const audit = result.audit;
+            var audit = result.audit;
 
             // KPIs live update
             if (audit.kpis) {
                 $.each(audit.kpis, function(i, kpi) {
-                    const $kpiValue = $audit.find('[data-audit-kpi="' + kpi.key + '"]');
+                    var $kpiValue = $audit.find('[data-audit-kpi="' + kpi.key + '"]');
                     if ($kpiValue.length) {
                         $kpiValue.text(kpi.value);
                         $kpiValue.closest('.seoo-report__kpi')
@@ -564,6 +612,10 @@ function runAuditBatch(action, firstProcess, $audit, $btn) {
                 renderAuditItems(audit.items, $audit);
             }
 
+            if (auditPaused[auditKey]) {
+                return;
+            }
+
             if (result.status === 'success') {
                 setTimeout(function() {
                     runAuditBatch(action, false, $audit, $btn);
@@ -572,10 +624,27 @@ function runAuditBatch(action, firstProcess, $audit, $btn) {
                 document.location.reload();
             }
         },
-        error: function() {
-            $btn.prop('disabled', false).html('<i class="process-icon-search"></i> Start audit');
+        error: function(xhr) {
+            auditErrorUI($audit, $btn, xhr.status);
         }
     });
+}
+
+function auditErrorUI($audit, $btn, httpStatus) {
+    var auditKey = $btn.data('audit-key');
+    auditPaused[auditKey] = true;
+
+    $audit.find('.seoo-audit__pause-btn').hide();
+    $btn.prop('disabled', false).html('<i class="icon-play"></i> Resume');
+
+    var msg = 'Audit interrupted';
+    if (httpStatus) {
+        msg += ' (HTTP ' + httpStatus + ')';
+    }
+    var $table = $audit.find('.seoo-audit__progress-table');
+    if (!$table.find('.seoo-audit__error-msg').length) {
+        $table.append('<div class="seoo-audit__error-msg alert alert-warning">' + msg + '</div>');
+    }
 }
 
 function renderAuditItems(items, $container) {
@@ -836,5 +905,26 @@ function initPagesPanel() {
                 $btn.removeClass('loading');
             }
         });
+    });
+}
+
+function initCopyButtons() {
+    $(document).on('click', '.seoo-copy-btn', function(e) {
+        e.preventDefault();
+        var url = $(this).data('url');
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url);
+        } else {
+            var $temp = $('<input>');
+            $('body').append($temp);
+            $temp.val(url).select();
+            document.execCommand('copy');
+            $temp.remove();
+        }
+        var $btn = $(this);
+        $btn.find('i').removeClass('icon-copy').addClass('icon-check');
+        setTimeout(function() {
+            $btn.find('i').removeClass('icon-check').addClass('icon-copy');
+        }, 1500);
     });
 }

@@ -1,4 +1,5 @@
-<div class="seoo-audit seoo-screen" id="audit_{$audit_key|escape:'htmlall':'UTF-8'}">
+<div class="seoo-audit seoo-screen" id="audit_{$audit_key|escape:'htmlall':'UTF-8'}"
+     data-audit-status="{$audit_status|escape:'htmlall':'UTF-8'}">
         <div class="seoo-panel-intro">
             {if $audit_visual}
                 <div class="seoo-panel-intro__visual">
@@ -18,6 +19,22 @@
                         data-audit-key="{$audit_key|escape:'htmlall':'UTF-8'}"
                         data-audit-action="runAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}">
                     <i class="process-icon-search"></i> {l s='Start audit' mod='seooptimizer'}
+                </button>
+                {if $audit_is_interrupted}
+                    <button type="button"
+                            class="btn btn-warning seoo-audit__resume-btn"
+                            data-audit-key="{$audit_key|escape:'htmlall':'UTF-8'}"
+                            data-audit-action="runAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}"
+                            data-audit-crawled="{$audit_crawled_pages|intval}"
+                            data-audit-total="{$audit_total_pages|intval}">
+                        <i class="icon-play"></i> {l s='Resume audit' mod='seooptimizer'} ({$audit_crawled_pages|intval}/{$audit_total_pages|intval})
+                    </button>
+                {/if}
+                <button type="button"
+                        class="btn btn-default seoo-audit__pause-btn"
+                        data-audit-key="{$audit_key|escape:'htmlall':'UTF-8'}"
+                        style="display:none;">
+                    <i class="icon-pause"></i> {l s='Pause' mod='seooptimizer'}
                 </button>
                 {if $audit_is_complete && $audit_results_count > 0}
                     <button type="button"
@@ -58,7 +75,7 @@
             </div>
 
             {if $audit_results_count > 0 && $audit_result_list_html}
-                <div class="seoo-audit__results">
+                <div class="seoo-audit__results" {if $audit_is_interrupted}style="display:none;"{/if}>
                     {$audit_result_list_html nofilter}
                 </div>
             {/if}

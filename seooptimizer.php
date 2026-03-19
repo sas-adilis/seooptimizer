@@ -121,9 +121,57 @@ class SeoOptimizer extends Module
             $this->context->controller->addCSS($this->_path . 'views/css/seooptimizer.css', 'all');
 
             $this->context->controller->addJS($this->_path . 'views/js/seooptimizer.js');
+            $this->context->controller->addJS($this->_path . 'views/js/robots-txt.js');
+            $this->context->controller->addJS($this->_path . 'views/js/llms-txt.js');
+
+            $shopUrl = rtrim($this->context->shop->getBaseURL(true), '/');
 
             Media::addJsDef([
                 'SeoOptimizerAjaxUrl' => $this->context->link->getAdminLink('AdminModules', true, [], ['configure' => $this->name]),
+                'SeoOptimizerRobots' => [
+                    'shopUrl' => $shopUrl,
+                    'presets' => (new Adilis\SeoOptimizer\Form\FormRobotsTxt())->getPresetsContentPublic(),
+                    'i18n' => [
+                        'disallowDetected' => $this->l('Disallow: / detected — no page will be indexed!'),
+                        'noDisallow' => $this->l('No Disallow: / in production'),
+                        'sitemapDeclared' => $this->l('Sitemap declared'),
+                        'noSitemap' => $this->l('No Sitemap directive found'),
+                        'cartBlocked' => $this->l('Cart/account/order pages blocked'),
+                        'cartNotBlocked' => $this->l('Cart/account pages not blocked — may create duplicate content'),
+                        'paramsBlocked' => $this->l('Sort/filter parameters blocked'),
+                        'paramsNotBlocked' => $this->l('Sort/filter URL parameters not blocked'),
+                        'userAgentPresent' => $this->l('User-agent directive present'),
+                        'noUserAgent' => $this->l('No User-agent directive — file will be ignored by crawlers'),
+                        'errorsDetected' => $this->l('error(s) detected'),
+                        'errors' => $this->l('error(s)'),
+                        'warnings' => $this->l('warning(s)'),
+                        'checksPassed' => $this->l('checks passed'),
+                        'noErrors' => $this->l('No errors detected'),
+                        'blocked' => $this->l('Blocked'),
+                        'allowed' => $this->l('Allowed'),
+                        'matchesRule' => $this->l('Matches rule:'),
+                        'willBeCrawled' => $this->l('This URL will be crawled by robots.'),
+                    ],
+                ],
+                'SeoOptimizerLlms' => [
+                    'presets' => (new Adilis\SeoOptimizer\Form\FormLlmsTxt())->getPresetsContentPublic(),
+                    'i18n' => [
+                        'titlePresent' => $this->l('Title present (# ...)'),
+                        'missingTitle' => $this->l('Missing title — add a line starting with # followed by your site name'),
+                        'descPresent' => $this->l('Description present (> ...)'),
+                        'missingDesc' => $this->l('Missing description — add a line starting with > followed by a short description'),
+                        'sectionsFound' => $this->l('section(s) found'),
+                        'noSections' => $this->l('No sections found — add ## Section headings'),
+                        'linksDeclared' => $this->l('link(s) declared'),
+                        'noLinks' => $this->l('No links found — add links with - [Text](url): description'),
+                        'emptyLinks' => $this->l('link(s) with empty URL'),
+                        'errorsDetected' => $this->l('error(s) detected'),
+                        'errors' => $this->l('error(s)'),
+                        'warnings' => $this->l('warning(s)'),
+                        'checksPassed' => $this->l('checks passed'),
+                        'valid' => $this->l('Valid'),
+                    ],
+                ],
             ]);
         }
 
@@ -448,6 +496,17 @@ class SeoOptimizer extends Module
         foreach ($actions_classes as $class) {
             (new $class($params))->process($params['html']);
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getCronUrl(): string
+    {
+        return $this->context->link->getModuleLink($this->name, 'cron', [
+            'token' => $this->secure_key,
+            'audit' => 'all',
+        ]);
     }
 
     public function hookModuleRoutes($params): array
