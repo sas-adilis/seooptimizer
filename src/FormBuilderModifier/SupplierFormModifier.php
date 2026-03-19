@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\FormBuilderModifier;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 
 use Symfony\Component\Form\FormBuilder;
 

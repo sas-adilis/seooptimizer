@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Events;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class ManufacturerDeleteRedirect extends AbstractDeleteRedirect implements DeleteRedirectInterface
 {
     /**

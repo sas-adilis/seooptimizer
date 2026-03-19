@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Content\DataList;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Utils;
 
 abstract class DataList implements DataListInterface

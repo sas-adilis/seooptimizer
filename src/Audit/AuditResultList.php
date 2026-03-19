@@ -2,7 +2,11 @@
 
 namespace Adilis\SeoOptimizer\Audit;
 
-use Adilis\SeoOptimizer\CacheManager;
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 
 class AuditResultList
 {
@@ -15,9 +19,6 @@ class AuditResultList
     /** @var array */
     private $fieldsListDef = [];
 
-    /** @var array */
-    private $results = [];
-
     public function __construct(AuditInterface $audit)
     {
         $this->audit = $audit;
@@ -28,15 +29,15 @@ class AuditResultList
      */
     public function render(): string
     {
-        $state = CacheManager::get('audit_' . $this->audit->getKey());
+        $auditKey = $this->audit->getKey();
+        $totalResults = AuditResultStorage::countByAuditKey($auditKey);
 
-        if (!$state || empty($state['results'])) {
+        if ($totalResults === 0) {
             return '';
         }
 
-        $this->results = $state['results'];
-
         $this->buildFieldsList();
+        $filterId = 'audit_' . $auditKey;
 
         $this->helper = new \HelperList();
         $this->helper->no_link = true;
@@ -49,43 +50,46 @@ class AuditResultList
         $this->helper->_pagination = [20, 50, 100, 300, 1000];
         $this->helper->token = \Tools::getAdminTokenLite('AdminModules');
         $this->helper->currentIndex = \AdminController::$currentIndex . '&configure=seooptimizer';
-        $this->helper->identifier = 'audit_row_id';
-        $this->helper->table = 'audit_' . $this->audit->getKey();
-        $this->helper->id = 'audit_' . $this->audit->getKey();
+        $this->helper->identifier = 'id_seooptimizer_audit_result';
+        $this->helper->table = $filterId;
+        $this->helper->id = $filterId;
         $this->helper->_defaultOrderBy = 'severity';
         $this->helper->_defaultOrderWay = 'ASC';
         $this->helper->bulk_actions = [];
         $this->helper->actions = [];
 
-        $this->helper->toolbar_btn = [
-            'export' => [
-                'href' => '#',
-                'desc' => 'Export CSV',
-                'class' => 'seoo-audit__csv-btn',
-                'data-audit-action' => 'exportCsvAudit' . ucfirst($this->audit->getKey()),
-            ],
-        ];
-
         $this->helper->tpl_vars = [
             'link' => \Context::getContext()->link,
         ];
 
+        // Handle filters
         $this->handleResetFilters();
         $this->handleFilters();
 
-        $filteredResults = $this->applyFilters($this->results);
-        $this->helper->listTotal = count($filteredResults);
+        // Build SQL filters from cookies
+        $filters = $this->getActiveFilters();
+        $this->helper->listTotal = AuditResultStorage::countFiltered($auditKey, $filters);
 
-        $sortedResults = $this->applySort($filteredResults);
-        $paginatedResults = $this->applyPagination($sortedResults);
+        // Pagination
+        $limit = $this->getLimit();
+        $start = $this->getStart($limit);
 
-        // Add row IDs for HelperList
-        foreach ($paginatedResults as $i => &$row) {
-            $row['audit_row_id'] = $i + 1;
-        }
-        unset($row);
+        // Sorting
+        $orderBy = $this->getOrderBy();
+        $orderWay = $this->getOrderWay();
+        $this->helper->orderBy = $orderBy;
+        $this->helper->orderWay = $orderWay;
 
-        return $this->helper->generateList($paginatedResults, $this->fieldsListDef);
+        $results = AuditResultStorage::getFiltered(
+            $auditKey,
+            $start,
+            $limit,
+            $orderBy,
+            $orderWay,
+            $filters
+        );
+
+        return $this->helper->generateList($results, $this->fieldsListDef);
     }
 
     private function buildFieldsList()
@@ -112,113 +116,62 @@ class AuditResultList
             'callback' => 'displayTruncatedUrl',
         ];
 
+        $this->fieldsListDef['message'] = [
+            'title' => 'Message',
+            'type' => 'text',
+            'orderby' => true,
+            'search' => true,
+        ];
+
+        $columnCallbacks = method_exists($this->audit, 'getResultColumnCallbacks')
+            ? $this->audit->getResultColumnCallbacks()
+            : [];
+
         $auditColumns = $this->audit->getResultColumns();
         foreach ($auditColumns as $key => $label) {
-            $this->fieldsListDef[$key] = [
+            $def = [
                 'title' => $label,
                 'type' => 'text',
-                'orderby' => true,
+                'orderby' => false,
                 'search' => true,
             ];
+
+            if (isset($columnCallbacks[$key])) {
+                $def['callback_object'] = self::class;
+                $def['callback'] = $columnCallbacks[$key];
+            }
+
+            $this->fieldsListDef[$key] = $def;
         }
     }
 
     /**
-     * @param array $results
      * @return array
      */
-    private function applyFilters(array $results): array
+    private function getActiveFilters(): array
     {
-        $context = \Context::getContext();
         $filterId = $this->helper->id;
-        $filters = $context->cookie->getFamily($filterId . 'Filter_');
+        $context = \Context::getContext();
+        $filters = [];
 
-        foreach ($filters as $cookieKey => $value) {
+        $cookieFilters = $context->cookie->getFamily($filterId . 'Filter_');
+        foreach ($cookieFilters as $cookieKey => $value) {
             if ($value === null || $value === '') {
                 continue;
             }
-
             $field = str_replace($filterId . 'Filter_', '', $cookieKey);
-
-            if (!isset($this->fieldsListDef[$field])) {
-                continue;
+            if (isset($this->fieldsListDef[$field])) {
+                $filters[$field] = $value;
             }
-
-            $results = array_filter($results, function ($row) use ($field, $value) {
-                if (!isset($row[$field])) {
-                    return false;
-                }
-
-                return stripos((string) $row[$field], $value) !== false;
-            });
         }
 
-        return array_values($results);
+        return $filters;
     }
 
     /**
-     * @param array $results
-     * @return array
+     * @return int
      */
-    private function applySort(array $results): array
-    {
-        $context = \Context::getContext();
-        $filterId = $this->helper->id;
-
-        $orderBy = \Tools::getValue($filterId . 'Orderby');
-        if (!$orderBy && isset($context->cookie->{$filterId . 'Orderby'})) {
-            $orderBy = $context->cookie->{$filterId . 'Orderby'};
-        }
-        if (!$orderBy) {
-            $orderBy = $this->helper->_defaultOrderBy;
-        }
-
-        $orderWay = \Tools::getValue($filterId . 'Orderway');
-        if (!$orderWay && isset($context->cookie->{$filterId . 'Orderway'})) {
-            $orderWay = $context->cookie->{$filterId . 'Orderway'};
-        }
-        if (!$orderWay) {
-            $orderWay = $this->helper->_defaultOrderWay;
-        }
-
-        // Save to cookie
-        if (\Tools::getValue($filterId . 'Orderby')) {
-            $context->cookie->{$filterId . 'Orderby'} = $orderBy;
-        }
-        if (\Tools::getValue($filterId . 'Orderway')) {
-            $context->cookie->{$filterId . 'Orderway'} = $orderWay;
-        }
-
-        $this->helper->orderBy = $orderBy;
-        $this->helper->orderWay = strtoupper($orderWay);
-
-        if (!$orderBy || !isset($this->fieldsListDef[$orderBy])) {
-            return $results;
-        }
-
-        $asc = strtoupper($orderWay) === 'ASC';
-
-        usort($results, function ($a, $b) use ($orderBy, $asc) {
-            $va = isset($a[$orderBy]) ? $a[$orderBy] : '';
-            $vb = isset($b[$orderBy]) ? $b[$orderBy] : '';
-
-            if (is_numeric($va) && is_numeric($vb)) {
-                $cmp = $va - $vb;
-            } else {
-                $cmp = strcasecmp((string) $va, (string) $vb);
-            }
-
-            return $asc ? $cmp : -$cmp;
-        });
-
-        return $results;
-    }
-
-    /**
-     * @param array $results
-     * @return array
-     */
-    private function applyPagination(array $results): array
+    private function getLimit(): int
     {
         $filterId = $this->helper->id;
         $context = \Context::getContext();
@@ -235,14 +188,70 @@ class AuditResultList
             $context->cookie->{$filterId . '_pagination'} = $limit;
         }
 
+        return $limit;
+    }
+
+    /**
+     * @param int $limit
+     * @return int
+     */
+    private function getStart(int $limit): int
+    {
+        $filterId = $this->helper->id;
+        $context = \Context::getContext();
+
         $page = (int) \Tools::getValue('submitFilter' . $filterId, 0);
         if (!$page && isset($context->cookie->{'submitFilter' . $filterId})) {
             $page = (int) $context->cookie->{'submitFilter' . $filterId};
         }
 
-        $start = $page > 0 ? ($page - 1) * $limit : 0;
+        return $page > 0 ? ($page - 1) * $limit : 0;
+    }
 
-        return array_slice($results, $start, $limit);
+    /**
+     * @return string
+     */
+    private function getOrderBy(): string
+    {
+        $filterId = $this->helper->id;
+        $context = \Context::getContext();
+
+        $orderBy = \Tools::getValue($filterId . 'Orderby');
+        if (!$orderBy && isset($context->cookie->{$filterId . 'Orderby'})) {
+            $orderBy = $context->cookie->{$filterId . 'Orderby'};
+        }
+        if (!$orderBy) {
+            $orderBy = $this->helper->_defaultOrderBy;
+        }
+
+        if (\Tools::getValue($filterId . 'Orderby')) {
+            $context->cookie->{$filterId . 'Orderby'} = $orderBy;
+        }
+
+        return $orderBy;
+    }
+
+    /**
+     * @return string
+     */
+    private function getOrderWay(): string
+    {
+        $filterId = $this->helper->id;
+        $context = \Context::getContext();
+
+        $orderWay = \Tools::getValue($filterId . 'Orderway');
+        if (!$orderWay && isset($context->cookie->{$filterId . 'Orderway'})) {
+            $orderWay = $context->cookie->{$filterId . 'Orderway'};
+        }
+        if (!$orderWay) {
+            $orderWay = $this->helper->_defaultOrderWay;
+        }
+
+        if (\Tools::getValue($filterId . 'Orderway')) {
+            $context->cookie->{$filterId . 'Orderway'} = $orderWay;
+        }
+
+        return strtoupper($orderWay);
     }
 
     private function handleResetFilters()
@@ -253,11 +262,8 @@ class AuditResultList
         if (\Tools::isSubmit('submitReset' . $filterId)) {
             $filters = $context->cookie->getFamily($filterId . 'Filter_');
             foreach ($filters as $cookieKey => $filter) {
-                if (strpos($cookieKey, $filterId . 'Filter_') === 0) {
-                    unset($context->cookie->$cookieKey);
-                }
+                unset($context->cookie->$cookieKey);
             }
-
             if (isset($context->cookie->{'submitFilter' . $filterId})) {
                 unset($context->cookie->{'submitFilter' . $filterId});
             }
@@ -275,10 +281,7 @@ class AuditResultList
         $filterId = $this->helper->id;
         $context = \Context::getContext();
 
-        if (
-            \Tools::isSubmit('submitFilter' . $filterId)
-            || $context->cookie->{'submitFilter' . $filterId} !== false
-        ) {
+        if (\Tools::isSubmit('submitFilter' . $filterId) || $context->cookie->{'submitFilter' . $filterId} !== false) {
             foreach ($_POST as $cookieKey => $value) {
                 if (stripos($cookieKey, $filterId . 'Filter_') === 0) {
                     if ($value === '') {
@@ -288,7 +291,6 @@ class AuditResultList
                     }
                 }
             }
-
             foreach ($_GET as $cookieKey => $value) {
                 if (stripos($cookieKey, $filterId . 'Filter_') === 0) {
                     if ($value === '') {
@@ -298,7 +300,6 @@ class AuditResultList
                     }
                 }
             }
-
             if (\Tools::isSubmit('submitFilter' . $filterId)) {
                 $context->cookie->{'submitFilter' . $filterId} = (int) \Tools::getValue('submitFilter' . $filterId);
             }
@@ -317,7 +318,6 @@ class AuditResultList
             'info' => '#6b7280',
             'good' => '#16a34a',
         ];
-
         $color = isset($colors[$severity]) ? $colors[$severity] : '#6b7280';
 
         return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
@@ -338,5 +338,67 @@ class AuditResultList
         return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
             . '" target="_blank" rel="noopener" title="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
             . '">' . htmlspecialchars($display, ENT_QUOTES, 'UTF-8') . '</a>';
+    }
+
+    /**
+     * @param string $score
+     * @return string
+     */
+    public static function displayScoreBadge($score): string
+    {
+        $value = (int) $score;
+        if ($value >= 80) {
+            $color = '#16a34a';
+        } elseif ($value >= 50) {
+            $color = '#f59e0b';
+        } else {
+            $color = '#dc2626';
+        }
+
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:3px;color:#fff;'
+            . 'font-weight:600;font-size:12px;background:' . $color . '">'
+            . htmlspecialchars($score, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    /**
+     * @param string $zones
+     * @return string
+     */
+    public static function displayZonesList($zones): string
+    {
+        if (empty($zones) || $zones === '-' || $zones === 'None') {
+            return '<span style="color:#9ca3af">' . htmlspecialchars($zones, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+
+        $parts = array_map('trim', explode(',', $zones));
+        $badges = [];
+        foreach ($parts as $part) {
+            $badges[] = '<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:3px;'
+                . 'font-size:11px;background:#e5e7eb;color:#374151">'
+                . htmlspecialchars($part, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+
+        return implode(' ', $badges);
+    }
+
+    /**
+     * @param string $zones
+     * @return string
+     */
+    public static function displayMissingZones($zones): string
+    {
+        if (empty($zones) || $zones === '-') {
+            return '<span style="color:#9ca3af">-</span>';
+        }
+
+        $parts = array_map('trim', explode(',', $zones));
+        $badges = [];
+        foreach ($parts as $part) {
+            $badges[] = '<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:3px;'
+                . 'font-size:11px;background:#fee2e2;color:#991b1b">'
+                . htmlspecialchars($part, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+
+        return implode(' ', $badges);
     }
 }

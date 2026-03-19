@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\CrawlerObserver;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class HeadingHierarchyObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     const MIN_H1_LENGTH = 10;

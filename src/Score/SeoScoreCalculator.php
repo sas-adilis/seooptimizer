@@ -2,25 +2,28 @@
 
 namespace Adilis\SeoOptimizer\Score;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Audit\AuditInterface;
 use Adilis\SeoOptimizer\Audit\AuditBrokenLinks;
 use Adilis\SeoOptimizer\Audit\AuditHeadingHierarchy;
+use Adilis\SeoOptimizer\Audit\AuditInternalLinks;
+use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
+use Adilis\SeoOptimizer\Audit\AuditMetaTags;
 use Adilis\SeoOptimizer\Audit\AuditMissingAlt;
 use Adilis\SeoOptimizer\Audit\AuditPageLoadTime;
 use Adilis\SeoOptimizer\Audit\AuditPageWeight;
-use Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks;
-use Adilis\SeoOptimizer\Audit\AuditMetaTags;
-use Adilis\SeoOptimizer\Audit\AuditInternalLinks;
 use Adilis\SeoOptimizer\Audit\AuditTextRatio;
-use Adilis\SeoOptimizer\CacheManager;
+use Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks;
+use Adilis\SeoOptimizer\Storage\AuditResultStorage;
+use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
 class SeoScoreCalculator
 {
     /** @var AuditInterface[] */
     private $audits;
-
-    /** @var array<string, array|null> */
-    private $auditStates = [];
 
     public function __construct()
     {
@@ -34,21 +37,16 @@ class SeoScoreCalculator
             new AuditMetaTags(),
             new AuditInternalLinks(),
             new AuditTextRatio(),
+            new AuditKeywordCheck(),
         ];
-
-        foreach ($this->audits as $audit) {
-            $this->auditStates[$audit->getKey()] = CacheManager::get('audit_' . $audit->getKey());
-        }
     }
 
     /**
-     * Compute full scoring data.
-     *
-     * @return array{global: array, audits: array<string, array>, pages: array<string, array>, has_data: bool}
+     * @return array
      */
     public function compute(): array
     {
-        if (!$this->hasAnyData()) {
+        if (!AuditRunStorage::hasAnyComplete()) {
             return [
                 'global' => ['score' => 0, 'grade' => '-', 'grade_color' => 'gray'],
                 'audits' => [],
@@ -57,22 +55,33 @@ class SeoScoreCalculator
             ];
         }
 
-        $allUrls = $this->collectAllUrls();
         $auditScores = [];
         $pageScores = [];
 
         foreach ($this->audits as $audit) {
             $key = $audit->getKey();
-            $state = $this->auditStates[$key];
 
-            if (!$state || !isset($state['status']) || $state['status'] !== 'complete') {
+            if (!AuditRunStorage::isComplete($key)) {
                 continue;
             }
 
-            $results = $state['results'] ?? [];
+            $run = AuditRunStorage::get($key);
+            $results = AuditResultStorage::getByAuditKey($key);
             $impact = $audit->getScoreImpact();
 
-            // Group results by URL for this audit
+            // Get all URLs for this audit
+            $auditUrls = [];
+            if ($run && isset($run['urls'])) {
+                foreach ($run['urls'] as $entry) {
+                    $url = is_array($entry) ? ($entry['url'] ?? '') : (string) $entry;
+                    if ($url !== '') {
+                        $auditUrls[] = $url;
+                    }
+                }
+                $auditUrls = array_unique($auditUrls);
+            }
+
+            // Group results by URL
             $issuesByUrl = [];
             foreach ($results as $row) {
                 $url = $row['url'] ?? '';
@@ -85,10 +94,8 @@ class SeoScoreCalculator
                 $issuesByUrl[$url][] = $row;
             }
 
-            // Compute per-page score for this audit
+            // Per-page score
             $auditPageScores = [];
-            $auditUrls = $this->getAuditUrls($state);
-
             foreach ($auditUrls as $url) {
                 $penalty = 0;
                 if (isset($issuesByUrl[$url])) {
@@ -103,7 +110,6 @@ class SeoScoreCalculator
                 $pageScore = max(0, 100 - $penalty);
                 $auditPageScores[$url] = $pageScore;
 
-                // Accumulate for per-page global scores
                 if (!isset($pageScores[$url])) {
                     $pageScores[$url] = [
                         'url' => $url,
@@ -117,7 +123,6 @@ class SeoScoreCalculator
                 $pageScores[$url]['weight_total'] += $audit->getScoreWeight();
             }
 
-            // Per-audit global score = average of all page scores for this audit
             $auditAvg = count($auditPageScores) > 0
                 ? array_sum($auditPageScores) / count($auditPageScores)
                 : 100;
@@ -148,12 +153,11 @@ class SeoScoreCalculator
             ];
         }
 
-        // Sort pages by score ascending (worst first)
         uasort($pagesResult, function ($a, $b) {
             return $a['score'] <=> $b['score'];
         });
 
-        // Global score = weighted average of per-audit scores
+        // Global score
         $globalWeightedSum = 0;
         $globalWeightTotal = 0;
         foreach ($auditScores as $auditData) {
@@ -178,22 +182,31 @@ class SeoScoreCalculator
     }
 
     /**
-     * Compute score for a single audit (lightweight, no page-level data).
-     *
      * @param AuditInterface $audit
-     * @return array{score: float, grade: string, grade_color: string}
+     * @return array
      */
     public function computeForAudit(AuditInterface $audit): array
     {
-        $state = $this->auditStates[$audit->getKey()] ?? null;
+        $key = $audit->getKey();
 
-        if (!$state || !isset($state['status']) || $state['status'] !== 'complete') {
+        if (!AuditRunStorage::isComplete($key)) {
             return ['score' => 0, 'grade' => '-', 'grade_color' => 'gray'];
         }
 
-        $results = $state['results'] ?? [];
+        $run = AuditRunStorage::get($key);
+        $results = AuditResultStorage::getByAuditKey($key);
         $impact = $audit->getScoreImpact();
-        $auditUrls = $this->getAuditUrls($state);
+
+        $auditUrls = [];
+        if ($run && isset($run['urls'])) {
+            foreach ($run['urls'] as $entry) {
+                $url = is_array($entry) ? ($entry['url'] ?? '') : (string) $entry;
+                if ($url !== '') {
+                    $auditUrls[] = $url;
+                }
+            }
+            $auditUrls = array_unique($auditUrls);
+        }
 
         $issuesByUrl = [];
         foreach ($results as $row) {
@@ -230,112 +243,19 @@ class SeoScoreCalculator
         ];
     }
 
-    /**
-     * @param float $score
-     * @return string
-     */
     public static function scoreToGrade(float $score): string
     {
-        if ($score >= 95) {
-            return 'A+';
-        }
-        if ($score >= 85) {
-            return 'A';
-        }
-        if ($score >= 70) {
-            return 'B';
-        }
-        if ($score >= 50) {
-            return 'C';
-        }
-        if ($score >= 30) {
-            return 'D';
-        }
-
+        if ($score >= 95) return 'A+';
+        if ($score >= 85) return 'A';
+        if ($score >= 70) return 'B';
+        if ($score >= 50) return 'C';
+        if ($score >= 30) return 'D';
         return 'F';
     }
 
-    /**
-     * @param string $grade
-     * @return string
-     */
     public static function gradeToColor(string $grade): string
     {
-        switch ($grade) {
-            case 'A+':
-                return 'excellent';
-            case 'A':
-                return 'good';
-            case 'B':
-                return 'fair';
-            case 'C':
-                return 'warning';
-            case 'D':
-                return 'poor';
-            case 'F':
-                return 'critical';
-            default:
-                return 'gray';
-        }
-    }
-
-    /**
-     * @return bool
-     */
-    private function hasAnyData(): bool
-    {
-        foreach ($this->auditStates as $state) {
-            if ($state && isset($state['status']) && $state['status'] === 'complete') {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Collect all unique URLs across all audit states.
-     *
-     * @return string[]
-     */
-    private function collectAllUrls(): array
-    {
-        $urls = [];
-        foreach ($this->auditStates as $state) {
-            if (!$state || !isset($state['urls'])) {
-                continue;
-            }
-            foreach ($state['urls'] as $entry) {
-                if (is_array($entry) && isset($entry['url'])) {
-                    $urls[$entry['url']] = true;
-                } elseif (is_string($entry)) {
-                    $urls[$entry] = true;
-                }
-            }
-        }
-
-        return array_keys($urls);
-    }
-
-    /**
-     * Get list of URLs crawled in a specific audit.
-     *
-     * @param array $state
-     * @return string[]
-     */
-    private function getAuditUrls(array $state): array
-    {
-        $urls = [];
-        if (isset($state['urls'])) {
-            foreach ($state['urls'] as $entry) {
-                if (is_array($entry) && isset($entry['url'])) {
-                    $urls[] = $entry['url'];
-                } elseif (is_string($entry)) {
-                    $urls[] = $entry;
-                }
-            }
-        }
-
-        return array_unique($urls);
+        $map = ['A+' => 'excellent', 'A' => 'good', 'B' => 'fair', 'C' => 'warning', 'D' => 'poor', 'F' => 'critical'];
+        return isset($map[$grade]) ? $map[$grade] : 'gray';
     }
 }

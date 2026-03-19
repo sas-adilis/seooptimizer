@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\SitemapIndexer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class ProductIndexer implements IndexerInterface
 {
 
@@ -43,6 +47,7 @@ class ProductIndexer implements IndexerInterface
 
         foreach ($products as $product) {
             $links[] = [
+                'id_entity' => (int) $product['id_product'],
                 'url' => $context->link->getProductLink($product, $product['link_rewrite'], $product['category'], $product['ean13']),
                 'date_updated' => date('Y-m-d H:i:s'),
                 'frequency' => \Configuration::get('SEOO_SITEMAP_PRODUCT_FREQUENCY'),

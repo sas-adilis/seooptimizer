@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Form;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Constants;
 use Adilis\SeoOptimizer\Utils;
 

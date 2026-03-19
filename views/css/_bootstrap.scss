@@ -29,49 +29,107 @@
     background: $primary-color;
 }
 
-/* Tables */
-#content.bootstrap .panel table.table thead tr:first-child th {
+/* Tabs */
+.tab {
+    height: auto !important;
+}
+
+.tab:not(.in) {
+    display: none;
+}
+
+/* ── .seoo-screen — Single visual block per tab ── */
+
+.seoo-screen {
+    background: #fff;
+    border: 1px solid #dbe6e9;
+    border-radius: 5px;
+    box-shadow: 0 0 4px 0 rgba(0, 0, 0, .06);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+/* Neutralize ALL .panel inside a screen */
+.seoo-screen .panel {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+/* panel-body: just padding, nothing else */
+.seoo-screen .panel-body {
+    padding: 20px;
+}
+
+/* panel-heading: teal bar (from HelperForm/HelperList) */
+.seoo-screen .panel-heading {
+    background-color: $primary-color;
+    color: #fff;
+    border-radius: 0;
+
+    i { color: #fff; }
+}
+
+/* panel-footer: clean separator */
+.seoo-screen .panel-footer {
+    border-radius: 0;
+
+    .btn.btn-default.pull-right {
+        background-color: $primary-color;
+        border-color: $primary-color;
+        color: #fff;
+
+        &:hover {
+            background-color: $primary-color-hover;
+            border-color: $primary-color-hover;
+        }
+
+        &.btn-danger {
+            background-color: $danger-color;
+            border-color: $danger-color;
+
+            &:hover {
+                background-color: $danger-color-hover;
+                border-color: $danger-color-hover;
+            }
+        }
+    }
+}
+
+/* Tables inside screen */
+.seoo-screen table.table {
+    margin: 0;
+}
+
+.seoo-screen table.table thead tr:first-child th {
     border-bottom: solid 0.125rem $primary-color;
 }
 
-#content.bootstrap .panel table.table thead tr.filter {
+.seoo-screen table.table thead tr.filter {
     background: rgba(5, 128, 139, 0.1);
     background: linear-gradient(-90deg, rgba(5, 128, 139, 0.1) 0%, rgb(255, 255, 255) 68%, rgba(5, 128, 139, 0.1) 100%);
+
     th {
         background-color: transparent;
     }
 }
 
-/* Panel heading */
-#content.bootstrap .panel .panel-heading {
-    background-color: $primary-color;
-    color: #fff;
+/* Section separators: any panel/form after another gets a top border */
+.seoo-screen > .panel + .panel,
+.seoo-screen > .panel + form,
+.seoo-screen > form + .panel,
+.seoo-screen > form + form,
+.seoo-screen > .collapse.in + .panel,
+.seoo-screen > .collapse.in + form {
+    border-top: 1px solid #e8e8e8;
 }
 
-#content.bootstrap .panel .panel-heading i {
-    color: #fff;
-}
-
-/* Panel footer buttons */
-.bootstrap .panel .panel-footer .btn.btn-default.pull-right {
-    background-color: $primary-color;
-    border-color: $primary-color;
-    color: #fff;
-}
-
-.bootstrap .panel .panel-footer .btn.btn-default.pull-right:hover {
-    background-color: $primary-color-hover;
-    border-color: $primary-color-hover;
-}
-
-.bootstrap .panel .panel-footer .btn.btn-default.pull-right.btn-danger {
-    background-color: $danger-color;
-    border-color: $danger-color;
-}
-
-.bootstrap .panel .panel-footer .btn.btn-default.pull-right.btn-danger:hover {
-    background-color: $danger-color-hover;
-    border-color: $danger-color-hover;
+/* Collapsed blocks are invisible — don't add border after them */
+.seoo-screen > .collapse:not(.in) + .panel,
+.seoo-screen > .collapse:not(.in) + form {
+    border-top: 0;
 }
 
 /* Tags */
@@ -96,59 +154,6 @@
 .bootstrap .alert.alert-info.col-lg-offset-3 {
     margin-left: 0;
 }
-
-/* Tabs */
-.tab {
-    height: auto !important;
-}
-
-.tab:not(.in) {
-    display: none;
-}
-
-/* ── Fused panels: all panels inside a tab form a single visual block ── */
-
-/* Reset all panels inside tabs: no margin, no radius */
-#seooptimizer .tab .panel {
-    margin-bottom: 0;
-    border-radius: 0;
-    border-top: 0;
-}
-
-/* First panel in each tab: restore top border + round top corners */
-#seooptimizer .tab > .panel:first-child,
-#seooptimizer .tab > form:first-child > .panel,
-#seooptimizer .tab > .seoo-audit:first-child .panel:first-child,
-#seooptimizer .tab > .collapse:first-child .panel:first-child {
-    border-top: 1px solid #dbe6e9;
-    border-radius: 5px 5px 0 0;
-}
-
-/* Last panel in each tab: round bottom corners + spacing after */
-#seooptimizer .tab > .panel:last-child,
-#seooptimizer .tab > form:last-child > .panel,
-#seooptimizer .tab > .seoo-audit:last-child .panel:last-child,
-#seooptimizer .tab > .collapse:last-child .panel:last-child {
-    border-radius: 0 0 5px 5px;
-    margin-bottom: 20px;
-}
-
-/* Only panel: full border-radius */
-#seooptimizer .tab > .panel:only-child,
-#seooptimizer .tab > .seoo-audit:only-child .panel:only-child {
-    border-top: 1px solid #dbe6e9;
-    border-radius: 5px;
-}
-
-/* Collapsed containers should be invisible — panels after them keep border-top hidden */
-#seooptimizer .tab > .collapse:not(.in) + .panel,
-#seooptimizer .tab > .collapse:not(.in) + form > .panel,
-#seooptimizer .tab > .collapse:not(.in) + .collapse:not(.in) + .panel,
-#seooptimizer .tab > .collapse:not(.in) + .collapse:not(.in) + form > .panel {
-    border-top: 0;
-}
-
-/* When a collapse is open (.in), its inner panel needs top border as separator */
-#seooptimizer .tab > .collapse.in .panel {
-    border-top: 1px solid #dbe6e9;
+.bootstrap textarea:hover {
+    border: 1px solid #ddd;
 }

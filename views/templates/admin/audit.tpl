@@ -1,5 +1,4 @@
-<div class="seoo-audit" id="audit_{$audit_key|escape:'htmlall':'UTF-8'}">
-    <div class="panel">
+<div class="seoo-audit seoo-screen" id="audit_{$audit_key|escape:'htmlall':'UTF-8'}">
         <div class="seoo-panel-intro">
             {if $audit_visual}
                 <div class="seoo-panel-intro__visual">
@@ -55,49 +54,6 @@
                         <div class="seoo-report__th seoo-report__th--progress">{l s='Progression' mod='seooptimizer'}</div>
                         <div class="seoo-report__th seoo-report__th--result">{l s='Result' mod='seooptimizer'}</div>
                     </div>
-                    {if $audit_items|count > 0}
-                        {foreach $audit_items as $type_key => $item}
-                            <div class="seoo-report__row" data-audit-item="{$type_key|escape:'htmlall':'UTF-8'}">
-                                <div class="seoo-report__cell seoo-report__cell--entity">
-                                    <span class="seoo-report__icon"><i class="{$item.icon|escape:'htmlall':'UTF-8'}"></i></span>
-                                    <span class="seoo-report__entity-info">
-                                        <strong class="seoo-report__entity-name">{$item.label|escape:'htmlall':'UTF-8'}</strong>
-                                        <span class="seoo-report__entity-count">{$item.total|escape:'htmlall':'UTF-8'} {l s='pages' mod='seooptimizer'}</span>
-                                    </span>
-                                </div>
-                                <div class="seoo-report__cell seoo-report__cell--progress">
-                                    <div class="seoo-report__bar-wrap">
-                                        <div class="progress report__progress-percentage">
-                                            <div class="progress-bar {if $item.percentage == 100}bg-success{elseif $item.percentage > 0}bg-processing{/if}"
-                                                 role="progressbar"
-                                                 aria-valuenow="{$item.percentage|escape:'htmlall':'UTF-8'}"
-                                                 aria-valuemin="0"
-                                                 aria-valuemax="100"
-                                                 style="width: {$item.percentage|escape:'htmlall':'UTF-8'}%">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="seoo-report__status-line">
-                                        <span class="seoo-report__status-label">
-                                            {if $item.status == 'done'}
-                                                {l s='Done' mod='seooptimizer'}
-                                            {elseif $item.status == 'processing'}
-                                                {l s='In progress' mod='seooptimizer'}
-                                            {else}
-                                                {l s='Waiting' mod='seooptimizer'}
-                                            {/if}
-                                        </span>
-                                        <span class="seoo-report__progress-value">{$item.crawled|escape:'htmlall':'UTF-8'} / {$item.total|escape:'htmlall':'UTF-8'}</span>
-                                    </div>
-                                </div>
-                                <div class="seoo-report__cell seoo-report__cell--result">
-                                    <span class="seoo-report__badge {if $item.issues_count > 0}seoo-report__badge--danger{else}seoo-report__badge--success{/if}">
-                                        {$item.issues_count|escape:'htmlall':'UTF-8'}
-                                    </span>
-                                </div>
-                            </div>
-                        {/foreach}
-                    {/if}
                 </div>
             </div>
 
@@ -107,5 +63,4 @@
                 </div>
             {/if}
         </div>
-    </div>
 </div>

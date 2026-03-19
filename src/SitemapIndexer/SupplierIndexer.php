@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\SitemapIndexer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Constants;
 
 class SupplierIndexer implements IndexerInterface
@@ -40,6 +44,7 @@ class SupplierIndexer implements IndexerInterface
 
         foreach ($suppliers as $supplier) {
             $links[] = [
+                'id_entity' => (int) $supplier['id_supplier'],
                 'url' => $context->link->getSupplierLink($supplier, \Tools::str2url($supplier['name'])),
                 'date_updated' => date('Y-m-d H:i:s'),
                 'frequency' => \Configuration::get('SEOO_SITEMAP_SUPPLIER_FREQUENCY'),

@@ -60,15 +60,10 @@
             white-space: nowrap;
         }
     }
-
-    + .panel-body {
-        padding-top: 0;
-    }
 }
 
 /* Standalone panel-intro (only child of .panel) */
 .panel > .seoo-panel-intro:only-child {
-    border-bottom: 0;
 }
 
 /* CSV import help */

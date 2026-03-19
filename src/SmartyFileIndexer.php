@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class SmartyFileIndexer
 {
     private $tplFiles = [];

@@ -1,5 +1,4 @@
-<div class="seoo-robots" id="seoo-robots">
-    <div class="panel">
+<div class="seoo-robots seoo-screen" id="seoo-robots">
         <div class="seoo-panel-intro">
             <div class="seoo-panel-intro__visual">
                 <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-robots.png" alt="{l s='Robots.txt' mod='seooptimizer'}">
@@ -12,6 +11,9 @@
                 <p class="seoo-panel-intro__desc">{l s='Edit the content of your robots.txt file. Choose a preset adapted to your shop, then customize it if needed.' mod='seooptimizer'}</p>
             </div>
             <div class="seoo-panel-intro__actions">
+                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#seooRobotsUrlTesterModal">
+                    <i class="icon-search"></i> {l s='Test URL' mod='seooptimizer'}
+                </button>
                 <a href="{$seoo_robots_form_action|escape:'htmlall':'UTF-8'}&submitFormRobotsTxtReset=1&token={$seoo_robots_token|escape:'htmlall':'UTF-8'}" class="btn btn-default" onclick="return confirm('{l s="This will regenerate the robots.txt using PrestaShop defaults. Continue?" mod="seooptimizer" js=1}');">
                     <i class="icon-refresh"></i> {l s='Reset to PrestaShop default' mod='seooptimizer'}
                 </a>
@@ -70,41 +72,43 @@
                     </div>
                 </div>
 
-                <div class="seoo-robots__url-tester">
-                    <h4><i class="icon-search"></i> {l s='URL Tester' mod='seooptimizer'}</h4>
-                    <p class="seoo-robots__url-tester-desc">{l s='Check if a URL will be blocked or allowed by your current rules.' mod='seooptimizer'}</p>
-                    <div class="seoo-robots__url-tester-row">
-                        <input type="text" id="seooRobotsTestUrl" placeholder="/my-product.html" value="/recherche?q=chaussures">
-                        <button type="button" class="btn btn-default" id="seooRobotsTestBtn">
-                            <i class="icon-search"></i> {l s='Test' mod='seooptimizer'}
-                        </button>
-                    </div>
-                    <div id="seooRobotsTestResult" class="seoo-robots__test-result" style="display:none;"></div>
-                </div>
-
             </form>
         </div>
-    </div>
 
     {if $seoo_robots_history_html}
-        <div class="panel">
-            <div class="seoo-panel-intro">
-                <div class="seoo-panel-intro__visual">
-                    <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-history.png" alt="{l s='History' mod='seooptimizer'}">
-                </div>
-                <div class="seoo-panel-intro__content">
-                    <h3 class="seoo-panel-intro__title">
-                        <i class="icon-time"></i>
-                        {l s='History' mod='seooptimizer'}
-                    </h3>
-                    <p class="seoo-panel-intro__desc">{l s='Previous versions of your robots.txt file. You can restore any backup with one click.' mod='seooptimizer'}</p>
-                </div>
+        <div class="seoo-panel-intro" style="border-top:1px solid #e8e8e8;">
+            <div class="seoo-panel-intro__visual">
+                <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-history.png" alt="{l s='History' mod='seooptimizer'}">
             </div>
-            <div class="seoo-robots__history-list">
-                {$seoo_robots_history_html nofilter}
+            <div class="seoo-panel-intro__content">
+                <h3 class="seoo-panel-intro__title"><i class="icon-time"></i> {l s='History' mod='seooptimizer'}</h3>
+                <p class="seoo-panel-intro__desc">{l s='Previous versions of your robots.txt file. You can restore any backup with one click.' mod='seooptimizer'}</p>
             </div>
         </div>
+        {$seoo_robots_history_html nofilter}
     {/if}
+</div>
+
+{* ── URL Tester Modal ── *}
+<div class="modal fade" id="seooRobotsUrlTesterModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title"><i class="icon-search" style="color:#05808B"></i> {l s='URL Tester' mod='seooptimizer'}</h4>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">{l s='Check if a URL will be blocked or allowed by your current robots.txt rules.' mod='seooptimizer'}</p>
+                <div class="seoo-robots__url-tester-row">
+                    <input type="text" id="seooRobotsTestUrl" class="form-control" placeholder="/my-product.html" value="/recherche?q=chaussures" style="flex:1;">
+                    <button type="button" class="btn btn-default" id="seooRobotsTestBtn">
+                        <i class="icon-search"></i> {l s='Test' mod='seooptimizer'}
+                    </button>
+                </div>
+                <div id="seooRobotsTestResult" class="seoo-robots__test-result" style="display:none;margin-top:12px;"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -140,25 +144,19 @@
         var items = [];
         var level = 'ok';
 
-        // Check Disallow: /
         if (/^Disallow:\s*\/$/m.test(content) && content.indexOf('Disallow: /\n') !== -1) {
-            var hasOnlyRoot = true;
             var lines = content.split('\n');
             for (var i = 0; i < lines.length; i++) {
                 if (lines[i].trim() === 'Disallow: /' ) {
-                    hasOnlyRoot = true;
+                    items.push({ type: 'err', text: '{l s="Disallow: / detected — no page will be indexed!" mod="seooptimizer" js=1}' });
+                    level = 'error';
                     break;
                 }
-            }
-            if (hasOnlyRoot) {
-                items.push({ type: 'err', text: '{l s="Disallow: / detected — no page will be indexed!" mod="seooptimizer" js=1}' });
-                level = 'error';
             }
         } else {
             items.push({ type: 'ok', text: '{l s="No Disallow: / in production" mod="seooptimizer" js=1}' });
         }
 
-        // Check Sitemap
         if (/^Sitemap:/m.test(content)) {
             items.push({ type: 'ok', text: '{l s="Sitemap declared" mod="seooptimizer" js=1}' });
         } else {
@@ -166,7 +164,6 @@
             if (level === 'ok') level = 'warn';
         }
 
-        // Check cart/account blocked
         if (/Disallow:.*(?:panier|cart|commande|order|mon-compte|my-account)/m.test(content)) {
             items.push({ type: 'ok', text: '{l s="Cart/account/order pages blocked" mod="seooptimizer" js=1}' });
         } else {
@@ -174,7 +171,6 @@
             if (level === 'ok') level = 'warn';
         }
 
-        // Check sort/filter params
         if (/Disallow:.*\?\*?(?:order=|q=|page=)/m.test(content) || /Disallow:.*\*\?(?:order=|q=|page=)/m.test(content)) {
             items.push({ type: 'ok', text: '{l s="Sort/filter parameters blocked" mod="seooptimizer" js=1}' });
         } else {
@@ -182,7 +178,6 @@
             if (level === 'ok') level = 'warn';
         }
 
-        // Check User-agent
         if (/^User-agent:/m.test(content)) {
             items.push({ type: 'ok', text: '{l s="User-agent directive present" mod="seooptimizer" js=1}' });
         } else {
@@ -232,7 +227,7 @@
         container.innerHTML = html;
     }
 
-    // URL Tester
+    // URL Tester (inside modal)
     document.getElementById('seooRobotsTestBtn').addEventListener('click', function() {
         testUrl();
     });
@@ -281,7 +276,6 @@
         }
     }
 
-    // Auto-validate on load and on edit
     document.getElementById('seooRobotsEditor').addEventListener('input', validateRobots);
     validateRobots();
 })();

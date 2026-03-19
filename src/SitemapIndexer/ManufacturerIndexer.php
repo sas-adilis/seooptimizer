@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\SitemapIndexer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Constants;
 
 class ManufacturerIndexer implements IndexerInterface
@@ -37,6 +41,7 @@ class ManufacturerIndexer implements IndexerInterface
 
         foreach ($manufacturers as $manufacturer) {
             $links[] = [
+                'id_entity' => (int) $manufacturer['id_manufacturer'],
                 'url' => $context->link->getManufacturerLink($manufacturer, \Tools::str2url($manufacturer['name'])),
                 'date_updated' => date('Y-m-d H:i:s'),
                 'frequency' => \Configuration::get('SEOO_SITEMAP_MANUFACTURER_FREQUENCY'),

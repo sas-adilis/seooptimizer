@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Audit;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\CrawlerObserver\PageWeightObserver;
 
 class AuditPageWeight implements AuditInterface
@@ -137,6 +141,11 @@ class AuditPageWeight implements AuditInterface
     public function getScoreWeight(): int
     {
         return 20;
+    }
+
+    public function requiresIndexablePage(): bool
+    {
+        return false;
     }
 
     private function formatSize(int $kb): string

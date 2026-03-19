@@ -2,9 +2,13 @@
 
 namespace Adilis\SeoOptimizer\Pages;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Audit\AuditInterface;
-use Adilis\SeoOptimizer\CacheManager;
-use Adilis\SeoOptimizer\CrawlerObserver\CrawlerObserverInterface;
+use Adilis\SeoOptimizer\Audit\AuditRunner;
+use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 
 class SinglePageAuditor
 {
@@ -17,11 +21,8 @@ class SinglePageAuditor
     }
 
     /**
-     * Re-audit a single URL across all audits.
-     * Fetches the page once, runs all observers, updates each audit cache.
-     *
      * @param string $url
-     * @return array Page data after re-audit
+     * @return array
      */
     public function auditUrl(string $url): array
     {
@@ -35,16 +36,13 @@ class SinglePageAuditor
         }
 
         $audits = $this->aggregator->getAudits();
-        $auditStates = $this->aggregator->getAuditStates();
 
-        // Create all observers for all audits, grouped by audit
+        // Create all observers for all audits
         $auditObservers = [];
         foreach ($audits as $audit) {
             $observers = [];
             foreach ($audit->getObserverClasses() as $observerClass) {
-                /** @var CrawlerObserverInterface $observer */
-                $observer = new $observerClass();
-                $observers[] = $observer;
+                $observers[] = new $observerClass();
             }
             $auditObservers[$audit->getKey()] = [
                 'audit' => $audit,
@@ -52,7 +50,7 @@ class SinglePageAuditor
             ];
         }
 
-        // Run observeBeforeRequest on all observers
+        // Run observers
         foreach ($auditObservers as $data) {
             foreach ($data['observers'] as $observer) {
                 if (method_exists($observer, 'observeBeforeRequest')) {
@@ -61,8 +59,16 @@ class SinglePageAuditor
             }
         }
 
-        // Run observeAfterRequest on all observers (single fetch)
+        $isIndexable = AuditRunner::isPageIndexable($content);
+
         foreach ($auditObservers as $data) {
+            /** @var AuditInterface $audit */
+            $audit = $data['audit'];
+
+            if ($audit->requiresIndexablePage() && !$isIndexable) {
+                continue;
+            }
+
             foreach ($data['observers'] as $observer) {
                 if (method_exists($observer, 'observeAfterRequest')) {
                     $observer->observeAfterRequest($url, $content);
@@ -70,7 +76,7 @@ class SinglePageAuditor
             }
         }
 
-        // Format results and update each audit's cache
+        // Format results and update DB for each audit
         foreach ($auditObservers as $auditKey => $data) {
             /** @var AuditInterface $audit */
             $audit = $data['audit'];
@@ -83,61 +89,14 @@ class SinglePageAuditor
 
             $newResults = $audit->formatResults($observerResults);
 
-            // Update the audit cache
-            $cacheKey = 'audit_' . $auditKey;
-            $state = $auditStates[$auditKey];
+            // Remove old results for this URL in this audit
+            AuditResultStorage::deleteByUrl($auditKey, $url);
 
-            if (!$state || !isset($state['status'])) {
-                continue;
-            }
-
-            // Remove old results for this URL
-            $state['results'] = array_values(array_filter(
-                $state['results'] ?? [],
-                function ($row) use ($url) {
-                    return ($row['url'] ?? '') !== $url;
-                }
-            ));
-
-            // Add new results
-            $state['results'] = array_merge($state['results'], $newResults);
-
-            // Update items issues_count by recounting from results
-            if (isset($state['items']) && isset($state['urls'])) {
-                // Find the type for this URL
-                $urlType = null;
-                foreach ($state['urls'] as $entry) {
-                    $entryUrl = is_array($entry) ? ($entry['url'] ?? '') : (string) $entry;
-                    if ($entryUrl === $url) {
-                        $urlType = is_array($entry) ? ($entry['type'] ?? null) : null;
-                        break;
-                    }
-                }
-
-                if ($urlType && isset($state['items'][$urlType])) {
-                    // Recount issues for this type
-                    $issueCount = 0;
-                    $typeUrls = [];
-                    foreach ($state['urls'] as $entry) {
-                        if (is_array($entry) && ($entry['type'] ?? '') === $urlType) {
-                            $typeUrls[] = $entry['url'];
-                        }
-                    }
-
-                    foreach ($state['results'] as $row) {
-                        if (in_array($row['url'] ?? '', $typeUrls, true)) {
-                            $issueCount++;
-                        }
-                    }
-
-                    $state['items'][$urlType]['issues_count'] = $issueCount;
-                }
-            }
-
-            CacheManager::write($cacheKey, $state);
+            // Insert new results
+            AuditResultStorage::insertBatch($auditKey, $newResults);
         }
 
-        // Re-read aggregated data for this URL
+        // Re-read aggregated data
         $freshAggregator = new PagesAggregator();
         $pageData = $freshAggregator->getPageData($url);
 

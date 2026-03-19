@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 

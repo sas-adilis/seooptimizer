@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class UrlHelper
 {
     public static function is404($url)

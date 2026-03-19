@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\CrawlerObserver;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class TextRatioObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */

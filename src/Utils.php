@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class Utils
 {
     const MODULE_NAME = 'seooptimizer';
@@ -50,6 +54,8 @@ class Utils
        if (strpos($path, _PS_ROOT_DIR_) !== false) {
            return str_replace(_PS_ROOT_DIR_, '', $path);
        }
+
+       return $path;
     }
 
     public static function saveFormConfiguration(string $form_name, bool $lang = false)

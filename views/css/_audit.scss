@@ -125,23 +125,6 @@
     background: #6b7280;
 }
 
-/* HelperList inside audit results — remove double panel nesting */
-.seoo-audit__results .panel {
-    margin-bottom: 0;
-    border: 0;
-    box-shadow: none;
-}
-
-.seoo-audit__results .panel .panel-heading {
-    margin: 0 -16px;
-    padding: 16px;
-    border-top: 1px solid #e8e8e8;
-    border-bottom: 1px solid #e8e8e8;
-    border-radius: 0;
-    background: rgba(5, 128, 139, 0.1);
-    background: linear-gradient(-90deg, rgba(5, 128, 139, .1) 0%, rgba(255, 255, 255, 1) 68%);
-}
-
 .seoo-audit__start-btn .process-icon-search::before {
     margin-right: 6px;
 }

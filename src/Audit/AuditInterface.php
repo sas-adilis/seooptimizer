@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Audit;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 interface AuditInterface
 {
     public function getKey(): string;
@@ -65,4 +69,12 @@ interface AuditInterface
      * @return int
      */
     public function getScoreWeight(): int;
+
+    /**
+     * Whether this audit should only run on indexable pages.
+     * If true, pages with meta robots noindex will be skipped.
+     *
+     * @return bool
+     */
+    public function requiresIndexablePage(): bool;
 }

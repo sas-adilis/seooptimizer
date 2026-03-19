@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Form;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\CacheManager;
 use Adilis\SeoOptimizer\Constants;
 use Adilis\SeoOptimizer\Utils;
@@ -28,6 +32,10 @@ abstract class FormAbstract implements FormInterface
         }
 
         if (\Tools::isSubmit('submit' . $this->getKey())) {
+            if (!\Tools::getValue('token') || \Tools::getValue('token') !== \Tools::getAdminTokenLite('AdminModules')) {
+                \Context::getContext()->controller->errors[] = 'Invalid security token.';
+                return;
+            }
             if (method_exists($this, 'postProcess')) {
                 $this->postProcess();
             }

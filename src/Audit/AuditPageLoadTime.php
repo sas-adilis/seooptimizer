@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Audit;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\CrawlerObserver\PageLoadTimeObserver;
 
 class AuditPageLoadTime implements AuditInterface
@@ -129,5 +133,10 @@ class AuditPageLoadTime implements AuditInterface
     public function getScoreWeight(): int
     {
         return 20;
+    }
+
+    public function requiresIndexablePage(): bool
+    {
+        return false;
     }
 }

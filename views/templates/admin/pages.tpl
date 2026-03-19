@@ -1,5 +1,4 @@
-<div class="seoo-pages" id="seoo-pages">
-    <div class="panel">
+<div class="seoo-pages seoo-screen" id="seoo-pages">
         <div class="seoo-panel-intro">
             <div class="seoo-panel-intro__visual">
                 <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-pages.png" alt="{l s='Pages' mod='seooptimizer'}">
@@ -26,51 +25,7 @@
                         <div class="seoo-report__th seoo-report__th--progress">{l s='Progression' mod='seooptimizer'}</div>
                         <div class="seoo-report__th seoo-report__th--result">{l s='Result' mod='seooptimizer'}</div>
                     </div>
-                    <div id="seoo-full-audit-items">
-                        {if $seoo_full_audit_items|count > 0}
-                            {foreach $seoo_full_audit_items as $type_key => $item}
-                                <div class="seoo-report__row" data-full-audit-item="{$type_key|escape:'htmlall':'UTF-8'}">
-                                    <div class="seoo-report__cell seoo-report__cell--entity">
-                                        <span class="seoo-report__icon"><i class="{$item.icon|escape:'htmlall':'UTF-8'}"></i></span>
-                                        <span class="seoo-report__entity-info">
-                                            <strong class="seoo-report__entity-name">{$item.label|escape:'htmlall':'UTF-8'}</strong>
-                                            <span class="seoo-report__entity-count">{$item.total|escape:'htmlall':'UTF-8'} {l s='pages' mod='seooptimizer'}</span>
-                                        </span>
-                                    </div>
-                                    <div class="seoo-report__cell seoo-report__cell--progress">
-                                        <div class="seoo-report__bar-wrap">
-                                            <div class="progress report__progress-percentage">
-                                                <div class="progress-bar {if $item.percentage == 100}bg-success{elseif $item.percentage > 0}bg-processing{/if}"
-                                                     role="progressbar"
-                                                     aria-valuenow="{$item.percentage|escape:'htmlall':'UTF-8'}"
-                                                     aria-valuemin="0"
-                                                     aria-valuemax="100"
-                                                     style="width: {$item.percentage|escape:'htmlall':'UTF-8'}%">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="seoo-report__status-line">
-                                            <span class="seoo-report__status-label">
-                                                {if $item.status == 'done'}
-                                                    {l s='Done' mod='seooptimizer'}
-                                                {elseif $item.status == 'processing'}
-                                                    {l s='In progress' mod='seooptimizer'}
-                                                {else}
-                                                    {l s='Waiting' mod='seooptimizer'}
-                                                {/if}
-                                            </span>
-                                            <span class="seoo-report__progress-value">{$item.crawled|escape:'htmlall':'UTF-8'} / {$item.total|escape:'htmlall':'UTF-8'}</span>
-                                        </div>
-                                    </div>
-                                    <div class="seoo-report__cell seoo-report__cell--result">
-                                        <span class="seoo-report__badge {if $item.issues_count > 0}seoo-report__badge--danger{else}seoo-report__badge--success{/if}">
-                                            {$item.issues_count|escape:'htmlall':'UTF-8'}
-                                        </span>
-                                    </div>
-                                </div>
-                            {/foreach}
-                        {/if}
-                    </div>
+                    <div id="seoo-full-audit-items"></div>
                 </div>
             </div>
 
@@ -116,11 +71,13 @@
                     <thead>
                         <tr>
                             <th style="width:30px;"></th>
+                            <th class="text-center" style="width:50px;">{l s='Grade' mod='seooptimizer'}</th>
                             <th>{l s='Page' mod='seooptimizer'}</th>
-                            <th class="text-center" style="width:80px;">{l s='Critical' mod='seooptimizer'}</th>
-                            <th class="text-center" style="width:80px;">{l s='Warning' mod='seooptimizer'}</th>
-                            <th class="text-center" style="width:80px;">{l s='Total' mod='seooptimizer'}</th>
-                            <th class="text-right" style="width:120px;">{l s='Actions' mod='seooptimizer'}</th>
+                            <th class="text-center" style="width:70px;">{l s='Score' mod='seooptimizer'}</th>
+                            <th class="text-center" style="width:70px;">{l s='Critical' mod='seooptimizer'}</th>
+                            <th class="text-center" style="width:70px;">{l s='Warning' mod='seooptimizer'}</th>
+                            <th class="text-center" style="width:70px;">{l s='Total' mod='seooptimizer'}</th>
+                            <th class="text-right" style="width:100px;">{l s='Actions' mod='seooptimizer'}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -131,8 +88,14 @@
                                         <i class="icon-chevron-right seoo-pages__chevron"></i>
                                     {/if}
                                 </td>
+                                <td class="text-center">
+                                    <span class="seoo-grade-badge seoo-grade-badge--{$page.grade_color|escape:'htmlall':'UTF-8'}">{$page.grade|escape:'htmlall':'UTF-8'}</span>
+                                </td>
                                 <td class="seoo-pages__url-cell">
                                     <a href="{$page.url|escape:'htmlall':'UTF-8'}" target="_blank" rel="noopener" title="{$page.url|escape:'htmlall':'UTF-8'}">{$page.url|escape:'htmlall':'UTF-8'}</a>
+                                </td>
+                                <td class="text-center">
+                                    <strong>{$page.score|escape:'htmlall':'UTF-8'}</strong>
                                 </td>
                                 <td class="text-center">
                                     {if $page.critical > 0}
@@ -163,7 +126,7 @@
                             </tr>
                             {if $page.total > 0}
                                 <tr class="seoo-pages__detail-row" data-detail-for="{$page.url|escape:'htmlall':'UTF-8'}" style="display:none;">
-                                    <td colspan="6">
+                                    <td colspan="8">
                                         <div class="seoo-pages__issues">
                                             {foreach $page.issues as $issue}
                                                 <div class="seoo-pages__issue seoo-pages__issue--{$issue.severity|escape:'htmlall':'UTF-8'}">
@@ -186,5 +149,4 @@
                 </table>
             {/if}
         </div>
-    </div>
 </div>

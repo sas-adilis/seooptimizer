@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Actions;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class CanonicalUrlGenerate
 {
     const PAGINATION_PARAMS = ['p', 'page'];
@@ -143,8 +147,9 @@ class CanonicalUrlGenerate
             }
 
             if (empty($page['canonical'])) {
+                $currentPath = isset($path) ? $path : parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
                 $page['canonical'] = self::getUrlWithParams(
-                    $context->link->getBaseLink() . ltrim($path, '/'),
+                    $context->link->getBaseLink() . ltrim($currentPath, '/'),
                     []
                 );
             }

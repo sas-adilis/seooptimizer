@@ -1,5 +1,10 @@
 <?php
+
 namespace Adilis\SeoOptimizer\SitemapIndexer;
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
 
 interface IndexerInterface
 {

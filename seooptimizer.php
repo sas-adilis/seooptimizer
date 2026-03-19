@@ -5,6 +5,10 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/vendor/autoload.php';
+require_once dirname(__FILE__) . '/classes/SeoOptimizerIndexationRule.php';
+require_once dirname(__FILE__) . '/classes/SeoOptimizerLog404.php';
+require_once dirname(__FILE__) . '/classes/SeoOptimizerPage.php';
+require_once dirname(__FILE__) . '/classes/SeoOptimizerRedirect.php';
 
 use Adilis\SeoOptimizer\Constants;
 
@@ -23,7 +27,7 @@ class SeoOptimizer extends Module
     {
         $this->name = 'seooptimizer';
         $this->tab = 'seo';
-        $this->version = '1.0.0';
+        $this->version = '1.4.0';
         $this->author = 'Adilis';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -84,6 +88,15 @@ class SeoOptimizer extends Module
             && $this->registerHook('actionSupplierFormBuilderModifier')
             && $this->registerHook('actionOutputHTMLBefore')
             && $this->registerHook('moduleRoutes')
+            && $this->registerHook('displayAdminProductsSeoStepBottom')
+            && $this->registerHook('actionProductUpdate')
+            && $this->registerHook('actionCategoryFormBuilderModifier')
+            && $this->registerHook('actionAfterUpdateCategoryFormHandler')
+            && $this->registerHook('actionAfterCreateCategoryFormHandler')
+            && $this->registerHook('actionManufacturerFormBuilderModifier')
+            && $this->registerHook('actionAfterUpdateManufacturerFormHandler')
+            && $this->registerHook('actionAfterCreateManufacturerFormHandler')
+            && $this->registerHook('displayBackOfficeCategory')
             ;
     }
 
@@ -114,8 +127,9 @@ class SeoOptimizer extends Module
             ]);
         }
 
-        $this->context->controller->addJS($this->_path . 'views/js/supplier-form.js');
-
+        if (Tools::getValue('controller') === 'AdminSuppliers') {
+            $this->context->controller->addJS($this->_path . 'views/js/supplier-form.js');
+        }
     }
 
     /**
@@ -171,6 +185,7 @@ class SeoOptimizer extends Module
             new Adilis\SeoOptimizer\Audit\AuditMetaTags(),
             new Adilis\SeoOptimizer\Audit\AuditInternalLinks(),
             new Adilis\SeoOptimizer\Audit\AuditTextRatio(),
+            new Adilis\SeoOptimizer\Audit\AuditKeywordCheck(),
         ];
         foreach ($audits as $audit) {
             (new Adilis\SeoOptimizer\Audit\AuditRunner($audit))->process();
@@ -193,13 +208,6 @@ class SeoOptimizer extends Module
             }
         }
 
-        // Full audit state for progress table
-        $fullAuditState = Adilis\SeoOptimizer\Pages\FullAuditRunner::getState();
-        $fullAuditItems = [];
-        if ($fullAuditState && isset($fullAuditState['items'])) {
-            $fullAuditItems = $fullAuditState['items'];
-        }
-
         // Assign pages variables first so pages.tpl can be rendered
         $this->context->smarty->assign([
             'seoo_module_path' => $this->_path,
@@ -210,8 +218,6 @@ class SeoOptimizer extends Module
             'seoo_pages_critical' => $totalCritical,
             'seoo_pages_warnings' => $totalWarnings,
             'seoo_pages_clean' => count($pagesData) - $pagesWithIssues,
-            'seoo_full_audit_items' => $fullAuditItems,
-            'seoo_full_audit_complete' => $fullAuditState && isset($fullAuditState['status']) && $fullAuditState['status'] === 'complete',
         ]);
 
         $this->context->smarty->assign([

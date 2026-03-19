@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Actions;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Content\Form\FormSocialConfiguration;
 use Adilis\SeoOptimizer\Utils;
 use PrestaShop\PrestaShop\Adapter\Validate;

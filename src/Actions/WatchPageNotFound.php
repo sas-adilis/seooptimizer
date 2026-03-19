@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Actions;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class WatchPageNotFound
 {
     public function run()

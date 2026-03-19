@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\SitemapIndexer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class MetaIndexer implements IndexerInterface
 {
     public static function getType(): string
@@ -17,7 +21,7 @@ class MetaIndexer implements IndexerInterface
         $context = \Context::getContext();
         $links = [];
         $query = new \DbQuery();
-        $query->select('m.page, ml.url_rewrite');
+        $query->select('m.id_meta, m.page, ml.url_rewrite');
         $query->from('meta', 'm');
         $query->innerJoin('meta_lang', 'ml', 'm.id_meta = ml.id_meta AND ml.id_shop = ' . $context->shop->id . ' AND ml.id_lang = ' . $context->language->id);
         $query->where('m.configurable = 1');
@@ -32,6 +36,7 @@ class MetaIndexer implements IndexerInterface
         foreach ($metas as $meta) {
             try {
                 $links[] = [
+                    'id_entity' => (int) $meta['id_meta'],
                     'url' => $context->link->getPageLink($meta['page']),
                     'date_updated' => null,
                     'frequency' => \Configuration::get('SEOO_SITEMAP_META_FREQUENCY'),

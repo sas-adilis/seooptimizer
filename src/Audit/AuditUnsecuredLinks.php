@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Audit;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\CrawlerObserver\UnsecuredLinksAuditObserver;
 
 class AuditUnsecuredLinks implements AuditInterface
@@ -102,5 +106,10 @@ class AuditUnsecuredLinks implements AuditInterface
     public function getScoreWeight(): int
     {
         return 15;
+    }
+
+    public function requiresIndexablePage(): bool
+    {
+        return false;
     }
 }

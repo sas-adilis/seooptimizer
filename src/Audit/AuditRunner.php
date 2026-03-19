@@ -2,10 +2,15 @@
 
 namespace Adilis\SeoOptimizer\Audit;
 
-use Adilis\SeoOptimizer\CacheManager;
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\CrawlerObserver\CrawlerObserverInterface;
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
 use Adilis\SeoOptimizer\SitemapIndexer\SitemapIndexer;
+use Adilis\SeoOptimizer\Storage\AuditResultStorage;
+use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
 class AuditRunner
 {
@@ -20,7 +25,7 @@ class AuditRunner
     /**
      * @var array<string, string>
      */
-    private static $typeLabels = [
+    public static $typeLabels = [
         'product' => 'Products',
         'category' => 'Categories',
         'cms' => 'CMS pages',
@@ -34,7 +39,7 @@ class AuditRunner
     /**
      * @var array<string, string>
      */
-    private static $typeIcons = [
+    public static $typeIcons = [
         'product' => 'icon-tag',
         'category' => 'icon-th-large',
         'cms' => 'icon-file-text',
@@ -48,11 +53,6 @@ class AuditRunner
     public function __construct(AuditInterface $audit)
     {
         $this->audit = $audit;
-    }
-
-    public function getCacheKey(): string
-    {
-        return 'audit_' . $this->audit->getKey();
     }
 
     /**
@@ -79,36 +79,41 @@ class AuditRunner
 
     public function getContent(): string
     {
-        $state = CacheManager::get($this->getCacheKey());
+        $auditKey = $this->audit->getKey();
+        $run = AuditRunStorage::get($auditKey);
 
         $totalPages = 0;
         $crawledPages = 0;
-        $results = [];
-        $items = [];
-        $customKpis = $state['custom_kpis'] ?? [];
+        $customKpis = [];
 
-        if ($state && isset($state['status'])) {
-            $totalPages = $state['total_urls'];
-            $crawledPages = $state['crawled'];
-            $results = $state['results'] ?? [];
-            $items = $state['items'] ?? [];
+        if ($run) {
+            $totalPages = $run['total_urls'];
+            $crawledPages = $run['crawled'];
+            $customKpis = $run['custom_kpis'];
         }
 
-        // Build KPI values
-        $kpiDefinitions = $this->audit->getKpiDefinitions();
-        $kpis = $this->computeKpis($kpiDefinitions, $results, $crawledPages, $totalPages, $customKpis);
+        $results = AuditResultStorage::getByAuditKey($auditKey);
 
-        // Compute score for this audit
+        // Build KPI values
+        $kpis = $this->computeKpis(
+            $this->audit->getKpiDefinitions(),
+            $results,
+            $crawledPages,
+            $totalPages,
+            $customKpis
+        );
+
+        // Compute score
         $scoreCalculator = new SeoScoreCalculator();
         $auditScore = $scoreCalculator->computeForAudit($this->audit);
 
-        // Generate HelperList for results
+        // Generate HelperList
         $resultList = new AuditResultList($this->audit);
         $resultListHtml = $resultList->render();
 
         $context = \Context::getContext();
         $context->smarty->assign([
-            'audit_key' => $this->audit->getKey(),
+            'audit_key' => $auditKey,
             'audit_title' => $this->audit->getTitle(),
             'audit_description' => $this->audit->getDescription(),
             'audit_icon' => $this->audit->getIcon(),
@@ -118,10 +123,10 @@ class AuditRunner
             'audit_crawled_pages' => $crawledPages,
             'audit_results_count' => count($results),
             'audit_result_list_html' => $resultListHtml,
-            'audit_items' => $items,
+            'audit_items' => [],
             'audit_kpis' => $kpis,
             'audit_score' => $auditScore,
-            'audit_is_complete' => isset($state['status']) && $state['status'] === 'complete',
+            'audit_is_complete' => $run && $run['status'] === 'complete',
             'audit_percentage' => $totalPages > 0 ? round(($crawledPages / $totalPages) * 100) : 0,
         ]);
 
@@ -132,9 +137,9 @@ class AuditRunner
 
     private function ajaxProcessExportCsv()
     {
-        $state = CacheManager::get($this->getCacheKey());
+        $results = AuditResultStorage::getByAuditKey($this->audit->getKey());
 
-        if (!$state || empty($state['results'])) {
+        if (empty($results)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
@@ -150,15 +155,13 @@ class AuditRunner
         $output = fopen('php://output', 'w');
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-        // Header row
         $headerRow = ['Severity', 'URL'];
         foreach ($columns as $colLabel) {
             $headerRow[] = $colLabel;
         }
         fputcsv($output, $headerRow, ';');
 
-        // Data rows
-        foreach ($state['results'] as $row) {
+        foreach ($results as $row) {
             $csvRow = [
                 isset($row['severity']) ? $row['severity'] : '',
                 isset($row['url']) ? $row['url'] : '',
@@ -178,10 +181,11 @@ class AuditRunner
      */
     private function ajaxProcessRun(bool $firstProcess)
     {
+        $auditKey = $this->audit->getKey();
+
         if ($firstProcess) {
             $urlsByType = $this->collectAllUrls();
 
-            // Build flat url list with type info
             $urls = [];
             $items = [];
             foreach ($urlsByType as $type => $typeUrls) {
@@ -195,61 +199,64 @@ class AuditRunner
                     'percentage' => 0,
                     'status' => 'waiting',
                 ];
-                foreach ($typeUrls as $url) {
-                    $urls[] = ['url' => $url, 'type' => $type];
+                foreach ($typeUrls as $urlData) {
+                    $urls[] = [
+                        'url' => $urlData['url'],
+                        'type' => $type,
+                        'id_entity' => $urlData['id_entity'] ?? 0,
+                    ];
                 }
             }
+
+            // Seed pages table + clear old results
+            \SeoOptimizerPage::seedFromUrls($urls);
+            AuditResultStorage::deleteByAuditKey($auditKey);
 
             $this->state = [
                 'status' => 'running',
                 'urls' => $urls,
                 'total_urls' => count($urls),
                 'crawled' => 0,
-                'results' => [],
                 'items' => $items,
                 'custom_kpis' => [],
-                'date' => date('Y-m-d H:i:s'),
             ];
-            CacheManager::write($this->getCacheKey(), $this->state);
+
+            AuditRunStorage::upsert($auditKey, $this->state);
             $this->returnJson('success');
         }
 
-        $this->state = CacheManager::get($this->getCacheKey());
+        $run = AuditRunStorage::get($auditKey);
 
-        if (!$this->state || $this->state['status'] === 'complete') {
+        if (!$run || $run['status'] === 'complete') {
+            $this->state = $run ?: ['total_urls' => 0, 'crawled' => 0, 'items' => [], 'custom_kpis' => []];
             $this->returnJson('done');
         }
 
+        $this->state = $run;
         $offset = $this->state['crawled'];
         $batch = array_slice($this->state['urls'], $offset, self::URLS_PER_BATCH);
 
         if (empty($batch)) {
             $this->state['status'] = 'complete';
-            // Mark all items as done
             foreach ($this->state['items'] as &$item) {
                 $item['status'] = 'done';
                 $item['percentage'] = 100;
             }
             unset($item);
-            CacheManager::write($this->getCacheKey(), $this->state);
+            AuditRunStorage::upsert($auditKey, $this->state);
+            \SeoOptimizerPage::rebuildAllCounters();
             $this->returnJson('done');
         }
 
         // Create observers
         $observers = [];
         foreach ($this->audit->getObserverClasses() as $observerClass) {
-            /** @var CrawlerObserverInterface $observer */
-            $observer = new $observerClass();
-            $observers[] = $observer;
+            $observers[] = new $observerClass();
         }
 
-        // Track which types are in this batch
-        $typesInBatch = [];
-        foreach ($batch as $entry) {
-            $typesInBatch[$entry['type']] = true;
-        }
+        $requiresIndexable = $this->audit->requiresIndexablePage();
 
-        // Crawl batch using cURL
+        // Crawl batch
         foreach ($batch as $entry) {
             $url = $entry['url'];
             $type = $entry['type'];
@@ -263,6 +270,19 @@ class AuditRunner
             $content = $this->fetchUrl($url);
 
             if ($content !== false) {
+                // Skip non-indexable pages for SEO content audits
+                if ($requiresIndexable && !self::isPageIndexable($content)) {
+                    // Still count as crawled but don't analyze
+                    if (isset($this->state['items'][$type])) {
+                        $this->state['items'][$type]['crawled']++;
+                        $total = $this->state['items'][$type]['total'];
+                        $crawled = $this->state['items'][$type]['crawled'];
+                        $this->state['items'][$type]['percentage'] = $total > 0 ? round(($crawled / $total) * 100) : 0;
+                        $this->state['items'][$type]['status'] = $crawled >= $total ? 'done' : 'processing';
+                    }
+                    continue;
+                }
+
                 foreach ($observers as $observer) {
                     if (method_exists($observer, 'observeAfterRequest')) {
                         $observer->observeAfterRequest($url, $content);
@@ -270,7 +290,6 @@ class AuditRunner
                 }
             }
 
-            // Update per-type progress
             if (isset($this->state['items'][$type])) {
                 $this->state['items'][$type]['crawled']++;
                 $total = $this->state['items'][$type]['total'];
@@ -280,110 +299,28 @@ class AuditRunner
             }
         }
 
-        // Collect observer results and custom KPI data
+        // Collect results and KPIs
         $observerResults = [];
         foreach ($observers as $observer) {
             $observerResults[$observer->getKey()] = $observer->getResults();
-
-            // Collect custom KPIs from observers that expose them
-            if (method_exists($observer, 'getLinksChecked')) {
-                if (!isset($this->state['custom_kpis']['links_checked'])) {
-                    $this->state['custom_kpis']['links_checked'] = 0;
-                }
-                $this->state['custom_kpis']['links_checked'] += $observer->getLinksChecked();
-            }
-
-            // Page load time KPIs
-            if (method_exists($observer, 'getGoodCount')) {
-                if (!isset($this->state['custom_kpis']['good_count'])) {
-                    $this->state['custom_kpis']['good_count'] = 0;
-                }
-                $this->state['custom_kpis']['good_count'] += $observer->getGoodCount();
-            }
-            if (method_exists($observer, 'getMediumCount')) {
-                if (!isset($this->state['custom_kpis']['medium_count'])) {
-                    $this->state['custom_kpis']['medium_count'] = 0;
-                }
-                $this->state['custom_kpis']['medium_count'] += $observer->getMediumCount();
-            }
-            if (method_exists($observer, 'getSlowCount')) {
-                if (!isset($this->state['custom_kpis']['slow_count'])) {
-                    $this->state['custom_kpis']['slow_count'] = 0;
-                }
-                $this->state['custom_kpis']['slow_count'] += $observer->getSlowCount();
-            }
-
-            // Page weight KPIs
-            if (method_exists($observer, 'getLightCount')) {
-                if (!isset($this->state['custom_kpis']['light_count'])) {
-                    $this->state['custom_kpis']['light_count'] = 0;
-                }
-                $this->state['custom_kpis']['light_count'] += $observer->getLightCount();
-            }
-            if (method_exists($observer, 'getModerateCount')) {
-                if (!isset($this->state['custom_kpis']['moderate_count'])) {
-                    $this->state['custom_kpis']['moderate_count'] = 0;
-                }
-                $this->state['custom_kpis']['moderate_count'] += $observer->getModerateCount();
-            }
-            if (method_exists($observer, 'getHeavyCount')) {
-                if (!isset($this->state['custom_kpis']['heavy_count'])) {
-                    $this->state['custom_kpis']['heavy_count'] = 0;
-                }
-                $this->state['custom_kpis']['heavy_count'] += $observer->getHeavyCount();
-            }
-
-            // Text ratio KPIs
-            if (method_exists($observer, 'getLowCount')) {
-                if (!isset($this->state['custom_kpis']['low_count'])) {
-                    $this->state['custom_kpis']['low_count'] = 0;
-                }
-                $this->state['custom_kpis']['low_count'] += $observer->getLowCount();
-            }
-
-            // Internal links KPIs
-            if (method_exists($observer, 'getNoOutgoingCount')) {
-                if (!isset($this->state['custom_kpis']['no_outgoing_count'])) {
-                    $this->state['custom_kpis']['no_outgoing_count'] = 0;
-                }
-                $this->state['custom_kpis']['no_outgoing_count'] += $observer->getNoOutgoingCount();
-            }
-            if (method_exists($observer, 'getFewOutgoingCount')) {
-                if (!isset($this->state['custom_kpis']['few_outgoing_count'])) {
-                    $this->state['custom_kpis']['few_outgoing_count'] = 0;
-                }
-                $this->state['custom_kpis']['few_outgoing_count'] += $observer->getFewOutgoingCount();
-            }
-
-            // Meta tags KPIs
-            if (method_exists($observer, 'getWarningCount')) {
-                if (!isset($this->state['custom_kpis']['warning_count'])) {
-                    $this->state['custom_kpis']['warning_count'] = 0;
-                }
-                $this->state['custom_kpis']['warning_count'] += $observer->getWarningCount();
-            }
-            if (method_exists($observer, 'getCriticalCount')) {
-                if (!isset($this->state['custom_kpis']['critical_count'])) {
-                    $this->state['custom_kpis']['critical_count'] = 0;
-                }
-                $this->state['custom_kpis']['critical_count'] += $observer->getCriticalCount();
-            }
+            $this->collectCustomKpis($observer);
         }
 
         $newResults = $this->audit->formatResults($observerResults);
 
-        // Count issues per type from new results
+        // Count issues per type
         foreach ($newResults as $row) {
-            // Match URL back to type
             foreach ($batch as $entry) {
-                if ($entry['url'] === $row['url'] && isset($this->state['items'][$entry['type']])) {
+                if ($entry['url'] === ($row['url'] ?? '') && isset($this->state['items'][$entry['type']])) {
                     $this->state['items'][$entry['type']]['issues_count']++;
                     break;
                 }
             }
         }
 
-        $this->state['results'] = array_merge($this->state['results'], $newResults);
+        // Store results in DB
+        AuditResultStorage::insertBatch($auditKey, $newResults);
+
         $this->state['crawled'] += count($batch);
 
         if ($this->state['crawled'] >= $this->state['total_urls']) {
@@ -395,16 +332,85 @@ class AuditRunner
             unset($item);
         }
 
-        CacheManager::write($this->getCacheKey(), $this->state);
+        AuditRunStorage::upsert($auditKey, $this->state);
+
+        if ($this->state['status'] === 'complete') {
+            \SeoOptimizerPage::rebuildAllCounters();
+        }
+
         $this->returnJson($this->state['status'] === 'complete' ? 'done' : 'success');
     }
 
     /**
-     * Collect all URLs grouped by type.
-     *
+     * @param object $observer
+     */
+    private function collectCustomKpis($observer)
+    {
+        $methods = [
+            'getLinksChecked' => 'links_checked',
+            'getGoodCount' => 'good_count',
+            'getMediumCount' => 'medium_count',
+            'getSlowCount' => 'slow_count',
+            'getLightCount' => 'light_count',
+            'getModerateCount' => 'moderate_count',
+            'getHeavyCount' => 'heavy_count',
+            'getWarningCount' => 'warning_count',
+            'getCriticalCount' => 'critical_count',
+            'getNoOutgoingCount' => 'no_outgoing_count',
+            'getFewOutgoingCount' => 'few_outgoing_count',
+            'getLowCount' => 'low_count',
+            'getPagesWithKeywords' => 'pages_with_keywords',
+            'getPagesWithoutKeywords' => 'pages_without_keywords',
+            'getTotalKeywordsChecked' => 'total_keywords_checked',
+        ];
+
+        foreach ($methods as $method => $kpiKey) {
+            if (method_exists($observer, $method)) {
+                if (!isset($this->state['custom_kpis'][$kpiKey])) {
+                    $this->state['custom_kpis'][$kpiKey] = 0;
+                }
+                $this->state['custom_kpis'][$kpiKey] += $observer->$method();
+            }
+        }
+    }
+
+    /**
      * @return array<string, array<string>>
      */
-    private function collectAllUrls(): array
+    /**
+     * Check if a page is indexable by search engines.
+     * Detects meta robots noindex/none.
+     *
+     * @param string $content
+     * @return bool
+     */
+    public static function isPageIndexable(string $content): bool
+    {
+        // Check <meta name="robots" content="noindex...">
+        if (preg_match('/<meta[^>]+name=["\']robots["\'][^>]+content=["\']([^"\']*)["\'][^>]*>/is', $content, $m)) {
+            $directives = strtolower($m[1]);
+            if (strpos($directives, 'noindex') !== false || strpos($directives, 'none') !== false) {
+                return false;
+            }
+        }
+        // Reversed attribute order
+        if (preg_match('/<meta[^>]+content=["\']([^"\']*)["\'][^>]+name=["\']robots["\'][^>]*>/is', $content, $m)) {
+            $directives = strtolower($m[1]);
+            if (strpos($directives, 'noindex') !== false || strpos($directives, 'none') !== false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Collect all URLs grouped by type.
+     * Each entry has 'url' and optionally 'id_entity'.
+     *
+     * @return array<string, array<array{url: string, id_entity: int}>>
+     */
+    public static function collectAllUrls(): array
     {
         $urlsByType = [];
         $types = SitemapIndexer::getAllPagesTypes();
@@ -416,19 +422,22 @@ class AuditRunner
             }
 
             $urlsByType[$type] = [];
+            $seen = [];
             $perPage = (int) \Configuration::get('SEOO_SITEMAP_PER_PAGE');
             $pages = $perPage > 0 ? (int) ceil($count / $perPage) : 1;
 
             for ($page = 1; $page <= $pages; $page++) {
                 $pageData = SitemapIndexer::getPagesByType($type, $page);
                 foreach ($pageData as $item) {
-                    if (!empty($item['url'])) {
-                        $urlsByType[$type][] = $item['url'];
+                    if (!empty($item['url']) && !isset($seen[$item['url']])) {
+                        $seen[$item['url']] = true;
+                        $urlsByType[$type][] = [
+                            'url' => $item['url'],
+                            'id_entity' => isset($item['id_entity']) ? (int) $item['id_entity'] : 0,
+                        ];
                     }
                 }
             }
-
-            $urlsByType[$type] = array_unique($urlsByType[$type]);
         }
 
         return $urlsByType;
@@ -466,7 +475,7 @@ class AuditRunner
      * @param array $customKpis
      * @return array
      */
-    private function computeKpis(array $kpiDefinitions, array $results, int $crawled, int $totalUrls, array $customKpis = []): array
+    public function computeKpis(array $kpiDefinitions, array $results, int $crawled, int $totalUrls, array $customKpis = []): array
     {
         $kpis = [];
 
@@ -483,14 +492,12 @@ class AuditRunner
                 case 'crawled':
                     $kpi['value'] = $crawled . ' / ' . $totalUrls;
                     break;
-
                 case 'total_issues':
                     $kpi['value'] = count($results);
                     if (!empty($def['danger_if_positive']) && count($results) > 0) {
                         $kpi['danger'] = true;
                     }
                     break;
-
                 case 'count_severity':
                     $count = 0;
                     $severity = $def['value'];
@@ -507,7 +514,6 @@ class AuditRunner
                         $kpi['warning'] = true;
                     }
                     break;
-
                 case 'custom':
                     $kpi['value'] = isset($customKpis[$def['key']]) ? $customKpis[$def['key']] : 0;
                     if (!empty($def['danger_if_positive']) && $kpi['value'] > 0) {
@@ -530,12 +536,12 @@ class AuditRunner
      */
     private function returnJson(string $status)
     {
-        $kpiDefinitions = $this->audit->getKpiDefinitions();
+        $results = AuditResultStorage::getByAuditKey($this->audit->getKey());
         $kpis = $this->computeKpis(
-            $kpiDefinitions,
-            $this->state['results'],
-            $this->state['crawled'],
-            $this->state['total_urls'],
+            $this->audit->getKpiDefinitions(),
+            $results,
+            $this->state['crawled'] ?? 0,
+            $this->state['total_urls'] ?? 0,
             $this->state['custom_kpis'] ?? []
         );
 
@@ -549,13 +555,13 @@ class AuditRunner
             'status' => $status,
             'audit' => [
                 'key' => $this->audit->getKey(),
-                'total_urls' => $this->state['total_urls'],
-                'crawled' => $this->state['crawled'],
-                'percentage' => $this->state['total_urls'] > 0
-                    ? round(($this->state['crawled'] / $this->state['total_urls']) * 100)
+                'total_urls' => $this->state['total_urls'] ?? 0,
+                'crawled' => $this->state['crawled'] ?? 0,
+                'percentage' => ($this->state['total_urls'] ?? 0) > 0
+                    ? round((($this->state['crawled'] ?? 0) / $this->state['total_urls']) * 100)
                     : 0,
                 'kpis' => $kpis,
-                'items' => $this->state['items'],
+                'items' => $this->state['items'] ?? [],
                 'score' => $auditScore,
             ],
         ]);

@@ -35,6 +35,6 @@ class TranslateHelper
      */
     public function l($string, $source = '', $locale = null)
     {
-        return \Translate::getModuleTranslation('seeoptimizer', $string, $source, null, false, $locale);
+        return \Translate::getModuleTranslation('seooptimizer', $string, $source, null, false, $locale);
     }
 }

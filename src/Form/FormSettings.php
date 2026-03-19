@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Form;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Utils;
 
 class FormSettings extends FormAbstract implements FormInterface

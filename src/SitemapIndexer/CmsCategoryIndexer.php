@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\SitemapIndexer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class CmsCategoryIndexer implements IndexerInterface
 {
     public static function getType(): string
@@ -29,6 +33,7 @@ class CmsCategoryIndexer implements IndexerInterface
 
         foreach ($categories as $category) {
             $links[] = [
+                'id_entity' => (int) $category['id_cms_category'],
                 'url' => $context->link->getCMSCategoryLink($category, $category['link_rewrite']),
                 'date_updated' => null,
                 'frequency' => \Configuration::get('SEOO_SITEMAP_CMS_FREQUENCY'),

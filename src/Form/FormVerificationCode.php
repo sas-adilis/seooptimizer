@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\Form;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 use Adilis\SeoOptimizer\Utils;
 
 class FormVerificationCode extends FormAbstract implements FormInterface
@@ -56,7 +60,7 @@ class FormVerificationCode extends FormAbstract implements FormInterface
      */
     public function postProcess()
     {
-        \Configuration::updateValue('SEOO_REDIRECT_INACTIVE_PRODUCT', \Tools::getValue('SEOO_REDIRECT_INACTIVE_PRODUCT'));
+        \Configuration::updateValue('SEOO_CODE_VERIFICATION_GOOGLE', \Tools::getValue('SEOO_CODE_VERIFICATION_GOOGLE'));
         \Configuration::updateValue('SEOO_CODE_VERIFICATION_BING', \Tools::getValue('SEOO_CODE_VERIFICATION_BING'));
         \Configuration::updateValue('SEOO_CODE_VERIFICATION_PINTEREST', \Tools::getValue('SEOO_CODE_VERIFICATION_PINTEREST'));
         \Tools::redirectAdmin(Utils::getConfigFormUrl(4));

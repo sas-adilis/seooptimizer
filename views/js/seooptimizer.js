@@ -559,42 +559,9 @@ function runAuditBatch(action, firstProcess, $audit, $btn) {
                 });
             }
 
-            // Update per-type rows
+            // Render/update per-type rows
             if (audit.items) {
-                let doneTypes = 0;
-                let totalTypes = 0;
-                $.each(audit.items, function(typeKey, item) {
-                    totalTypes++;
-                    if (item.status === 'done') doneTypes++;
-
-                    const $row = $audit.find('[data-audit-item="' + typeKey + '"]');
-                    if (!$row.length) return;
-
-                    // Progress bar
-                    const $bar = $row.find('.progress-bar');
-                    $bar.css('width', item.percentage + '%')
-                        .attr('aria-valuenow', item.percentage);
-
-                    if (item.status === 'done') {
-                        $bar.removeClass('bg-processing progress-bar-striped progress-bar-animated').addClass('bg-success');
-                    } else if (item.status === 'processing') {
-                        $bar.addClass('bg-processing progress-bar-striped progress-bar-animated').removeClass('bg-success');
-                    }
-
-                    // Status label
-                    const $statusLabel = $row.find('.seoo-report__status-label');
-                    if (item.status === 'done') $statusLabel.text('Done');
-                    else if (item.status === 'processing') $statusLabel.text('In progress');
-
-                    // Progress fraction
-                    $row.find('.seoo-report__progress-value').text(item.crawled + ' / ' + item.total);
-
-                    // Issues badge
-                    const $badge = $row.find('.seoo-report__badge');
-                    $badge.text(item.issues_count);
-                    $badge.toggleClass('seoo-report__badge--danger', item.issues_count > 0);
-                    $badge.toggleClass('seoo-report__badge--success', item.issues_count === 0);
-                });
+                renderAuditItems(audit.items, $audit);
             }
 
             if (result.status === 'success') {
@@ -607,6 +574,63 @@ function runAuditBatch(action, firstProcess, $audit, $btn) {
         },
         error: function() {
             $btn.prop('disabled', false).html('<i class="process-icon-search"></i> Start audit');
+        }
+    });
+}
+
+function renderAuditItems(items, $container) {
+    var $table = $container.find('.seoo-audit__progress-table, .seoo-report__table').first();
+
+    $.each(items, function(typeKey, item) {
+        var $row = $table.find('[data-audit-item="' + typeKey + '"]');
+
+        if (!$row.length) {
+            // Create row
+            var barClass = item.percentage === 100 ? 'bg-success' : item.percentage > 0 ? 'bg-processing progress-bar-striped progress-bar-animated' : '';
+            var statusText = item.status === 'done' ? 'Done' : item.status === 'processing' ? 'In progress' : 'Waiting';
+            var badgeClass = item.issues_count > 0 ? 'seoo-report__badge--danger' : 'seoo-report__badge--success';
+
+            var html = '<div class="seoo-report__row" data-audit-item="' + typeKey + '">'
+                + '<div class="seoo-report__cell seoo-report__cell--entity">'
+                + '<span class="seoo-report__icon"><i class="' + item.icon + '"></i></span>'
+                + '<span class="seoo-report__entity-info">'
+                + '<strong class="seoo-report__entity-name">' + item.label + '</strong>'
+                + '<span class="seoo-report__entity-count">' + item.total + ' pages</span>'
+                + '</span></div>'
+                + '<div class="seoo-report__cell seoo-report__cell--progress">'
+                + '<div class="seoo-report__bar-wrap"><div class="progress report__progress-percentage">'
+                + '<div class="progress-bar ' + barClass + '" role="progressbar" aria-valuenow="' + item.percentage + '" aria-valuemin="0" aria-valuemax="100" style="width:' + item.percentage + '%"></div>'
+                + '</div></div>'
+                + '<div class="seoo-report__status-line">'
+                + '<span class="seoo-report__status-label">' + statusText + '</span>'
+                + '<span class="seoo-report__progress-value">' + item.crawled + ' / ' + item.total + '</span>'
+                + '</div></div>'
+                + '<div class="seoo-report__cell seoo-report__cell--result">'
+                + '<span class="seoo-report__badge ' + badgeClass + '">' + item.issues_count + '</span>'
+                + '</div></div>';
+
+            $table.append(html);
+        } else {
+            // Update existing row
+            var $bar = $row.find('.progress-bar');
+            $bar.css('width', item.percentage + '%').attr('aria-valuenow', item.percentage);
+
+            if (item.status === 'done') {
+                $bar.removeClass('bg-processing progress-bar-striped progress-bar-animated').addClass('bg-success');
+            } else if (item.status === 'processing') {
+                $bar.addClass('bg-processing progress-bar-striped progress-bar-animated').removeClass('bg-success');
+            }
+
+            var $statusLabel = $row.find('.seoo-report__status-label');
+            if (item.status === 'done') $statusLabel.text('Done');
+            else if (item.status === 'processing') $statusLabel.text('In progress');
+
+            $row.find('.seoo-report__progress-value').text(item.crawled + ' / ' + item.total);
+
+            var $badge = $row.find('.seoo-report__badge');
+            $badge.text(item.issues_count);
+            $badge.toggleClass('seoo-report__badge--danger', item.issues_count > 0);
+            $badge.toggleClass('seoo-report__badge--success', item.issues_count === 0);
         }
     });
 }
@@ -647,7 +671,7 @@ function initFullAudit() {
 
                 // Render/update items
                 if (audit.items) {
-                    renderFullAuditItems(audit.items);
+                    renderAuditItems(audit.items, $panel);
                 }
 
                 if (result.status === 'success') {
@@ -666,39 +690,6 @@ function initFullAudit() {
                 resetBtn();
             }
         });
-    }
-
-    function renderFullAuditItems(items) {
-        var html = '';
-        $.each(items, function(typeKey, item) {
-            html += '<div class="seoo-report__row" data-full-audit-item="' + typeKey + '">'
-                + '<div class="seoo-report__cell seoo-report__cell--entity">'
-                + '<span class="seoo-report__icon"><i class="' + item.icon + '"></i></span>'
-                + '<span class="seoo-report__entity-info">'
-                + '<strong class="seoo-report__entity-name">' + item.label + '</strong>'
-                + '<span class="seoo-report__entity-count">' + item.total + ' pages</span>'
-                + '</span>'
-                + '</div>'
-                + '<div class="seoo-report__cell seoo-report__cell--progress">'
-                + '<div class="seoo-report__bar-wrap">'
-                + '<div class="progress report__progress-percentage">'
-                + '<div class="progress-bar ' + (item.percentage === 100 ? 'bg-success' : item.percentage > 0 ? 'bg-processing progress-bar-striped progress-bar-animated' : '') + '"'
-                + ' role="progressbar" aria-valuenow="' + item.percentage + '" aria-valuemin="0" aria-valuemax="100"'
-                + ' style="width:' + item.percentage + '%"></div>'
-                + '</div></div>'
-                + '<div class="seoo-report__status-line">'
-                + '<span class="seoo-report__status-label">' + (item.status === 'done' ? 'Done' : item.status === 'processing' ? 'In progress' : 'Waiting') + '</span>'
-                + '<span class="seoo-report__progress-value">' + item.crawled + ' / ' + item.total + '</span>'
-                + '</div>'
-                + '</div>'
-                + '<div class="seoo-report__cell seoo-report__cell--result">'
-                + '<span class="seoo-report__badge ' + (item.issues_count > 0 ? 'seoo-report__badge--danger' : 'seoo-report__badge--success') + '">'
-                + item.issues_count
-                + '</span>'
-                + '</div>'
-                + '</div>';
-        });
-        $itemsContainer.html(html);
     }
 
     function resetBtn() {

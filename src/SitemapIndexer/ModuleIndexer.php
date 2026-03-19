@@ -2,6 +2,10 @@
 
 namespace Adilis\SeoOptimizer\SitemapIndexer;
 
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class ModuleIndexer implements IndexerInterface
 {
 
@@ -42,6 +46,7 @@ class ModuleIndexer implements IndexerInterface
             }
             foreach ($module_links as $link) {
                 $links[] = [
+                    'id_entity' => 0,
                     'url' => $link['link'],
                     'date_updated' => null,
                     'frequency' => \Configuration::get('SEOO_SITEMAP_DEFAULT_FREQUENCY'),
