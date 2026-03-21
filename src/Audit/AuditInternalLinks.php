@@ -29,7 +29,7 @@ class AuditInternalLinks implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-link';
+        return 'link';
     }
 
     public function getVisual(): string

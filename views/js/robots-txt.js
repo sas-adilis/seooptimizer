@@ -1,46 +1,51 @@
-(function() {
+(function($) {
     if (typeof SeoOptimizerRobots === 'undefined') return;
 
     var config = SeoOptimizerRobots;
     var presets = config.presets;
     var i18n = config.i18n;
+    var initialized = false;
 
-    for (var key in presets) {
-        if (presets.hasOwnProperty(key)) {
-            presets[key] = presets[key].replace(/__SHOP_URL__/g, config.shopUrl);
-        }
-    }
-
-    // Preset selection
-    var presetCards = document.querySelectorAll('.seoo-robots__preset');
-    presetCards.forEach(function(card) {
-        card.addEventListener('click', function() {
-            var presetKey = card.getAttribute('data-preset');
-            if (!presets[presetKey]) return;
-
-            presetCards.forEach(function(c) { c.classList.remove('seoo-robots__preset--active'); });
-            card.classList.add('seoo-robots__preset--active');
-
-            document.getElementById('seooRobotsEditor').value = presets[presetKey];
-            validateRobots();
-        });
+    $.each(presets, function(key, val) {
+        presets[key] = val.replace(/__SHOP_URL__/g, config.shopUrl);
     });
 
-    // Validation
+    function init() {
+        if (initialized) return;
+        var $editor = $('#seooRobotsEditor');
+        if (!$editor.length) return;
+        initialized = true;
+
+        // Preset selection
+        $(document).on('click', '.seoo-robots__preset', function() {
+            var presetKey = $(this).data('preset');
+            if (!presets[presetKey]) return;
+
+            $('.seoo-robots__preset').removeClass('seoo-robots__preset--active');
+            $(this).addClass('seoo-robots__preset--active');
+
+            $editor.val(presets[presetKey]);
+            validateRobots();
+        });
+
+        // URL Tester
+        $(document).on('click', '#seooRobotsTestBtn', testUrl);
+        $(document).on('keypress', '#seooRobotsTestUrl', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); testUrl(); }
+        });
+
+        $editor.on('input', validateRobots);
+        validateRobots();
+    }
+
     function validateRobots() {
-        var content = document.getElementById('seooRobotsEditor').value;
+        var content = $('#seooRobotsEditor').val();
         var items = [];
         var level = 'ok';
 
         if (/^Disallow:\s*\/$/m.test(content) && content.indexOf('Disallow: /\n') !== -1) {
-            var lines = content.split('\n');
-            for (var i = 0; i < lines.length; i++) {
-                if (lines[i].trim() === 'Disallow: /') {
-                    items.push({ type: 'err', text: i18n.disallowDetected });
-                    level = 'error';
-                    break;
-                }
-            }
+            items.push({ type: 'err', text: i18n.disallowDetected });
+            level = 'error';
         } else {
             items.push({ type: 'ok', text: i18n.noDisallow });
         }
@@ -73,67 +78,60 @@
             level = 'error';
         }
 
-        updateValidation(level, items);
+        renderValidation('#seooRobotsValidationHeader', '#seooRobotsValidationItems', '#seooRobotsStatusDot', '#seooRobotsStatusText', level, items);
     }
 
-    function updateValidation(level, items) {
-        var header = document.getElementById('seooRobotsValidationHeader');
-        var container = document.getElementById('seooRobotsValidationItems');
-        var dot = document.getElementById('seooRobotsStatusDot');
-        var statusText = document.getElementById('seooRobotsStatusText');
+    function renderValidation(headerSel, containerSel, dotSel, statusSel, level, items) {
+        var $header = $(headerSel);
+        var $container = $(containerSel);
+        var $dot = $(dotSel);
+        var $status = $(statusSel);
 
-        var okCount = 0, warnCount = 0, errCount = 0;
-        items.forEach(function(i) {
-            if (i.type === 'ok') okCount++;
-            else if (i.type === 'warn') warnCount++;
-            else errCount++;
+        if (!$header.length) return;
+
+        var ok = 0, warn = 0, err = 0;
+        $.each(items, function(_, i) {
+            if (i.type === 'ok') ok++;
+            else if (i.type === 'warn') warn++;
+            else err++;
         });
 
-        header.className = 'seoo-robots__validation-header seoo-robots__validation-header--' + level;
+        $header.attr('class', 'seoo-robots__validation-header seoo-robots__validation-header--' + level);
 
         if (level === 'error') {
-            header.textContent = errCount + ' ' + i18n.errorsDetected;
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--error';
-            statusText.textContent = errCount + ' ' + i18n.errors;
+            $header.text(err + ' ' + i18n.errorsDetected);
+            $dot.attr('class', 'seoo-robots__status-dot seoo-robots__status-dot--error');
+            $status.text(err + ' ' + i18n.errors);
         } else if (level === 'warn') {
-            header.textContent = warnCount + ' ' + i18n.warnings;
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--warn';
-            statusText.textContent = warnCount + ' ' + i18n.warnings;
+            $header.text(warn + ' ' + i18n.warnings);
+            $dot.attr('class', 'seoo-robots__status-dot seoo-robots__status-dot--warn');
+            $status.text(warn + ' ' + i18n.warnings);
         } else {
-            header.textContent = okCount + ' ' + i18n.checksPassed;
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--ok';
-            statusText.textContent = i18n.noErrors;
+            $header.text(ok + ' ' + i18n.checksPassed);
+            $dot.attr('class', 'seoo-robots__status-dot seoo-robots__status-dot--ok');
+            $status.text(i18n.noErrors);
         }
 
         var html = '';
-        items.forEach(function(i) {
+        $.each(items, function(_, i) {
             var cls = i.type === 'ok' ? 'seoo-validation-icon--ok' :
                       i.type === 'warn' ? 'seoo-validation-icon--warn' : 'seoo-validation-icon--err';
             html += '<div class="seoo-robots__validation-item"><span class="seoo-validation-icon ' + cls + '"></span> ' + i.text + '</div>';
         });
-        container.innerHTML = html;
+        $container.html(html);
     }
 
-    // URL Tester
-    document.getElementById('seooRobotsTestBtn').addEventListener('click', function() {
-        testUrl();
-    });
-
-    document.getElementById('seooRobotsTestUrl').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); testUrl(); }
-    });
-
     function testUrl() {
-        var url = document.getElementById('seooRobotsTestUrl').value.trim();
+        var url = $.trim($('#seooRobotsTestUrl').val());
         if (!url) return;
 
-        var content = document.getElementById('seooRobotsEditor').value;
+        var content = $('#seooRobotsEditor').val();
         var lines = content.split('\n');
         var blocked = false;
         var matchedRule = '';
 
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i].trim();
+        for (var idx = 0; idx < lines.length; idx++) {
+            var line = $.trim(lines[idx]);
             if (line.indexOf('Disallow:') !== 0) continue;
             var rule = line.substring(9).trim();
             if (!rule) continue;
@@ -152,17 +150,23 @@
             } catch(e) { }
         }
 
-        var el = document.getElementById('seooRobotsTestResult');
-        el.style.display = 'block';
+        var $el = $('#seooRobotsTestResult');
+        $el.show();
         if (blocked) {
-            el.className = 'seoo-robots__test-result seoo-robots__test-result--blocked';
-            el.innerHTML = '<span class="seoo-validation-icon seoo-validation-icon--err"></span> <strong>' + i18n.blocked + '</strong> — ' + i18n.matchesRule + ' <code>Disallow: ' + matchedRule.replace(/</g, '&lt;') + '</code>';
+            $el.attr('class', 'seoo-robots__test-result seoo-robots__test-result--blocked')
+               .html('<span class="seoo-validation-icon seoo-validation-icon--err"></span> <strong>' + i18n.blocked + '</strong> — ' + i18n.matchesRule + ' <code>Disallow: ' + $('<span>').text(matchedRule).html() + '</code>');
         } else {
-            el.className = 'seoo-robots__test-result seoo-robots__test-result--allowed';
-            el.innerHTML = '<span class="seoo-validation-icon seoo-validation-icon--ok"></span> <strong>' + i18n.allowed + '</strong> — ' + i18n.willBeCrawled;
+            $el.attr('class', 'seoo-robots__test-result seoo-robots__test-result--allowed')
+               .html('<span class="seoo-validation-icon seoo-validation-icon--ok"></span> <strong>' + i18n.allowed + '</strong> — ' + i18n.willBeCrawled);
         }
     }
 
-    document.getElementById('seooRobotsEditor').addEventListener('input', validateRobots);
-    validateRobots();
-})();
+    // Init on tab open
+    $(document).on('click', 'a[href="#tab-robots-txt"]', function() {
+        setTimeout(init, 50);
+    });
+
+    // Try immediate init
+    init();
+
+})(jQuery);

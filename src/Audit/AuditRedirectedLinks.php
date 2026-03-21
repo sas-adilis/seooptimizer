@@ -27,7 +27,7 @@ class AuditRedirectedLinks implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-share';
+        return 'arrows-split';
     }
 
     public function getVisual(): string

@@ -1,0 +1,138 @@
+@charset "UTF-8";
+/* ── SEO Optimizer — BO Entity Audit Panel ── */
+.seoo-ea {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 20px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.seoo-ea__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(-90deg, rgba(5, 128, 139, 0.1) 0%, rgb(255, 255, 255) 68%);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.seoo-ea__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.seoo-ea__logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.seoo-ea__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.seoo-ea__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #9ca3af;
+}
+.seoo-ea__badge--loading {
+  background: #9ca3af;
+}
+.seoo-ea__badge--green, .seoo-ea__badge--excellent, .seoo-ea__badge--good {
+  background: #16a34a;
+}
+.seoo-ea__badge--orange, .seoo-ea__badge--fair, .seoo-ea__badge--warning {
+  background: #d97706;
+}
+.seoo-ea__badge--red, .seoo-ea__badge--poor, .seoo-ea__badge--critical {
+  background: #dc2626;
+}
+.seoo-ea__badge--gray {
+  background: #9ca3af;
+}
+
+.seoo-ea__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.seoo-ea__body {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* ── Override front-audit styles inside BO panel ── */
+.seoo-ea .seoo-fa-score {
+  background: #fff;
+}
+
+.seoo-ea .seoo-fa-loading {
+  padding: 40px 20px;
+}
+
+/* ── Grade badge for listing columns (circle) ── */
+.seoo-grade-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+  line-height: 1;
+  border: 2px solid transparent;
+}
+.seoo-grade-badge:hover {
+  text-decoration: none;
+  color: #fff;
+  transform: scale(1.1);
+}
+.seoo-grade-badge--excellent {
+  background: #059669;
+  border-color: #a7f3d0;
+}
+.seoo-grade-badge--good, .seoo-grade-badge--green {
+  background: #16a34a;
+  border-color: #bbf7d0;
+}
+.seoo-grade-badge--fair, .seoo-grade-badge--orange {
+  background: #d97706;
+  border-color: #fde68a;
+}
+.seoo-grade-badge--warning {
+  background: #f59e0b;
+  border-color: #fef3c7;
+}
+.seoo-grade-badge--poor, .seoo-grade-badge--red {
+  background: #dc2626;
+  border-color: #fecaca;
+}
+.seoo-grade-badge--critical {
+  background: #991b1b;
+  border-color: #fca5a5;
+}
+.seoo-grade-badge--gray {
+  background: #e5e7eb;
+  border-color: #f3f4f6;
+  color: #9ca3af;
+}
+
+/*# sourceMappingURL=entity-audit.css.map */

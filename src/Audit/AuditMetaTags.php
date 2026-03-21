@@ -27,7 +27,7 @@ class AuditMetaTags implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-align-left';
+        return 'text-align-left';
     }
 
     public function getVisual(): string

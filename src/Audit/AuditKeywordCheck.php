@@ -42,7 +42,7 @@ class AuditKeywordCheck implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-bullseye';
+        return 'crosshair';
     }
 
     public function getVisual(): string

@@ -1,26 +1,34 @@
-(function() {
+(function($) {
     if (typeof SeoOptimizerLlms === 'undefined') return;
 
     var config = SeoOptimizerLlms;
     var presets = config.presets;
     var i18n = config.i18n;
+    var initialized = false;
 
-    var presetCards = document.querySelectorAll('[data-llms-preset]');
-    presetCards.forEach(function(card) {
-        card.addEventListener('click', function() {
-            var presetKey = card.getAttribute('data-llms-preset');
+    function init() {
+        if (initialized) return;
+        var $editor = $('#seooLlmsEditor');
+        if (!$editor.length) return;
+        initialized = true;
+
+        $(document).on('click', '[data-llms-preset]', function() {
+            var presetKey = $(this).data('llms-preset');
             if (!presets[presetKey]) return;
 
-            presetCards.forEach(function(c) { c.classList.remove('seoo-robots__preset--active'); });
-            card.classList.add('seoo-robots__preset--active');
+            $('[data-llms-preset]').removeClass('seoo-robots__preset--active');
+            $(this).addClass('seoo-robots__preset--active');
 
-            document.getElementById('seooLlmsEditor').value = presets[presetKey];
-            validateLlms();
+            $editor.val(presets[presetKey]);
+            validate();
         });
-    });
 
-    function validateLlms() {
-        var content = document.getElementById('seooLlmsEditor').value;
+        $editor.on('input', validate);
+        validate();
+    }
+
+    function validate() {
+        var content = $('#seooLlmsEditor').val();
         var items = [];
         var level = 'ok';
 
@@ -60,47 +68,54 @@
             level = 'error';
         }
 
-        updateValidation(level, items);
+        renderValidation(level, items);
     }
 
-    function updateValidation(level, items) {
-        var header = document.getElementById('seooLlmsValidationHeader');
-        var container = document.getElementById('seooLlmsValidationItems');
-        var dot = document.getElementById('seooLlmsStatusDot');
-        var statusText = document.getElementById('seooLlmsStatusText');
+    function renderValidation(level, items) {
+        var $header = $('#seooLlmsValidationHeader');
+        var $container = $('#seooLlmsValidationItems');
+        var $dot = $('#seooLlmsStatusDot');
+        var $status = $('#seooLlmsStatusText');
 
-        var okCount = 0, warnCount = 0, errCount = 0;
-        items.forEach(function(i) {
-            if (i.type === 'ok') okCount++;
-            else if (i.type === 'warn') warnCount++;
-            else errCount++;
+        if (!$header.length) return;
+
+        var ok = 0, warn = 0, err = 0;
+        $.each(items, function(_, i) {
+            if (i.type === 'ok') ok++;
+            else if (i.type === 'warn') warn++;
+            else err++;
         });
 
-        header.className = 'seoo-robots__validation-header seoo-robots__validation-header--' + level;
+        $header.attr('class', 'seoo-robots__validation-header seoo-robots__validation-header--' + level);
 
         if (level === 'error') {
-            header.textContent = errCount + ' ' + i18n.errorsDetected;
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--error';
-            statusText.textContent = errCount + ' ' + i18n.errors;
+            $header.text(err + ' ' + i18n.errorsDetected);
+            $dot.attr('class', 'seoo-robots__status-dot seoo-robots__status-dot--error');
+            $status.text(err + ' ' + i18n.errors);
         } else if (level === 'warn') {
-            header.textContent = warnCount + ' ' + i18n.warnings;
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--warn';
-            statusText.textContent = warnCount + ' ' + i18n.warnings;
+            $header.text(warn + ' ' + i18n.warnings);
+            $dot.attr('class', 'seoo-robots__status-dot seoo-robots__status-dot--warn');
+            $status.text(warn + ' ' + i18n.warnings);
         } else {
-            header.textContent = okCount + ' ' + i18n.checksPassed;
-            dot.className = 'seoo-robots__status-dot seoo-robots__status-dot--ok';
-            statusText.textContent = i18n.valid;
+            $header.text(ok + ' ' + i18n.checksPassed);
+            $dot.attr('class', 'seoo-robots__status-dot seoo-robots__status-dot--ok');
+            $status.text(i18n.valid);
         }
 
         var html = '';
-        items.forEach(function(i) {
+        $.each(items, function(_, i) {
             var cls = i.type === 'ok' ? 'seoo-validation-icon--ok' :
                       i.type === 'warn' ? 'seoo-validation-icon--warn' : 'seoo-validation-icon--err';
             html += '<div class="seoo-robots__validation-item"><span class="seoo-validation-icon ' + cls + '"></span> ' + i.text + '</div>';
         });
-        container.innerHTML = html;
+        $container.html(html);
     }
 
-    document.getElementById('seooLlmsEditor').addEventListener('input', validateLlms);
-    validateLlms();
-})();
+    // Init on tab open
+    $(document).on('click', 'a[href="#tab-llms-txt"]', function() {
+        setTimeout(init, 50);
+    });
+
+    init();
+
+})(jQuery);

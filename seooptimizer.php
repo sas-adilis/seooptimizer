@@ -30,7 +30,7 @@ class SeoOptimizer extends Module
     {
         $this->name = 'seooptimizer';
         $this->tab = 'seo';
-        $this->version = '1.4.1';
+        $this->version = '1.5.1';
         $this->author = 'Adilis';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -69,6 +69,8 @@ class SeoOptimizer extends Module
             'SEOO_WEIGHT_THRESHOLD_HEAVY' => 3072,
             'SEOO_TEXT_THRESHOLD_LOW' => 100,
             'SEOO_TEXT_THRESHOLD_GOOD' => 300,
+            'SEOO_FRONT_AUDIT_ENABLED' => 0,
+            'SEOO_BO_SCORE_COLUMN' => 0,
 
         ];
     }
@@ -97,15 +99,16 @@ class SeoOptimizer extends Module
             && $this->registerHook('actionSupplierFormBuilderModifier')
             && $this->registerHook('actionOutputHTMLBefore')
             && $this->registerHook('moduleRoutes')
-            && $this->registerHook('displayAdminProductsSeoStepBottom')
-            && $this->registerHook('actionProductUpdate')
-            && $this->registerHook('actionCategoryFormBuilderModifier')
-            && $this->registerHook('actionAfterUpdateCategoryFormHandler')
-            && $this->registerHook('actionAfterCreateCategoryFormHandler')
-            && $this->registerHook('actionManufacturerFormBuilderModifier')
-            && $this->registerHook('actionAfterUpdateManufacturerFormHandler')
-            && $this->registerHook('actionAfterCreateManufacturerFormHandler')
-            && $this->registerHook('displayBackOfficeCategory')
+            && $this->registerHook('actionProductGridDefinitionModifier')
+            && $this->registerHook('actionProductGridQueryBuilderModifier')
+            && $this->registerHook('actionCategoryGridDefinitionModifier')
+            && $this->registerHook('actionCategoryGridQueryBuilderModifier')
+            && $this->registerHook('actionManufacturerGridDefinitionModifier')
+            && $this->registerHook('actionManufacturerGridQueryBuilderModifier')
+            && $this->registerHook('actionSupplierGridDefinitionModifier')
+            && $this->registerHook('actionSupplierGridQueryBuilderModifier')
+            && $this->registerHook('actionCmsPageGridDefinitionModifier')
+            && $this->registerHook('actionCmsPageGridQueryBuilderModifier')
             ;
     }
 
@@ -132,6 +135,8 @@ class SeoOptimizer extends Module
             $this->context->controller->addCSS($this->_path . 'views/css/seooptimizer.css', 'all');
 
             $this->context->controller->addJS($this->_path . 'views/js/seooptimizer.js');
+            $this->context->controller->addJS($this->_path . 'views/js/audit.js');
+            $this->context->controller->addJS($this->_path . 'views/js/pages.js');
             $this->context->controller->addJS($this->_path . 'views/js/robots-txt.js');
             $this->context->controller->addJS($this->_path . 'views/js/llms-txt.js');
 
@@ -189,6 +194,22 @@ class SeoOptimizer extends Module
         if (Tools::getValue('controller') === 'AdminSuppliers') {
             $this->context->controller->addJS($this->_path . 'views/js/supplier-form.js');
         }
+
+        // Entity audit panel — load CSS/JS on entity edit pages
+        $entityControllers = ['AdminProducts', 'AdminCategories', 'AdminManufacturers', 'AdminSuppliers', 'AdminCmsContent'];
+        $currentController = Tools::getValue('controller');
+        if (in_array($currentController, $entityControllers, true)) {
+            $this->context->controller->addCSS($this->_path . 'views/css/front-audit.css', 'all');
+            $this->context->controller->addCSS($this->_path . 'views/css/entity-audit.css', 'all');
+            $this->context->controller->addJS($this->_path . 'views/js/entity-audit.js');
+        }
+
+        // Score column — Symfony grid: post-process grade cells into circle badges
+        $gridControllers = ['AdminProducts', 'AdminCategories', 'AdminManufacturers', 'AdminSuppliers', 'AdminCmsContent'];
+        if (in_array($currentController, $gridControllers, true) && (int) Configuration::get('SEOO_BO_SCORE_COLUMN')) {
+            $this->context->controller->addCSS($this->_path . 'views/css/entity-audit.css', 'all');
+            $this->context->controller->addJS($this->_path . 'views/js/bo-score-column-grid.js');
+        }
     }
 
     /**
@@ -223,32 +244,73 @@ class SeoOptimizer extends Module
             Adilis\SeoOptimizer\Form\FormSitemap::class,
             Adilis\SeoOptimizer\Form\FormSocialMetaData::class,
             Adilis\SeoOptimizer\Form\FormLinkObfuscator::class,
+            Adilis\SeoOptimizer\Form\FormMetaTemplates::class,
 
             Adilis\SeoOptimizer\Content\DataList\DataListRedirections::class,
             Adilis\SeoOptimizer\Content\DataList\DataListIndexationRules::class,
             Adilis\SeoOptimizer\Content\DataList\DataListPagesNotFound::class,
         ];
 
+        // Pre-assign all Smarty variables with empty defaults to avoid
+        // "Undefined array key" warnings in PS 9 if a process() fails
+        $this->context->smarty->assign([
+            'form_redirection_edit' => '',
+            'form_redirection' => '',
+            'form_redirection_import' => '',
+            'form_robots_txt' => '',
+            'form_llms_txt' => '',
+            'form_canonical_urls' => '',
+            'form_indexation' => '',
+            'form_verification_code' => '',
+            'form_settings' => '',
+            'form_indexation_rule' => '',
+            'form_rich_snippets' => '',
+            'form_social' => '',
+            'form_sitemap' => '',
+            'form_social_meta_data' => '',
+            'form_link_obfuscator' => '',
+            'form_meta_templates' => '',
+            'data_list_redirections' => '',
+            'data_list_indexation_rules' => '',
+            'data_list_pages_not_found' => '',
+            'audit_heading_hierarchy' => '',
+            'audit_missing_alt' => '',
+            'audit_broken_links' => '',
+            'audit_redirected_links' => '',
+            'audit_page_load_time' => '',
+            'audit_page_weight' => '',
+            'audit_unsecured_links' => '',
+            'audit_meta_tags' => '',
+            'audit_internal_links' => '',
+            'audit_text_ratio' => '',
+            'audit_keyword_check' => '',
+        ]);
+
         foreach ($content_class as $class) {
-            (new $class())->process();
+            try {
+                (new $class())->process();
+            } catch (\Throwable $e) {
+                PrestaShopLogger::addLog(
+                    'SeoOptimizer: ' . $class . ' process() failed: ' . $e->getMessage(),
+                    3,
+                    null,
+                    'SeoOptimizer'
+                );
+            }
         }
 
         // Audits (crawler-based)
-        $audits = [
-            new Adilis\SeoOptimizer\Audit\AuditHeadingHierarchy(),
-            new Adilis\SeoOptimizer\Audit\AuditMissingAlt(),
-            new Adilis\SeoOptimizer\Audit\AuditBrokenLinks(),
-            new Adilis\SeoOptimizer\Audit\AuditPageLoadTime(),
-            new Adilis\SeoOptimizer\Audit\AuditPageWeight(),
-            new Adilis\SeoOptimizer\Audit\AuditRedirectedLinks(),
-            new Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks(),
-            new Adilis\SeoOptimizer\Audit\AuditMetaTags(),
-            new Adilis\SeoOptimizer\Audit\AuditInternalLinks(),
-            new Adilis\SeoOptimizer\Audit\AuditTextRatio(),
-            new Adilis\SeoOptimizer\Audit\AuditKeywordCheck(),
-        ];
-        foreach ($audits as $audit) {
-            (new Adilis\SeoOptimizer\Audit\AuditRunner($audit))->process();
+        foreach (Adilis\SeoOptimizer\Audit\AuditRegistry::getAll() as $audit) {
+            try {
+                (new Adilis\SeoOptimizer\Audit\AuditRunner($audit))->process();
+            } catch (\Throwable $e) {
+                PrestaShopLogger::addLog(
+                    'SeoOptimizer: AuditRunner ' . $audit->getKey() . ' failed: ' . $e->getMessage(),
+                    3,
+                    null,
+                    'SeoOptimizer'
+                );
+            }
         }
 
         $scoreCalculator = new Adilis\SeoOptimizer\Score\SeoScoreCalculator();
@@ -321,6 +383,66 @@ class SeoOptimizer extends Module
     }
 
     /**
+     * AJAX handler for BO entity audit panel.
+     */
+    public function ajaxProcessEntityAudit()
+    {
+        $url = Tools::getValue('url');
+        if (empty($url) || !Validate::isUrl($url)) {
+            $this->returnJsonSuccess(['html' => '', 'score' => ['score' => 0, 'grade' => '-', 'color' => 'gray']]);
+        }
+
+        $analyzer = new Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer();
+        $result = $analyzer->analyze($url);
+
+        if (isset($result['error'])) {
+            $this->returnJsonSuccess(['html' => '<p class="seoo-fa-empty">' . htmlspecialchars($result['error']) . '</p>', 'score' => ['score' => 0, 'grade' => '-', 'color' => 'gray']]);
+        }
+
+        $this->context->smarty->assign([
+            'seoo_audit' => $result,
+            'seoo_module_path' => $this->_path,
+        ]);
+
+        $html = $this->context->smarty->fetch(
+            $this->getLocalPath() . 'views/templates/hook/front-audit-panel.tpl'
+        );
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => ['html' => $html, 'score' => $result['score']],
+        ]);
+        exit;
+    }
+
+    /**
+     * AJAX handler: return scores for a batch of entity IDs.
+     */
+    public function ajaxProcessGetEntityScores()
+    {
+        $entityType = Tools::getValue('entity_type');
+        $ids = Tools::getValue('ids');
+
+        if (empty($entityType) || empty($ids)) {
+            echo json_encode(['status' => 'success', 'data' => []]);
+            exit;
+        }
+
+        $scores = SeoOptimizerPage::getScoresByEntityType(pSQL($entityType));
+
+        $result = [];
+        foreach (array_map('intval', explode(',', $ids)) as $id) {
+            if (isset($scores[$id])) {
+                $result[$id] = $scores[$id];
+                $result[$id]['color'] = SeoOptimizerPage::gradeToColor($scores[$id]['grade']);
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'data' => $result]);
+        exit;
+    }
+
+    /**
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -384,6 +506,16 @@ class SeoOptimizer extends Module
         foreach ($action_classes as $class) {
             (new $class())->run();
         }
+
+        if ((int) Configuration::get('SEOO_FRONT_AUDIT_ENABLED') && $this->isEmployeeBrowsing()) {
+            $this->context->smarty->assign([
+                'seoo_module_path' => $this->_path,
+            ]);
+
+            return $this->display(__FILE__, 'views/templates/hook/front-audit-shell.tpl');
+        }
+
+        return '';
     }
 
     /**
@@ -391,7 +523,8 @@ class SeoOptimizer extends Module
      */
     public function hookDisplayHeader($params)
     {
-        $this->context->controller->addCSS($this->_path . 'views/css/seooptimizer.front.css', 'all');
+        // Apply meta templates for pages with empty meta title/description
+        Adilis\SeoOptimizer\MetaTemplate\MetaTemplateEngine::apply();
 
         $configuration_key = null;
         switch (Dispatcher::getInstance()->getController()) {
@@ -452,7 +585,39 @@ class SeoOptimizer extends Module
             'seoo_verification_code_pinterest' => Configuration::get('SEOO_CODE_VERIFICATION_PINTEREST'),
         ]);
 
+        // Front audit panel
+        if ((int) Configuration::get('SEOO_FRONT_AUDIT_ENABLED') && $this->isEmployeeBrowsing()) {
+            $this->context->controller->registerStylesheet(
+                'module-seooptimizer-front-audit',
+                'modules/' . $this->name . '/views/css/front-audit.css',
+                ['media' => 'all', 'priority' => 200]
+            );
+            $this->context->controller->registerJavascript(
+                'module-seooptimizer-front-audit',
+                'modules/' . $this->name . '/views/js/front-audit.js',
+                ['position' => 'bottom', 'priority' => 200]
+            );
+
+            $currentUrl = Tools::getCurrentUrlProtocolPrefix() . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            Media::addJsDef([
+                'SeoOptimizerFrontAudit' => [
+                    'ajaxUrl' => $this->context->link->getModuleLink($this->name, 'pageaudit'),
+                    'currentUrl' => $currentUrl,
+                ],
+            ]);
+        }
+
         return $this->display(__FILE__, 'header.tpl') . $html_content;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isEmployeeBrowsing(): bool
+    {
+        $adminCookie = new Cookie('psAdmin');
+
+        return !empty($adminCookie->id_employee);
     }
 
     public function hookActionFrontControllerInitBefore($params)
@@ -508,6 +673,200 @@ class SeoOptimizer extends Module
         foreach ($actions_classes as $class) {
             (new $class($params))->process($params['html']);
         }
+
+    }
+
+    /**
+     * @param array $params
+     * @return string
+     */
+    public function hookDisplayAdminProductsSeoStepBottom(array $params): string
+    {
+        $idProduct = (int) ($params['id_product'] ?? Tools::getValue('id_product'));
+        if (!$idProduct) {
+            return '';
+        }
+
+        $url = $this->context->link->getProductLink(
+            $idProduct,
+            null,
+            null,
+            null,
+            (int) $this->context->language->id
+        );
+
+        return $this->renderEntityAuditPanel($url);
+    }
+
+    /**
+     * @param array $params
+     * @return string
+     */
+    public function hookDisplayBackOfficeCategory(array $params): string
+    {
+        $idCategory = (int) ($params['id_category'] ?? Tools::getValue('id_category'));
+        if (!$idCategory) {
+            return '';
+        }
+
+        $url = $this->context->link->getCategoryLink(
+            $idCategory,
+            null,
+            (int) $this->context->language->id
+        );
+
+        return $this->renderEntityAuditPanel($url);
+    }
+
+    /**
+     * Render the inline entity audit panel for a given front-office URL.
+     *
+     * @param string $url
+     * @return string
+     */
+    private function renderEntityAuditPanel(string $url): string
+    {
+        $this->context->smarty->assign([
+            'seoo_entity_audit_url' => $url,
+            'seoo_entity_audit_ajax_url' => $this->context->link->getAdminLink(
+                'AdminModules',
+                true,
+                [],
+                ['configure' => $this->name]
+            ),
+            'seoo_module_path' => $this->_path,
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/admin/entity-audit.tpl');
+    }
+
+    // ──────────────────────────────────────────────
+    // Symfony Grid hooks — SEO score column
+    // ──────────────────────────────────────────────
+
+    /**
+     * Add a SEO grade DataColumn to a Symfony grid.
+     *
+     * @param array $params
+     * @param string $afterColumn Column ID after which to insert
+     */
+    private function addSeoGradeColumnToGrid(array $params, string $afterColumn = 'active')
+    {
+        if (!(int) Configuration::get('SEOO_BO_SCORE_COLUMN')) {
+            return;
+        }
+
+        $columnClass = 'PrestaShop\\PrestaShop\\Core\\Grid\\Column\\Type\\DataColumn';
+        if (!class_exists($columnClass)) {
+            return;
+        }
+
+        $params['definition']->getColumns()->addAfter(
+            $afterColumn,
+            (new $columnClass('seo_grade'))
+                ->setName('SEO')
+                ->setOptions(['field' => 'seo_grade'])
+        );
+    }
+
+    /**
+     * Add LEFT JOIN on seooptimizer_page to a Symfony grid query builder.
+     *
+     * @param array $params
+     * @param string $entityType
+     * @param string $tableAlias Main table alias in the grid query
+     * @param string $primaryKey Primary key column name
+     */
+    private function addSeoGradeJoinToGrid(array $params, string $entityType, string $tableAlias, string $primaryKey)
+    {
+        if (!(int) Configuration::get('SEOO_BO_SCORE_COLUMN')) {
+            return;
+        }
+
+        $idLang = (int) $this->context->language->id;
+        $idShop = (int) $this->context->shop->id;
+
+        $joinCondition = 'seoo_p.entity_type = "' . pSQL($entityType) . '"'
+            . ' AND seoo_p.id_entity = ' . $tableAlias . '.' . $primaryKey
+            . ' AND seoo_p.id_lang = ' . $idLang
+            . ' AND seoo_p.id_shop = ' . $idShop;
+
+        foreach (['search_query_builder', 'count_query_builder'] as $builder) {
+            if (isset($params[$builder])) {
+                $params[$builder]->leftJoin(
+                    $tableAlias,
+                    _DB_PREFIX_ . 'seooptimizer_page',
+                    'seoo_p',
+                    $joinCondition
+                );
+            }
+        }
+
+        if (isset($params['search_query_builder'])) {
+            $params['search_query_builder']->addSelect(
+                'IFNULL(seoo_p.grade, "-") AS seo_grade'
+            );
+        }
+    }
+
+    /** @param array $params */
+    public function hookActionProductGridDefinitionModifier(array $params)
+    {
+        $this->addSeoGradeColumnToGrid($params, 'active');
+    }
+
+    /** @param array $params */
+    public function hookActionProductGridQueryBuilderModifier(array $params)
+    {
+        $this->addSeoGradeJoinToGrid($params, 'product', 'p', 'id_product');
+    }
+
+    /** @param array $params */
+    public function hookActionCategoryGridDefinitionModifier(array $params)
+    {
+        $this->addSeoGradeColumnToGrid($params, 'active');
+    }
+
+    /** @param array $params */
+    public function hookActionCategoryGridQueryBuilderModifier(array $params)
+    {
+        $this->addSeoGradeJoinToGrid($params, 'category', 'c', 'id_category');
+    }
+
+    /** @param array $params */
+    public function hookActionManufacturerGridDefinitionModifier(array $params)
+    {
+        $this->addSeoGradeColumnToGrid($params, 'active');
+    }
+
+    /** @param array $params */
+    public function hookActionManufacturerGridQueryBuilderModifier(array $params)
+    {
+        $this->addSeoGradeJoinToGrid($params, 'manufacturer', 'm', 'id_manufacturer');
+    }
+
+    /** @param array $params */
+    public function hookActionSupplierGridDefinitionModifier(array $params)
+    {
+        $this->addSeoGradeColumnToGrid($params, 'active');
+    }
+
+    /** @param array $params */
+    public function hookActionSupplierGridQueryBuilderModifier(array $params)
+    {
+        $this->addSeoGradeJoinToGrid($params, 'supplier', 's', 'id_supplier');
+    }
+
+    /** @param array $params */
+    public function hookActionCmsPageGridDefinitionModifier(array $params)
+    {
+        $this->addSeoGradeColumnToGrid($params, 'active');
+    }
+
+    /** @param array $params */
+    public function hookActionCmsPageGridQueryBuilderModifier(array $params)
+    {
+        $this->addSeoGradeJoinToGrid($params, 'cms', 'c', 'id_cms');
     }
 
     /**

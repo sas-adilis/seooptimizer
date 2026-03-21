@@ -467,4 +467,42 @@ class SeoOptimizerPage extends ObjectModel
             'entity_type = "' . pSQL($entityType) . '" AND id_entity = ' . (int) $idEntity
         );
     }
+
+    /**
+     * Bulk-fetch scores for a given entity type.
+     *
+     * @param string $entityType
+     * @param int|null $idLang
+     * @param int|null $idShop
+     * @return array<int, array{score: float, grade: string}>  Keyed by id_entity
+     */
+    public static function getScoresByEntityType(string $entityType, ?int $idLang = null, ?int $idShop = null): array
+    {
+        if ($idLang === null) {
+            $idLang = (int) Context::getContext()->language->id;
+        }
+        if ($idShop === null) {
+            $idShop = (int) Context::getContext()->shop->id;
+        }
+
+        $rows = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
+            'SELECT id_entity, score, grade
+            FROM ' . _DB_PREFIX_ . 'seooptimizer_page
+            WHERE entity_type = "' . pSQL($entityType) . '"
+            AND id_lang = ' . (int) $idLang . '
+            AND id_shop = ' . (int) $idShop
+        );
+
+        $result = [];
+        if ($rows) {
+            foreach ($rows as $row) {
+                $result[(int) $row['id_entity']] = [
+                    'score' => (float) $row['score'],
+                    'grade' => $row['grade'],
+                ];
+            }
+        }
+
+        return $result;
+    }
 }

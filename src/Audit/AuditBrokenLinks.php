@@ -27,7 +27,7 @@ class AuditBrokenLinks implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-unlink';
+        return 'link-break';
     }
 
     public function getVisual(): string

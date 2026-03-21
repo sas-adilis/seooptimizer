@@ -7,17 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Audit\AuditInterface;
-use Adilis\SeoOptimizer\Audit\AuditBrokenLinks;
-use Adilis\SeoOptimizer\Audit\AuditHeadingHierarchy;
-use Adilis\SeoOptimizer\Audit\AuditInternalLinks;
-use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
-use Adilis\SeoOptimizer\Audit\AuditMetaTags;
-use Adilis\SeoOptimizer\Audit\AuditMissingAlt;
-use Adilis\SeoOptimizer\Audit\AuditRedirectedLinks;
-use Adilis\SeoOptimizer\Audit\AuditPageLoadTime;
-use Adilis\SeoOptimizer\Audit\AuditPageWeight;
-use Adilis\SeoOptimizer\Audit\AuditTextRatio;
-use Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks;
+use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
@@ -28,19 +18,7 @@ class SeoScoreCalculator
 
     public function __construct()
     {
-        $this->audits = [
-            new AuditHeadingHierarchy(),
-            new AuditMissingAlt(),
-            new AuditBrokenLinks(),
-            new AuditRedirectedLinks(),
-            new AuditPageLoadTime(),
-            new AuditPageWeight(),
-            new AuditUnsecuredLinks(),
-            new AuditMetaTags(),
-            new AuditInternalLinks(),
-            new AuditTextRatio(),
-            new AuditKeywordCheck(),
-        ];
+        $this->audits = AuditRegistry::getAll();
     }
 
     /**
@@ -247,17 +225,16 @@ class SeoScoreCalculator
 
     public static function scoreToGrade(float $score): string
     {
-        if ($score >= 95) return 'A+';
-        if ($score >= 85) return 'A';
-        if ($score >= 70) return 'B';
-        if ($score >= 50) return 'C';
-        if ($score >= 30) return 'D';
-        return 'F';
+        $data = ScoreGradeMapping::fromScore($score);
+        return $data['grade'];
     }
 
     public static function gradeToColor(string $grade): string
     {
-        $map = ['A+' => 'excellent', 'A' => 'good', 'B' => 'fair', 'C' => 'warning', 'D' => 'poor', 'F' => 'critical'];
+        $map = [
+            'A+' => 'excellent', 'A' => 'good', 'B' => 'fair',
+            'C' => 'warning', 'D' => 'poor', 'E' => 'critical', 'F' => 'critical',
+        ];
         return isset($map[$grade]) ? $map[$grade] : 'gray';
     }
 }

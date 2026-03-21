@@ -6,6 +6,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\TextNormalizer;
+
 class TextRatioObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -40,15 +43,14 @@ class TextRatioObserver extends AbstractCrawlerObserver implements CrawlerObserv
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $bodyMatch)) {
-            $bodyContent = $bodyMatch[1];
-        }
+        $extractor = $extractor ?: new HTMLExtractor($content);
+        $bodyHTML = $extractor->extractBodyHTML();
 
-        if (empty(trim($bodyContent))) {
+        if (empty(trim($bodyHTML))) {
             $this->results[] = [
                 'url' => $url,
                 'word_count' => 0,
@@ -61,26 +63,13 @@ class TextRatioObserver extends AbstractCrawlerObserver implements CrawlerObserv
             return;
         }
 
-        $htmlLength = strlen($bodyContent);
-
-        // Remove scripts, styles, nav, header, footer to get main content text
-        $cleanContent = $bodyContent;
-        $cleanContent = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $cleanContent);
-        $cleanContent = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $cleanContent);
-        $cleanContent = preg_replace('/<nav[^>]*>.*?<\/nav>/is', '', $cleanContent);
-        $cleanContent = preg_replace('/<header[^>]*>.*?<\/header>/is', '', $cleanContent);
-        $cleanContent = preg_replace('/<footer[^>]*>.*?<\/footer>/is', '', $cleanContent);
-
-        // Strip tags and decode entities
-        $text = strip_tags($cleanContent);
-        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-
-        // Normalize whitespace
-        $text = preg_replace('/\s+/', ' ', $text);
-        $text = trim($text);
+        $htmlLength = strlen($bodyHTML);
+        $bodyText = $extractor->extractBodyText();
+        $text = html_entity_decode($bodyText, ENT_QUOTES, 'UTF-8');
+        $text = preg_replace('/\s+/', ' ', trim($text));
 
         $textLength = strlen($text);
-        $wordCount = $text !== '' ? count(preg_split('/\s+/', $text)) : 0;
+        $wordCount = TextNormalizer::countWords($text);
         $textRatio = $htmlLength > 0 ? round(($textLength / $htmlLength) * 100, 1) : 0;
 
         if ($wordCount < $this->thresholdLow) {

@@ -27,7 +27,7 @@ class AuditUnsecuredLinks implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-unlock';
+        return 'lock-open';
     }
 
     public function getVisual(): string

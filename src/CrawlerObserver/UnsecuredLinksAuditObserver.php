@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+
 class UnsecuredLinksAuditObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -22,20 +24,12 @@ class UnsecuredLinksAuditObserver extends AbstractCrawlerObserver implements Cra
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $bodyMatch)) {
-            $bodyContent = $bodyMatch[1];
-        }
-
-        if (empty(trim($bodyContent))) {
-            return;
-        }
-
-        $dom = new \DOMDocument();
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $bodyContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $extractor = $extractor ?: new HTMLExtractor($content);
+        $dom = $extractor->getDOM();
 
         $this->checkElements($dom, 'a', 'href', $url);
         $this->checkElements($dom, 'img', 'src', $url);

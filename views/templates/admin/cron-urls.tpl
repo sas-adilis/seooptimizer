@@ -1,6 +1,6 @@
 <div class="panel">
     <div class="panel-heading">
-        <i class="icon-time"></i> {l s='Cron URLs' mod='seooptimizer'}
+        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/clock.svg"}</span> {l s='Cron URLs' mod='seooptimizer'}
     </div>
     <div class="panel-body">
         <div class="alert alert-info">
@@ -24,7 +24,7 @@
                         </td>
                         <td class="text-right">
                             <button type="button" class="btn btn-default btn-xs seoo-copy-btn" data-url="{$cron.url|escape:'htmlall':'UTF-8'}">
-                                <i class="icon-copy"></i>
+                                <span class="seoo-icon">{include file="module:seooptimizer/views/icons/copy.svg"}</span>
                             </button>
                         </td>
                     </tr>

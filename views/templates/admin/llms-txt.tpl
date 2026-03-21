@@ -5,22 +5,22 @@
             </div>
             <div class="seoo-panel-intro__content">
                 <h3 class="seoo-panel-intro__title">
-                    <i class="icon-file-text"></i>
+                    <span class="seoo-icon">{include file="module:seooptimizer/views/icons/file-text.svg"}</span>
                     {l s='AI Visibility — Get found by AI assistants (GEO)' mod='seooptimizer'}
                 </h3>
                 <p class="seoo-panel-intro__desc">{l s='The llms.txt file describes your website structure for AI assistants and large language models (ChatGPT, Claude, Gemini...). It helps them understand your site and provide accurate answers about your products and services.' mod='seooptimizer'}</p>
             </div>
             <div class="seoo-panel-intro__actions">
                 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#seooLlmsHelpModal">
-                    <i class="icon-question-sign"></i> {l s='Help' mod='seooptimizer'}
+                    <span class="seoo-icon">{include file="module:seooptimizer/views/icons/question.svg"}</span> {l s='Help' mod='seooptimizer'}
                 </button>
                 {if $seoo_llms_exists}
                     <a href="{$seoo_llms_form_action|escape:'htmlall':'UTF-8'}&submitFormLlmsTxtDelete=1&token={$seoo_llms_token|escape:'htmlall':'UTF-8'}" class="btn btn-default" onclick="return confirm('{l s="Delete the llms.txt file?" mod="seooptimizer" js=1}');" style="color:#dc2626;">
-                        <i class="icon-trash"></i> {l s='Delete file' mod='seooptimizer'}
+                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/trash.svg"}</span> {l s='Delete file' mod='seooptimizer'}
                     </a>
                 {/if}
                 <a href="{$seoo_llms_live_url|escape:'htmlall':'UTF-8'}" target="_blank" rel="noopener" class="btn btn-default">
-                    <i class="icon-external-link"></i> {l s='View live file' mod='seooptimizer'}
+                    <span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrow-square-out.svg"}</span> {l s='View live file' mod='seooptimizer'}
                 </a>
             </div>
         </div>
@@ -46,7 +46,7 @@
                 <input type="hidden" name="token" value="{$seoo_llms_token|escape:'htmlall':'UTF-8'}">
 
                 <div class="seoo-robots__editor-toolbar">
-                    <span class="seoo-robots__editor-label"><i class="icon-pencil"></i> {l s='llms.txt editor' mod='seooptimizer'}</span>
+                    <span class="seoo-robots__editor-label"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/pencil-simple.svg"}</span> {l s='llms.txt editor' mod='seooptimizer'}</span>
                     <div class="seoo-robots__editor-status">
                         <span class="seoo-robots__status-dot seoo-robots__status-dot--ok" id="seooLlmsStatusDot"></span>
                         <span id="seooLlmsStatusText">{l s='Valid' mod='seooptimizer'}</span>
@@ -56,7 +56,7 @@
 
                 <div class="seoo-robots__save-bar">
                     <button type="submit" name="submitFormLlmsTxt" class="btn btn-default" style="background:#05808B;border-color:#05808B;color:#fff;">
-                        <i class="icon-save"></i> {l s='Save' mod='seooptimizer'}
+                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/floppy-disk.svg"}</span> {l s='Save' mod='seooptimizer'}
                     </button>
                 </div>
 
@@ -75,7 +75,7 @@
                 <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-history.png" alt="{l s='History' mod='seooptimizer'}">
             </div>
             <div class="seoo-panel-intro__content">
-                <h3 class="seoo-panel-intro__title"><i class="icon-time"></i> {l s='History' mod='seooptimizer'}</h3>
+                <h3 class="seoo-panel-intro__title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/clock.svg"}</span> {l s='History' mod='seooptimizer'}</h3>
                 <p class="seoo-panel-intro__desc">{l s='Previous versions of your llms.txt file. You can restore any backup with one click.' mod='seooptimizer'}</p>
             </div>
         </div>
@@ -89,11 +89,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                <h4 class="modal-title"><i class="icon-question-sign" style="color:#05808B"></i> {l s='About llms.txt & AI crawlers' mod='seooptimizer'}</h4>
+                <h4 class="modal-title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/question.svg"}</span> {l s='About llms.txt & AI crawlers' mod='seooptimizer'}</h4>
             </div>
             <div class="modal-body">
                 <div class="seoo-llms__info" style="margin-bottom:24px;">
-                    <h4><i class="icon-info-sign"></i> {l s='What is llms.txt?' mod='seooptimizer'}</h4>
+                    <h4><span class="seoo-icon">{include file="module:seooptimizer/views/icons/info.svg"}</span> {l s='What is llms.txt?' mod='seooptimizer'}</h4>
                     <p>{l s='The llms.txt file is a standard proposed to help AI models understand the structure and content of a website. Unlike robots.txt which controls crawling, llms.txt provides a curated description using Markdown format with links to your key pages.' mod='seooptimizer'}</p>
                     <p>{l s='When an AI assistant encounters your llms.txt file, it can use it to provide more accurate and relevant answers about your products and services to users.' mod='seooptimizer'}</p>
                     <div class="seoo-llms__format-example">
@@ -107,7 +107,7 @@
                     </div>
                 </div>
 
-                <h4 style="font-size:15px;font-weight:600;margin-bottom:12px;"><i class="icon-globe" style="color:#05808B;margin-right:6px;"></i> {l s='Known AI crawlers and their robots.txt directives' mod='seooptimizer'}</h4>
+                <h4 style="font-size:15px;font-weight:600;margin-bottom:12px;"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/globe.svg"}</span> {l s='Known AI crawlers and their robots.txt directives' mod='seooptimizer'}</h4>
                 <p style="font-size:13px;color:#6b7280;margin-bottom:10px;">{l s='To block or allow specific AI crawlers, add these User-Agent directives to your robots.txt file.' mod='seooptimizer'}</p>
                 <table class="table" style="font-size:13px;">
                     <thead>

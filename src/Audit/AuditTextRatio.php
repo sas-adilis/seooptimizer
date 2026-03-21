@@ -27,7 +27,7 @@ class AuditTextRatio implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-font';
+        return 'text-aa';
     }
 
     public function getVisual(): string

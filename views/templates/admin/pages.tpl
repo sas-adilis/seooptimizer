@@ -5,7 +5,7 @@
             </div>
             <div class="seoo-panel-intro__content">
                 <h3 class="seoo-panel-intro__title">
-                    <i class="icon-file-text"></i>
+                    <span class="seoo-icon">{include file="module:seooptimizer/views/icons/file-text.svg"}</span>
                     {l s='Pages overview' mod='seooptimizer'}
                 </h3>
                 <p class="seoo-panel-intro__desc">{l s='All crawled pages with a summary of detected issues. Click on a page to see its problems, or re-audit it individually.' mod='seooptimizer'}</p>
@@ -85,7 +85,7 @@
                             <tr class="seoo-pages__row" data-url="{$page.url|escape:'htmlall':'UTF-8'}" data-critical="{$page.critical|escape:'htmlall':'UTF-8'}" data-warning="{$page.warning|escape:'htmlall':'UTF-8'}" data-total="{$page.total|escape:'htmlall':'UTF-8'}">
                                 <td class="seoo-pages__expand-cell">
                                     {if $page.total > 0}
-                                        <i class="icon-chevron-right seoo-pages__chevron"></i>
+                                        <span class="seoo-icon seoo-pages__chevron">{include file="module:seooptimizer/views/icons/caret-right.svg"}</span>
                                     {/if}
                                 </td>
                                 <td class="text-center">
@@ -120,7 +120,7 @@
                                 </td>
                                 <td class="text-right">
                                     <button type="button" class="btn btn-default btn-sm seoo-pages__reaudit-btn" data-url="{$page.url|escape:'htmlall':'UTF-8'}" title="{l s='Re-audit this page' mod='seooptimizer'}">
-                                        <i class="icon-refresh"></i>&nbsp;{l s='ReRe-audit' mod='seooptimizer'}
+                                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrow-counter-clockwise.svg"}</span>&nbsp;{l s='ReRe-audit' mod='seooptimizer'}
                                     </button>
                                 </td>
                             </tr>

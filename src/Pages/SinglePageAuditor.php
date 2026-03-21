@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\Audit\AuditInterface;
 use Adilis\SeoOptimizer\Audit\AuditRunner;
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 
 class SinglePageAuditor
@@ -60,6 +62,7 @@ class SinglePageAuditor
         }
 
         $isIndexable = AuditRunner::isPageIndexable($content);
+        $extractor = new HTMLExtractor($content);
 
         foreach ($auditObservers as $data) {
             /** @var AuditInterface $audit */
@@ -71,7 +74,7 @@ class SinglePageAuditor
 
             foreach ($data['observers'] as $observer) {
                 if (method_exists($observer, 'observeAfterRequest')) {
-                    $observer->observeAfterRequest($url, $content);
+                    $observer->observeAfterRequest($url, $content, $extractor);
                 }
             }
         }
@@ -112,21 +115,6 @@ class SinglePageAuditor
      */
     private function fetchUrl(string $url)
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-        $content = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($content === false || $httpCode >= 400) {
-            return false;
-        }
-
-        return $content;
+        return CurlBatch::fetchPage($url);
     }
 }

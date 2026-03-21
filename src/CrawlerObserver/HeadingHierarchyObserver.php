@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+
 class HeadingHierarchyObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     const MIN_H1_LENGTH = 10;
@@ -24,10 +26,13 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
-        $headings = $this->extractHeadings($content);
+        $extractor = $extractor ?: new HTMLExtractor($content);
+        $rawHeadings = $extractor->extractHeadings();
+        $headings = $this->groupHeadings($rawHeadings);
         $issues = [];
 
         // Check H1
@@ -110,29 +115,18 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
     }
 
     /**
-     * @param string $content
+     * Group flat headings array into per-level buckets with an 'ordered' key.
+     *
+     * @param array<int, array{level: int, text: string}> $rawHeadings
      * @return array
      */
-    private function extractHeadings(string $content): array
+    private function groupHeadings(array $rawHeadings): array
     {
         $headings = [1 => [], 2 => [], 3 => [], 4 => [], 5 => [], 6 => []];
         $orderedHeadings = [];
 
-        // Extract body content only (skip header/nav/footer)
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $bodyMatch)) {
-            $bodyContent = $bodyMatch[1];
-        }
-
-        preg_match_all('/<h([1-6])[^>]*>(.*?)<\/h\1>/is', $bodyContent, $matches, PREG_SET_ORDER);
-
-        foreach ($matches as $match) {
-            $level = (int) $match[1];
-            $text = trim(strip_tags($match[2]));
-            $entry = [
-                'level' => $level,
-                'text' => $text,
-            ];
+        foreach ($rawHeadings as $entry) {
+            $level = $entry['level'];
             $headings[$level][] = $entry;
             $orderedHeadings[] = $entry;
         }

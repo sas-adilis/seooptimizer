@@ -6,6 +6,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\URLResolver;
+
 class InternalLinksObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array<string, array> per-page outgoing internal links */
@@ -28,7 +31,7 @@ class InternalLinksObserver extends AbstractCrawlerObserver implements CrawlerOb
 
     public function __construct()
     {
-        $this->shopDomain = $this->getShopDomain();
+        $this->shopDomain = URLResolver::getShopDomain();
     }
 
     public function getKey(): string
@@ -39,15 +42,14 @@ class InternalLinksObserver extends AbstractCrawlerObserver implements CrawlerOb
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $bodyMatch)) {
-            $bodyContent = $bodyMatch[1];
-        }
+        $extractor = $extractor ?: new HTMLExtractor($content);
+        $bodyHtml = $extractor->extractBodyHTML();
 
-        if (empty(trim($bodyContent))) {
+        if (empty(trim($bodyHtml))) {
             $this->outgoing[$url] = [
                 'links' => [],
                 'count' => 0,
@@ -59,47 +61,32 @@ class InternalLinksObserver extends AbstractCrawlerObserver implements CrawlerOb
             return;
         }
 
-        $dom = new \DOMDocument();
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $bodyContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-
+        $anchors = $extractor->extractAnchors();
         $links = [];
         $uniqueHrefs = [];
         $emptyAnchors = 0;
         $nofollowCount = 0;
 
-        $anchors = $dom->getElementsByTagName('a');
         foreach ($anchors as $anchor) {
-            $href = $anchor->getAttribute('href');
-            if (!$href) {
+            $href = $anchor['href'];
+
+            if (URLResolver::isSkippable($href)) {
                 continue;
             }
 
-            // Skip anchors, javascript, mailto, tel
-            if (strpos($href, '#') === 0
-                || strpos($href, 'javascript:') === 0
-                || strpos($href, 'mailto:') === 0
-                || strpos($href, 'tel:') === 0
-                || strpos($href, 'data:') === 0
-            ) {
-                continue;
-            }
-
-            $resolved = $this->resolveUrl($href, $url);
+            $resolved = URLResolver::resolve($href, $url);
             if (!$resolved) {
                 continue;
             }
 
-            // Only internal links
-            $linkDomain = parse_url($resolved, PHP_URL_HOST);
-            if ($linkDomain && $linkDomain !== $this->shopDomain) {
+            if (!URLResolver::isInternal($resolved, $this->shopDomain)) {
                 continue;
             }
 
             $this->totalLinksChecked++;
 
-            $text = trim(strip_tags($anchor->nodeValue));
-            $rel = $anchor->getAttribute('rel');
-            $isNofollow = $rel && strpos($rel, 'nofollow') !== false;
+            $text = $anchor['text'];
+            $isNofollow = strpos($anchor['rel'], 'nofollow') !== false;
 
             if ($isNofollow) {
                 $nofollowCount++;
@@ -142,46 +129,6 @@ class InternalLinksObserver extends AbstractCrawlerObserver implements CrawlerOb
         } elseif ($uniqueCount < 3) {
             $this->fewOutgoingCount++;
         }
-    }
-
-    /**
-     * @param string $href
-     * @param string $baseUrl
-     * @return string|null
-     */
-    private function resolveUrl(string $href, string $baseUrl)
-    {
-        if (preg_match('#^https?://#i', $href)) {
-            return $href;
-        }
-
-        if (strpos($href, '//') === 0) {
-            $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: 'https';
-            return $scheme . ':' . $href;
-        }
-
-        $parsed = parse_url($baseUrl);
-        if (!$parsed || !isset($parsed['scheme'], $parsed['host'])) {
-            return null;
-        }
-
-        $base = $parsed['scheme'] . '://' . $parsed['host'];
-
-        if (strpos($href, '/') === 0) {
-            return $base . $href;
-        }
-
-        $dir = isset($parsed['path']) ? rtrim(dirname($parsed['path']), '/') : '';
-        return $base . $dir . '/' . $href;
-    }
-
-    /**
-     * @return string
-     */
-    private function getShopDomain(): string
-    {
-        $shopUrl = \Context::getContext()->shop->getBaseURL();
-        return parse_url($shopUrl, PHP_URL_HOST) ?: '';
     }
 
     /**

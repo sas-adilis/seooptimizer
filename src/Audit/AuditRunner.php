@@ -6,11 +6,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-use Adilis\SeoOptimizer\CrawlerObserver\CrawlerObserverInterface;
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
 use Adilis\SeoOptimizer\SitemapIndexer\SitemapIndexer;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
 
 class AuditRunner
 {
@@ -60,7 +61,9 @@ class AuditRunner
      */
     public function process()
     {
-        if ((int) \Tools::getValue('ajax')) {
+        $isAjax = (int) \Tools::getValue('ajax');
+
+        if ($isAjax) {
             $action = \Tools::getValue('action');
 
             if ($action === 'runAudit' . ucfirst($this->audit->getKey())) {
@@ -71,6 +74,9 @@ class AuditRunner
             if ($action === 'exportCsvAudit' . ucfirst($this->audit->getKey())) {
                 $this->ajaxProcessExportCsv();
             }
+
+            // Skip rendering on AJAX calls (only the active audit processes above)
+            return;
         }
 
         $content = $this->getContent();
@@ -247,7 +253,6 @@ class AuditRunner
             }
             unset($item);
             AuditRunStorage::upsert($auditKey, $this->state);
-            \SeoOptimizerPage::rebuildAllCounters();
             $this->returnJson('done');
         }
 
@@ -286,9 +291,10 @@ class AuditRunner
                     continue;
                 }
 
+                $extractor = new HTMLExtractor($content);
                 foreach ($observers as $observer) {
                     if (method_exists($observer, 'observeAfterRequest')) {
-                        $observer->observeAfterRequest($url, $content);
+                        $observer->observeAfterRequest($url, $content, $extractor);
                     }
                 }
             }
@@ -311,13 +317,15 @@ class AuditRunner
 
         $newResults = $this->audit->formatResults($observerResults);
 
-        // Count issues per type
+        // Count issues per type (O(n) via hash map instead of O(n²))
+        $urlToType = [];
+        foreach ($batch as $entry) {
+            $urlToType[$entry['url']] = $entry['type'];
+        }
         foreach ($newResults as $row) {
-            foreach ($batch as $entry) {
-                if ($entry['url'] === ($row['url'] ?? '') && isset($this->state['items'][$entry['type']])) {
-                    $this->state['items'][$entry['type']]['issues_count']++;
-                    break;
-                }
+            $rowUrl = isset($row['url']) ? $row['url'] : '';
+            if (isset($urlToType[$rowUrl]) && isset($this->state['items'][$urlToType[$rowUrl]])) {
+                $this->state['items'][$urlToType[$rowUrl]]['issues_count']++;
             }
         }
 
@@ -337,10 +345,6 @@ class AuditRunner
 
         AuditRunStorage::upsert($auditKey, $this->state);
 
-        if ($this->state['status'] === 'complete') {
-            \SeoOptimizerPage::rebuildAllCounters();
-        }
-
         $this->returnJson($this->state['status'] === 'complete' ? 'done' : 'success');
     }
 
@@ -349,33 +353,7 @@ class AuditRunner
      */
     private function collectCustomKpis($observer)
     {
-        $methods = [
-            'getLinksChecked' => 'links_checked',
-            'getGoodCount' => 'good_count',
-            'getMediumCount' => 'medium_count',
-            'getSlowCount' => 'slow_count',
-            'getLightCount' => 'light_count',
-            'getModerateCount' => 'moderate_count',
-            'getHeavyCount' => 'heavy_count',
-            'getWarningCount' => 'warning_count',
-            'getCriticalCount' => 'critical_count',
-            'getRedirectedCount' => 'redirected_count',
-            'getNoOutgoingCount' => 'no_outgoing_count',
-            'getFewOutgoingCount' => 'few_outgoing_count',
-            'getLowCount' => 'low_count',
-            'getPagesWithKeywords' => 'pages_with_keywords',
-            'getPagesWithoutKeywords' => 'pages_without_keywords',
-            'getTotalKeywordsChecked' => 'total_keywords_checked',
-        ];
-
-        foreach ($methods as $method => $kpiKey) {
-            if (method_exists($observer, $method)) {
-                if (!isset($this->state['custom_kpis'][$kpiKey])) {
-                    $this->state['custom_kpis'][$kpiKey] = 0;
-                }
-                $this->state['custom_kpis'][$kpiKey] += $observer->$method();
-            }
-        }
+        KpiMapper::collect($observer, $this->state['custom_kpis']);
     }
 
     /**
@@ -453,22 +431,7 @@ class AuditRunner
      */
     private function fetchUrl(string $url)
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-        $content = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($content === false || $httpCode >= 400) {
-            return false;
-        }
-
-        return $content;
+        return CurlBatch::fetchPage($url);
     }
 
     /**

@@ -27,7 +27,7 @@ class AuditPageWeight implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-hdd-o';
+        return 'hard-drives';
     }
 
     public function getVisual(): string

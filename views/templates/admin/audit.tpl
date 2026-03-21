@@ -8,7 +8,7 @@
             {/if}
             <div class="seoo-panel-intro__content">
                 <h3 class="seoo-panel-intro__title">
-                    <i class="{$audit_icon|escape:'htmlall':'UTF-8'}"></i>
+                    {if $audit_icon}<span class="seoo-icon">{include file="module:seooptimizer/views/icons/`$audit_icon`.svg"}</span>{/if}
                     {$audit_title|escape:'htmlall':'UTF-8'}
                 </h3>
                 <p class="seoo-panel-intro__desc">{$audit_description|escape:'htmlall':'UTF-8'}</p>
@@ -18,7 +18,7 @@
                         class="btn btn-default seoo-audit__start-btn"
                         data-audit-key="{$audit_key|escape:'htmlall':'UTF-8'}"
                         data-audit-action="runAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}">
-                    <i class="process-icon-search"></i> {l s='Start audit' mod='seooptimizer'}
+                    <span class="seoo-icon">{include file="module:seooptimizer/views/icons/magnifying-glass.svg"}</span> {l s='Start audit' mod='seooptimizer'}
                 </button>
                 {if $audit_is_interrupted}
                     <button type="button"
@@ -27,24 +27,24 @@
                             data-audit-action="runAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}"
                             data-audit-crawled="{$audit_crawled_pages|intval}"
                             data-audit-total="{$audit_total_pages|intval}">
-                        <i class="icon-play"></i> {l s='Resume audit' mod='seooptimizer'} ({$audit_crawled_pages|intval}/{$audit_total_pages|intval})
+                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/play.svg"}</span> {l s='Resume audit' mod='seooptimizer'} ({$audit_crawled_pages|intval}/{$audit_total_pages|intval})
                     </button>
                 {/if}
                 <button type="button"
                         class="btn btn-default seoo-audit__pause-btn"
                         data-audit-key="{$audit_key|escape:'htmlall':'UTF-8'}"
                         style="display:none;">
-                    <i class="icon-pause"></i> {l s='Pause' mod='seooptimizer'}
+                    <span class="seoo-icon">{include file="module:seooptimizer/views/icons/pause.svg"}</span> {l s='Pause' mod='seooptimizer'}
                 </button>
                 {if $audit_is_complete && $audit_results_count > 0}
                     <button type="button"
                             class="btn btn-default seoo-audit__csv-btn"
                             data-audit-action="exportCsvAudit{$audit_key|ucfirst|escape:'htmlall':'UTF-8'}">
-                        <i class="icon-download"></i> {l s='Export CSV' mod='seooptimizer'}
+                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/download-simple.svg"}</span> {l s='Export CSV' mod='seooptimizer'}
                     </button>
                 {/if}
                 {if $audit_last_scan_date}
-                    <span class="seoo-panel-intro__last-scan"><i class="icon-clock-o"></i> {l s='Last scan:' mod='seooptimizer'} {$audit_last_scan_date|escape:'htmlall':'UTF-8'}</span>
+                    <span class="seoo-panel-intro__last-scan"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/clock.svg"}</span> {l s='Last scan:' mod='seooptimizer'} {$audit_last_scan_date|escape:'htmlall':'UTF-8'}</span>
                 {/if}
             </div>
         </div>

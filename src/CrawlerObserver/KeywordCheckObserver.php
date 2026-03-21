@@ -6,6 +6,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\TextNormalizer;
+
 class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -28,15 +31,20 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
+        $extractor = $extractor ?: new HTMLExtractor($content);
         // Try keywords from our database first, fallback to meta tag
         $dbKeywords = \SeoOptimizerPage::getKeywordsByUrl($url);
         if (!empty($dbKeywords)) {
             $keywords = array_filter(array_map('trim', explode(',', $dbKeywords)));
         } else {
-            $keywords = $this->extractMetaKeywords($content);
+            $rawKeywords = $extractor->extractMetaKeywords();
+            $keywords = !empty($rawKeywords)
+                ? array_filter(array_map('trim', explode(',', $rawKeywords)))
+                : [];
         }
 
         if (empty($keywords)) {
@@ -53,7 +61,7 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
         $this->pagesWithKeywords++;
 
         // Extract all zones
-        $zones = $this->extractZones($url, $content);
+        $zones = $this->extractZones($url, $content, $extractor);
 
         $checks = [];
         foreach ($keywords as $keyword) {
@@ -63,9 +71,6 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
             }
 
             $this->totalKeywordsChecked++;
-            $terms = $this->splitKeywordTerms($keyword);
-            $termCount = count($terms);
-            $minTermsRequired = $termCount >= 4 ? (int) ceil($termCount * 0.66) : $termCount;
 
             $keywordCheck = [
                 'keyword' => $keyword,
@@ -77,7 +82,7 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
             foreach ($zones as $zoneName => $zoneData) {
                 $zoneText = $zoneData['text'];
                 $zoneWeight = $zoneData['weight'];
-                $found = $this->checkKeywordInZone($keyword, $terms, $minTermsRequired, $zoneText);
+                $found = TextNormalizer::keywordFoundIn($keyword, $zoneText);
 
                 $keywordCheck['zones'][$zoneName] = [
                     'found' => $found,
@@ -103,45 +108,27 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
     }
 
     /**
-     * @param string $content
-     * @return array<string>
-     */
-    private function extractMetaKeywords(string $content): array
-    {
-        // Match <meta name="keywords" content="...">
-        if (preg_match('/<meta[^>]+name=["\']keywords["\'][^>]+content=["\']([^"\']*)["\'][^>]*>/is', $content, $match)) {
-            $raw = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
-            return array_filter(array_map('trim', explode(',', $raw)));
-        }
-        // Reversed order
-        if (preg_match('/<meta[^>]+content=["\']([^"\']*)["\'][^>]+name=["\']keywords["\'][^>]*>/is', $content, $match)) {
-            $raw = html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
-            return array_filter(array_map('trim', explode(',', $raw)));
-        }
-
-        return [];
-    }
-
-    /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor $extractor
      * @return array<string, array{text: string, importance: string, weight: int}>
      */
-    private function extractZones(string $url, string $content): array
+    private function extractZones(string $url, string $content, HTMLExtractor $extractor): array
     {
         $zones = [];
 
         // 1. Meta title (HIGH)
-        $title = '';
-        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $m)) {
-            $title = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES, 'UTF-8'));
-        }
+        $title = $extractor->extractTitle();
         $zones['meta_title'] = ['text' => $title, 'importance' => 'high', 'weight' => 15, 'label' => 'Meta title'];
 
         // 2. H1 (HIGH)
         $h1 = '';
-        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/is', $content, $m)) {
-            $h1 = trim(strip_tags($m[1]));
+        $headings = $extractor->extractHeadings();
+        foreach ($headings as $heading) {
+            if ($heading['level'] === 1) {
+                $h1 = $heading['text'];
+                break;
+            }
         }
         $zones['h1'] = ['text' => $h1, 'importance' => 'high', 'weight' => 15, 'label' => 'H1'];
 
@@ -150,16 +137,11 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
         $zones['url'] = ['text' => urldecode($urlPath), 'importance' => 'high', 'weight' => 10, 'label' => 'URL'];
 
         // 4. Meta description (MEDIUM)
-        $desc = '';
-        if (preg_match('/<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)["\'][^>]*>/is', $content, $m)) {
-            $desc = trim(html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'));
-        } elseif (preg_match('/<meta[^>]+content=["\']([^"\']*)["\'][^>]+name=["\']description["\'][^>]*>/is', $content, $m)) {
-            $desc = trim(html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'));
-        }
+        $desc = $extractor->extractMetaDescription();
         $zones['meta_description'] = ['text' => $desc, 'importance' => 'medium', 'weight' => 10, 'label' => 'Meta description'];
 
         // 5. First 100 words of content (MEDIUM)
-        $bodyText = $this->extractBodyText($content);
+        $bodyText = $extractor->extractBodyText();
         $words = preg_split('/\s+/', $bodyText);
         $first100 = implode(' ', array_slice($words, 0, 100));
         $zones['content_start'] = ['text' => $first100, 'importance' => 'medium', 'weight' => 10, 'label' => 'First 100 words'];
@@ -173,31 +155,6 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
         $zones['category'] = ['text' => $categoryName, 'importance' => 'low', 'weight' => 5, 'label' => 'Category'];
 
         return $zones;
-    }
-
-    /**
-     * @param string $content
-     * @return string
-     */
-    private function extractBodyText(string $content): string
-    {
-        $body = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $m)) {
-            $body = $m[1];
-        }
-
-        // Remove non-content elements
-        $body = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $body);
-        $body = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $body);
-        $body = preg_replace('/<nav[^>]*>.*?<\/nav>/is', '', $body);
-        $body = preg_replace('/<header[^>]*>.*?<\/header>/is', '', $body);
-        $body = preg_replace('/<footer[^>]*>.*?<\/footer>/is', '', $body);
-
-        $text = strip_tags($body);
-        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-        $text = preg_replace('/\s+/', ' ', $text);
-
-        return trim($text);
     }
 
     /**
@@ -268,88 +225,6 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
         }
 
         return '';
-    }
-
-    /**
-     * @param string $keyword
-     * @return array<string>
-     */
-    private function splitKeywordTerms(string $keyword): array
-    {
-        $terms = preg_split('/\s+/', $keyword);
-
-        return array_filter($terms, function ($t) {
-            return mb_strlen($t) >= 2;
-        });
-    }
-
-    /**
-     * @param string $keyword
-     * @param array $terms
-     * @param int $minTermsRequired
-     * @param string $text
-     * @return bool
-     */
-    private function checkKeywordInZone(string $keyword, array $terms, int $minTermsRequired, string $text): bool
-    {
-        if (empty($text)) {
-            return false;
-        }
-
-        $normalizedText = $this->normalize($text);
-        $normalizedKeyword = $this->normalize($keyword);
-
-        // Exact match
-        if (strpos($normalizedText, $normalizedKeyword) !== false) {
-            return true;
-        }
-
-        // Partial match: check how many terms are present
-        $foundTerms = 0;
-        foreach ($terms as $term) {
-            $normalizedTerm = $this->normalize($term);
-            if (mb_strlen($normalizedTerm) < 2) {
-                continue;
-            }
-            if (strpos($normalizedText, $normalizedTerm) !== false) {
-                $foundTerms++;
-            }
-        }
-
-        return $foundTerms >= $minTermsRequired;
-    }
-
-    /**
-     * @param string $string
-     * @return string
-     */
-    private function normalize(string $string): string
-    {
-        $string = mb_strtolower($string);
-        $string = $this->removeAccents($string);
-        $string = preg_replace('/[^a-z0-9\s]/', ' ', $string);
-        $string = preg_replace('/\s+/', ' ', $string);
-
-        return trim($string);
-    }
-
-    /**
-     * @param string $string
-     * @return string
-     */
-    private function removeAccents(string $string): string
-    {
-        $transliterations = [
-            'à' => 'a', 'â' => 'a', 'ä' => 'a', 'á' => 'a', 'ã' => 'a',
-            'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'é' => 'e',
-            'ì' => 'i', 'î' => 'i', 'ï' => 'i', 'í' => 'i',
-            'ò' => 'o', 'ô' => 'o', 'ö' => 'o', 'ó' => 'o', 'õ' => 'o',
-            'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ú' => 'u',
-            'ñ' => 'n', 'ç' => 'c', 'ÿ' => 'y', 'ý' => 'y',
-            'æ' => 'ae', 'œ' => 'oe',
-        ];
-
-        return strtr($string, $transliterations);
     }
 
     /**

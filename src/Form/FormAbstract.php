@@ -32,12 +32,12 @@ abstract class FormAbstract implements FormInterface
         }
 
         if (\Tools::isSubmit('submit' . $this->getKey())) {
-            if (!\Tools::getValue('token') || \Tools::getValue('token') !== \Tools::getAdminTokenLite('AdminModules')) {
+            if ($this->isValidToken()) {
+                if (method_exists($this, 'postProcess')) {
+                    $this->postProcess();
+                }
+            } else {
                 \Context::getContext()->controller->errors[] = 'Invalid security token.';
-                return;
-            }
-            if (method_exists($this, 'postProcess')) {
-                $this->postProcess();
             }
         }
 
@@ -53,7 +53,17 @@ abstract class FormAbstract implements FormInterface
             }
         }
 
-        \Context::getContext()->smarty->assign($this->getKey(true), $this->getContent());
+        try {
+            \Context::getContext()->smarty->assign($this->getKey(true), $this->getContent());
+        } catch (\Throwable $e) {
+            \PrestaShopLogger::addLog(
+                'SeoOptimizer FormAbstract::process() error in ' . $this->getKey() . ': ' . $e->getMessage(),
+                3,
+                null,
+                'SeoOptimizer'
+            );
+            \Context::getContext()->smarty->assign($this->getKey(true), '');
+        }
     }
 
     public function getContent(): string
@@ -89,6 +99,33 @@ abstract class FormAbstract implements FormInterface
         ];
 
         return $helper->generateForm([$form]);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isValidToken(): bool
+    {
+        $token = \Tools::getValue('token');
+
+        // Legacy token check (PS 1.7)
+        if ($token && $token === \Tools::getAdminTokenLite('AdminModules')) {
+            return true;
+        }
+
+        // PS 9+: Symfony handles CSRF — validate via admin controller context
+        if (version_compare(_PS_VERSION_, '9.0.0', '>=')) {
+            $controller = \Context::getContext()->controller;
+            if ($controller instanceof \AdminController && $controller->tabAccess['edit'] === '1') {
+                return true;
+            }
+
+            // Fallback: if we're on the module configure page, Symfony auth is valid
+            return \Tools::getValue('configure') === Utils::MODULE_NAME
+                || \Tools::getValue('module_name') === Utils::MODULE_NAME;
+        }
+
+        return false;
     }
 
     protected function l($string)

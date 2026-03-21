@@ -27,7 +27,7 @@ class AuditPageLoadTime implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-dashboard';
+        return 'gauge';
     }
 
     public function getVisual(): string

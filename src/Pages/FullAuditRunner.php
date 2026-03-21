@@ -6,19 +6,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-use Adilis\SeoOptimizer\Audit\AuditBrokenLinks;
-use Adilis\SeoOptimizer\Audit\AuditHeadingHierarchy;
 use Adilis\SeoOptimizer\Audit\AuditInterface;
-use Adilis\SeoOptimizer\Audit\AuditInternalLinks;
-use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
-use Adilis\SeoOptimizer\Audit\AuditMetaTags;
-use Adilis\SeoOptimizer\Audit\AuditMissingAlt;
-use Adilis\SeoOptimizer\Audit\AuditRedirectedLinks;
-use Adilis\SeoOptimizer\Audit\AuditPageLoadTime;
-use Adilis\SeoOptimizer\Audit\AuditPageWeight;
+use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Audit\AuditRunner;
-use Adilis\SeoOptimizer\Audit\AuditTextRatio;
-use Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks;
+use Adilis\SeoOptimizer\Audit\KpiMapper;
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
@@ -35,19 +28,7 @@ class FullAuditRunner
 
     public function __construct()
     {
-        $this->audits = [
-            new AuditHeadingHierarchy(),
-            new AuditMissingAlt(),
-            new AuditBrokenLinks(),
-            new AuditRedirectedLinks(),
-            new AuditPageLoadTime(),
-            new AuditPageWeight(),
-            new AuditUnsecuredLinks(),
-            new AuditMetaTags(),
-            new AuditInternalLinks(),
-            new AuditTextRatio(),
-            new AuditKeywordCheck(),
-        ];
+        $this->audits = AuditRegistry::getAll();
     }
 
     /**
@@ -185,6 +166,8 @@ class FullAuditRunner
                 $isIndexable = AuditRunner::isPageIndexable($content);
 
                 // Only run observers for audits that apply to this page
+                $extractor = new HTMLExtractor($content);
+
                 foreach ($auditObservers as $data) {
                     /** @var AuditInterface $audit */
                     $audit = $data['audit'];
@@ -196,7 +179,7 @@ class FullAuditRunner
 
                     foreach ($data['observers'] as $observer) {
                         if (method_exists($observer, 'observeAfterRequest')) {
-                            $observer->observeAfterRequest($url, $content);
+                            $observer->observeAfterRequest($url, $content, $extractor);
                         }
                     }
                 }
@@ -257,34 +240,7 @@ class FullAuditRunner
      */
     private function collectCustomKpis($observer, string $auditKey)
     {
-        $kpis = &$this->state['audit_custom_kpis'][$auditKey];
-
-        $methods = [
-            'getLinksChecked' => 'links_checked',
-            'getGoodCount' => 'good_count',
-            'getMediumCount' => 'medium_count',
-            'getSlowCount' => 'slow_count',
-            'getLightCount' => 'light_count',
-            'getModerateCount' => 'moderate_count',
-            'getHeavyCount' => 'heavy_count',
-            'getWarningCount' => 'warning_count',
-            'getCriticalCount' => 'critical_count',
-            'getNoOutgoingCount' => 'no_outgoing_count',
-            'getFewOutgoingCount' => 'few_outgoing_count',
-            'getLowCount' => 'low_count',
-            'getPagesWithKeywords' => 'pages_with_keywords',
-            'getPagesWithoutKeywords' => 'pages_without_keywords',
-            'getTotalKeywordsChecked' => 'total_keywords_checked',
-        ];
-
-        foreach ($methods as $method => $kpiKey) {
-            if (method_exists($observer, $method)) {
-                if (!isset($kpis[$kpiKey])) {
-                    $kpis[$kpiKey] = 0;
-                }
-                $kpis[$kpiKey] += $observer->$method();
-            }
-        }
+        KpiMapper::collect($observer, $this->state['audit_custom_kpis'][$auditKey]);
     }
 
     private function finalize()
@@ -324,22 +280,7 @@ class FullAuditRunner
      */
     private function fetchUrl(string $url)
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-        $content = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($content === false || $httpCode >= 400) {
-            return false;
-        }
-
-        return $content;
+        return CurlBatch::fetchPage($url);
     }
 
     /**

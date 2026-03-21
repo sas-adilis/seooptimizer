@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+
 class MissingAltAttributeObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -19,40 +21,39 @@ class MissingAltAttributeObserver extends AbstractCrawlerObserver implements Cra
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
+        $extractor = $extractor ?: new HTMLExtractor($content);
+
+        // We need DOM-level access to distinguish missing alt from empty alt,
+        // which extractImages() cannot provide (it returns '' for both cases).
+        $dom = $extractor->getDOM();
+        $imgNodes = $dom->getElementsByTagName('img');
+
         $issues = [];
-
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $bodyMatch)) {
-            $bodyContent = $bodyMatch[1];
-        }
-
-        if (empty(trim($bodyContent))) {
-            return;
-        }
-
-        $dom = new \DOMDocument();
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $bodyContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $images = $dom->getElementsByTagName('img');
-
         $totalImages = 0;
         $missingAlt = 0;
         $emptyAlt = 0;
 
-        foreach ($images as $img) {
+        foreach ($imgNodes as $img) {
             $src = $img->getAttribute('src');
+
+            // Skip data URIs and inline SVGs
+            if (strpos($src, 'data:') === 0) {
+                continue;
+            }
+
+            // Skip empty src
+            if (empty($src)) {
+                continue;
+            }
 
             // Skip tiny images (tracking pixels, spacers)
             $width = $img->getAttribute('width');
             $height = $img->getAttribute('height');
             if (($width && (int) $width <= 1) || ($height && (int) $height <= 1)) {
-                continue;
-            }
-
-            // Skip data URIs and inline SVGs
-            if (strpos($src, 'data:') === 0) {
                 continue;
             }
 

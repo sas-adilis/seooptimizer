@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Utils;
 
 class FormSettings extends FormAbstract implements FormInterface
@@ -18,11 +19,7 @@ class FormSettings extends FormAbstract implements FormInterface
             'token' => $module->secure_key,
         ]);
 
-        $auditKeys = [
-            'heading_hierarchy', 'missing_alt', 'broken_links', 'redirected_links',
-            'page_load_time', 'page_weight', 'unsecured_links', 'meta_tags',
-            'internal_links', 'text_ratio', 'keyword_check',
-        ];
+        $auditKeys = AuditRegistry::getKeys();
 
         $cronUrls = [];
         $cronUrls[] = ['label' => $this->l('Full audit (all)'), 'url' => $cronBaseUrl . '&audit=all'];
@@ -132,6 +129,38 @@ class FormSettings extends FormAbstract implements FormInterface
                         'suffix' => 'words',
                         'required' => true,
                     ],
+                    [
+                        'type' => 'html',
+                        'name' => 'separator_front_audit',
+                        'html_content' => '<hr><h4><i class="icon-eye"></i> ' . $this->l('Front-office audit panel') . '</h4>',
+                    ],
+                    [
+                        'type' => 'switch',
+                        'name' => 'SEOO_FRONT_AUDIT_ENABLED',
+                        'label' => $this->l('Enable front audit panel'),
+                        'desc' => $this->l('Display a floating SEO audit button on the front-office for back-office employees. The button triggers a real-time SEO analysis of the current page.'),
+                        'is_bool' => true,
+                        'values' => [
+                            ['id' => 'SEOO_FRONT_AUDIT_ENABLED_on', 'value' => 1, 'label' => $this->l('Yes')],
+                            ['id' => 'SEOO_FRONT_AUDIT_ENABLED_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
+                    [
+                        'type' => 'html',
+                        'name' => 'separator_bo_column',
+                        'html_content' => '<hr><h4><i class="icon-columns"></i> ' . $this->l('Back-office listing') . '</h4>',
+                    ],
+                    [
+                        'type' => 'switch',
+                        'name' => 'SEOO_BO_SCORE_COLUMN',
+                        'label' => $this->l('Show SEO score column'),
+                        'desc' => $this->l('Display a SEO score column in back-office product, category, manufacturer and supplier listings. Requires a completed audit.'),
+                        'is_bool' => true,
+                        'values' => [
+                            ['id' => 'SEOO_BO_SCORE_COLUMN_on', 'value' => 1, 'label' => $this->l('Yes')],
+                            ['id' => 'SEOO_BO_SCORE_COLUMN_off', 'value' => 0, 'label' => $this->l('No')],
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -150,6 +179,8 @@ class FormSettings extends FormAbstract implements FormInterface
             'SEOO_WEIGHT_THRESHOLD_HEAVY' => Utils::getValOrConf('SEOO_WEIGHT_THRESHOLD_HEAVY'),
             'SEOO_TEXT_THRESHOLD_LOW' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_LOW'),
             'SEOO_TEXT_THRESHOLD_GOOD' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_GOOD'),
+            'SEOO_FRONT_AUDIT_ENABLED' => (int) Utils::getValOrConf('SEOO_FRONT_AUDIT_ENABLED'),
+            'SEOO_BO_SCORE_COLUMN' => (int) Utils::getValOrConf('SEOO_BO_SCORE_COLUMN'),
         ]);
     }
 
@@ -178,6 +209,8 @@ class FormSettings extends FormAbstract implements FormInterface
         \Configuration::updateValue('SEOO_WEIGHT_THRESHOLD_HEAVY', (int) \Tools::getValue('SEOO_WEIGHT_THRESHOLD_HEAVY'));
         \Configuration::updateValue('SEOO_TEXT_THRESHOLD_LOW', (int) \Tools::getValue('SEOO_TEXT_THRESHOLD_LOW'));
         \Configuration::updateValue('SEOO_TEXT_THRESHOLD_GOOD', (int) \Tools::getValue('SEOO_TEXT_THRESHOLD_GOOD'));
+        \Configuration::updateValue('SEOO_FRONT_AUDIT_ENABLED', (int) \Tools::getValue('SEOO_FRONT_AUDIT_ENABLED'));
+        \Configuration::updateValue('SEOO_BO_SCORE_COLUMN', (int) \Tools::getValue('SEOO_BO_SCORE_COLUMN'));
         \Tools::redirectAdmin(Utils::getConfigFormUrl(4));
     }
 }

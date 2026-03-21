@@ -27,7 +27,7 @@ class AuditHeadingHierarchy implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-header';
+        return 'text-h-one';
     }
 
     public function getVisual(): string

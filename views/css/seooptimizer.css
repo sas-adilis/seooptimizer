@@ -1,5 +1,21 @@
 @charset "UTF-8";
-/* ── SEO Optimizer — Back-office styles ── */ /* ── Variables ── */ /* ── Process icons (FontAwesome) ── */
+/* ── SEO Optimizer — Back-office styles ── */ /* ── Variables ── */
+/* ── SVG Icons ── */
+.seoo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+}
+.seoo-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+/* ── Process icons (FontAwesome) ── */
 [class*=process-icon-]::before {
   display: inline-block;
   font: normal normal normal 14px/1 FontAwesome;

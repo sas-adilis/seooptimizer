@@ -29,8 +29,9 @@ class AuditResultStorage
 
         $knownFields = ['url', 'severity', 'type', 'message', 'entity_type', 'id_entity'];
 
-        // Try to resolve URL -> entity via seooptimizer_page
-        $urlEntityMap = self::buildUrlEntityMap($idShop);
+        // Try to resolve URL -> entity via seooptimizer_page (lazy, batch-scoped)
+        $batchUrls = array_filter(array_column($results, 'url'));
+        $urlEntityMap = self::buildUrlEntityMap($batchUrls, $idShop);
 
         foreach ($results as $row) {
             $extra = [];
@@ -302,32 +303,46 @@ class AuditResultStorage
      * @param int $idShop
      * @return array<string, array{entity_type: string, id_entity: int}>
      */
-    private static $urlEntityMapCache = null;
+    /** @var array<string, array{entity_type: string, id_entity: int}> */
+    private static $urlEntityMapCache = [];
 
-    private static function buildUrlEntityMap(int $idShop): array
+    /**
+     * Resolve URLs to entity types lazily — only fetches from DB for uncached URLs.
+     *
+     * @param array $urls
+     * @param int $idShop
+     * @return array<string, array{entity_type: string, id_entity: int}>
+     */
+    private static function buildUrlEntityMap(array $urls, int $idShop): array
     {
-        if (self::$urlEntityMapCache !== null) {
-            return self::$urlEntityMapCache;
-        }
-
-        $rows = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
-            'SELECT url, entity_type, id_entity FROM ' . _DB_PREFIX_ . 'seooptimizer_page
-            WHERE id_shop = ' . (int) $idShop . ' AND url != ""'
-        );
-
-        $map = [];
-        if ($rows) {
-            foreach ($rows as $row) {
-                $map[$row['url']] = [
-                    'entity_type' => $row['entity_type'],
-                    'id_entity' => (int) $row['id_entity'],
-                ];
+        $uncached = [];
+        foreach ($urls as $url) {
+            if (!isset(self::$urlEntityMapCache[$url])) {
+                $uncached[] = $url;
             }
         }
 
-        self::$urlEntityMapCache = $map;
+        if (!empty($uncached)) {
+            $inClause = implode(',', array_map(function ($u) {
+                return '"' . pSQL($u) . '"';
+            }, $uncached));
 
-        return $map;
+            $rows = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
+                'SELECT url, entity_type, id_entity FROM ' . _DB_PREFIX_ . 'seooptimizer_page
+                WHERE id_shop = ' . (int) $idShop . ' AND url IN (' . $inClause . ')'
+            );
+
+            if ($rows) {
+                foreach ($rows as $row) {
+                    self::$urlEntityMapCache[$row['url']] = [
+                        'entity_type' => $row['entity_type'],
+                        'id_entity' => (int) $row['id_entity'],
+                    ];
+                }
+            }
+        }
+
+        return self::$urlEntityMapCache;
     }
 
     private static function hydrateRows(array $rows): array

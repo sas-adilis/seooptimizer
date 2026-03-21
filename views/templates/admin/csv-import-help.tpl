@@ -28,6 +28,6 @@
         </tbody>
     </table>
     <a href="{$csv_example_url|escape:'htmlall':'UTF-8'}" class="btn btn-default btn-sm" download>
-        <i class="icon-download"></i> {l s='Download example CSV' mod='seooptimizer'}
+        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/download-simple.svg"}</span> {l s='Download example CSV' mod='seooptimizer'}
     </a>
 </div>

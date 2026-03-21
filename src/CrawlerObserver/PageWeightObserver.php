@@ -6,6 +6,10 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\URLResolver;
+
 class PageWeightObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -29,6 +33,20 @@ class PageWeightObserver extends AbstractCrawlerObserver implements CrawlerObser
     /** @var array already measured asset URLs to avoid duplicate requests */
     private $assetSizeCache = [];
 
+    /** @var string|null */
+    private $shopDomain;
+
+    /**
+     * Resource type mapping from HTMLExtractor types to PageWeight types.
+     *
+     * @var array<string, string>
+     */
+    private static $typeMap = [
+        'script' => 'js',
+        'stylesheet' => 'css',
+        'image' => 'image',
+    ];
+
     public function __construct()
     {
         $this->thresholdLight = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_LIGHT') ?: 1024;
@@ -44,11 +62,43 @@ class PageWeightObserver extends AbstractCrawlerObserver implements CrawlerObser
      * @param string $url
      * @param string $content
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
+        $extractor = $extractor ?: new HTMLExtractor($content);
         $htmlSize = strlen($content);
-        $assets = $this->extractAssetUrls($url, $content);
-        $assetSizes = $this->batchGetSizes($assets);
+        $assets = $this->extractAssetUrls($url, $extractor);
+
+        // Separate cached from uncached URLs
+        $toFetch = [];
+        $cachedResults = [];
+        foreach ($assets as $asset) {
+            if (isset($this->assetSizeCache[$asset['url']])) {
+                $cachedResults[] = [
+                    'type' => $asset['type'],
+                    'size' => $this->assetSizeCache[$asset['url']],
+                ];
+            } else {
+                $toFetch[] = $asset;
+            }
+        }
+
+        // Batch fetch sizes for uncached URLs
+        $fetchedResults = [];
+        if (!empty($toFetch)) {
+            $urlList = array_column($toFetch, 'url');
+            $sizes = CurlBatch::getContentLengths($urlList);
+
+            foreach ($toFetch as $asset) {
+                $size = isset($sizes[$asset['url']]) ? $sizes[$asset['url']] : 0;
+                $this->assetSizeCache[$asset['url']] = $size;
+                $fetchedResults[] = [
+                    'type' => $asset['type'],
+                    'size' => $size,
+                ];
+            }
+        }
+
+        $assetSizes = array_merge($cachedResults, $fetchedResults);
 
         $totalSize = $htmlSize;
         $detailHtml = $htmlSize;
@@ -100,178 +150,30 @@ class PageWeightObserver extends AbstractCrawlerObserver implements CrawlerObser
     /**
      * @param string $pageUrl
      * @param string $content
-     * @return array
+     * @return array<int, array{url: string, type: string}>
      */
-    private function extractAssetUrls(string $pageUrl, string $content): array
+    private function extractAssetUrls(string $pageUrl, HTMLExtractor $extractor): array
     {
+        $resources = $extractor->extractResources();
+
+        if ($this->shopDomain === null) {
+            $this->shopDomain = URLResolver::getShopDomain();
+        }
+
         $assets = [];
-        $shopDomain = $this->getShopDomain();
-
-        $dom = new \DOMDocument();
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-
-        // Images
-        $images = $dom->getElementsByTagName('img');
-        foreach ($images as $img) {
-            $src = $img->getAttribute('src');
-            if ($src && strpos($src, 'data:') !== 0) {
-                $resolved = $this->resolveUrl($src, $pageUrl);
-                if ($resolved && $this->isSameDomain($resolved, $shopDomain)) {
-                    $assets[] = ['url' => $resolved, 'type' => 'image'];
-                }
+        foreach ($resources as $resource) {
+            $resolved = URLResolver::resolve($resource['url'], $pageUrl);
+            if ($resolved === null) {
+                continue;
             }
-        }
-
-        // Stylesheets
-        $links = $dom->getElementsByTagName('link');
-        foreach ($links as $link) {
-            $href = $link->getAttribute('href');
-            $rel = $link->getAttribute('rel');
-            if ($href && $rel === 'stylesheet') {
-                $resolved = $this->resolveUrl($href, $pageUrl);
-                if ($resolved && $this->isSameDomain($resolved, $shopDomain)) {
-                    $assets[] = ['url' => $resolved, 'type' => 'css'];
-                }
+            if (!URLResolver::isInternal($resolved, $this->shopDomain)) {
+                continue;
             }
-        }
-
-        // Scripts
-        $scripts = $dom->getElementsByTagName('script');
-        foreach ($scripts as $script) {
-            $src = $script->getAttribute('src');
-            if ($src) {
-                $resolved = $this->resolveUrl($src, $pageUrl);
-                if ($resolved && $this->isSameDomain($resolved, $shopDomain)) {
-                    $assets[] = ['url' => $resolved, 'type' => 'js'];
-                }
-            }
+            $type = isset(self::$typeMap[$resource['type']]) ? self::$typeMap[$resource['type']] : $resource['type'];
+            $assets[] = ['url' => $resolved, 'type' => $type];
         }
 
         return $assets;
-    }
-
-    /**
-     * @param array $assets
-     * @return array
-     */
-    private function batchGetSizes(array $assets): array
-    {
-        if (empty($assets)) {
-            return [];
-        }
-
-        $results = [];
-        $toFetch = [];
-
-        // Check cache first
-        foreach ($assets as $i => $asset) {
-            if (isset($this->assetSizeCache[$asset['url']])) {
-                $results[] = [
-                    'type' => $asset['type'],
-                    'size' => $this->assetSizeCache[$asset['url']],
-                ];
-            } else {
-                $toFetch[$i] = $asset;
-            }
-        }
-
-        if (empty($toFetch)) {
-            return $results;
-        }
-
-        $multiHandle = curl_multi_init();
-        $handles = [];
-
-        foreach ($toFetch as $i => $asset) {
-            $ch = curl_init($asset['url']);
-            curl_setopt($ch, CURLOPT_NOBODY, true);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-            curl_multi_add_handle($multiHandle, $ch);
-            $handles[$i] = $ch;
-        }
-
-        $running = 0;
-        do {
-            curl_multi_exec($multiHandle, $running);
-            curl_multi_select($multiHandle);
-        } while ($running > 0);
-
-        foreach ($handles as $i => $ch) {
-            $contentLength = (int) curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-            if ($contentLength <= 0) {
-                $contentLength = (int) curl_getinfo($ch, CURLINFO_SIZE_DOWNLOAD);
-            }
-
-            $this->assetSizeCache[$toFetch[$i]['url']] = $contentLength;
-
-            $results[] = [
-                'type' => $toFetch[$i]['type'],
-                'size' => $contentLength,
-            ];
-
-            curl_multi_remove_handle($multiHandle, $ch);
-            curl_close($ch);
-        }
-
-        curl_multi_close($multiHandle);
-
-        return $results;
-    }
-
-    /**
-     * @param string $href
-     * @param string $baseUrl
-     * @return string|null
-     */
-    private function resolveUrl(string $href, string $baseUrl)
-    {
-        if (preg_match('#^https?://#i', $href)) {
-            return $href;
-        }
-
-        if (strpos($href, '//') === 0) {
-            $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: 'https';
-            return $scheme . ':' . $href;
-        }
-
-        $parsed = parse_url($baseUrl);
-        if (!$parsed || !isset($parsed['scheme'], $parsed['host'])) {
-            return null;
-        }
-
-        $base = $parsed['scheme'] . '://' . $parsed['host'];
-
-        if (strpos($href, '/') === 0) {
-            return $base . $href;
-        }
-
-        $dir = isset($parsed['path']) ? rtrim(dirname($parsed['path']), '/') : '';
-        return $base . $dir . '/' . $href;
-    }
-
-    /**
-     * @param string $url
-     * @param string $shopDomain
-     * @return bool
-     */
-    private function isSameDomain(string $url, string $shopDomain): bool
-    {
-        $host = parse_url($url, PHP_URL_HOST);
-        return $host && $host === $shopDomain;
-    }
-
-    /**
-     * @return string
-     */
-    private function getShopDomain(): string
-    {
-        $shopUrl = \Context::getContext()->shop->getBaseURL();
-        return parse_url($shopUrl, PHP_URL_HOST) ?: '';
     }
 
     /**

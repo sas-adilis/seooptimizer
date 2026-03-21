@@ -9,19 +9,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-use Adilis\SeoOptimizer\Audit\AuditBrokenLinks;
-use Adilis\SeoOptimizer\Audit\AuditHeadingHierarchy;
 use Adilis\SeoOptimizer\Audit\AuditInterface;
-use Adilis\SeoOptimizer\Audit\AuditInternalLinks;
-use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
-use Adilis\SeoOptimizer\Audit\AuditMetaTags;
-use Adilis\SeoOptimizer\Audit\AuditMissingAlt;
-use Adilis\SeoOptimizer\Audit\AuditRedirectedLinks;
-use Adilis\SeoOptimizer\Audit\AuditPageLoadTime;
-use Adilis\SeoOptimizer\Audit\AuditPageWeight;
+use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Audit\AuditRunner;
-use Adilis\SeoOptimizer\Audit\AuditTextRatio;
-use Adilis\SeoOptimizer\Audit\AuditUnsecuredLinks;
+use Adilis\SeoOptimizer\Audit\KpiMapper;
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
 use Adilis\SeoOptimizer\Pages\FullAuditRunner;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
@@ -66,22 +59,8 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
      */
     private function getAvailableAudits(): array
     {
-        $audits = [
-            new AuditHeadingHierarchy(),
-            new AuditMissingAlt(),
-            new AuditBrokenLinks(),
-            new AuditRedirectedLinks(),
-            new AuditPageLoadTime(),
-            new AuditPageWeight(),
-            new AuditUnsecuredLinks(),
-            new AuditMetaTags(),
-            new AuditInternalLinks(),
-            new AuditTextRatio(),
-            new AuditKeywordCheck(),
-        ];
-
         $map = [];
-        foreach ($audits as $audit) {
+        foreach (AuditRegistry::getAll() as $audit) {
             $map[$audit->getKey()] = $audit;
         }
 
@@ -216,9 +195,11 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
                         continue;
                     }
 
+                    $extractor = new HTMLExtractor($content);
+
                     foreach ($observers as $observer) {
                         if (method_exists($observer, 'observeAfterRequest')) {
-                            $observer->observeAfterRequest($url, $content);
+                            $observer->observeAfterRequest($url, $content, $extractor);
                         }
                     }
                 }
@@ -257,7 +238,6 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
             }
             unset($item);
             AuditRunStorage::upsert($auditKey, $state);
-            SeoOptimizerPage::rebuildAllCounters();
         }
 
         $this->returnJson(
@@ -339,22 +319,7 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
      */
     private function fetchUrl(string $url)
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-        $content = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($content === false || $httpCode >= 400) {
-            return false;
-        }
-
-        return $content;
+        return CurlBatch::fetchPage($url);
     }
 
     /**
@@ -363,33 +328,7 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
      */
     private function collectCustomKpis($observer, array &$state)
     {
-        $methods = [
-            'getLinksChecked' => 'links_checked',
-            'getGoodCount' => 'good_count',
-            'getMediumCount' => 'medium_count',
-            'getSlowCount' => 'slow_count',
-            'getLightCount' => 'light_count',
-            'getModerateCount' => 'moderate_count',
-            'getHeavyCount' => 'heavy_count',
-            'getWarningCount' => 'warning_count',
-            'getCriticalCount' => 'critical_count',
-            'getRedirectedCount' => 'redirected_count',
-            'getNoOutgoingCount' => 'no_outgoing_count',
-            'getFewOutgoingCount' => 'few_outgoing_count',
-            'getLowCount' => 'low_count',
-            'getPagesWithKeywords' => 'pages_with_keywords',
-            'getPagesWithoutKeywords' => 'pages_without_keywords',
-            'getTotalKeywordsChecked' => 'total_keywords_checked',
-        ];
-
-        foreach ($methods as $method => $kpiKey) {
-            if (method_exists($observer, $method)) {
-                if (!isset($state['custom_kpis'][$kpiKey])) {
-                    $state['custom_kpis'][$kpiKey] = 0;
-                }
-                $state['custom_kpis'][$kpiKey] += $observer->$method();
-            }
-        }
+        KpiMapper::collect($observer, $state['custom_kpis']);
     }
 
     /**

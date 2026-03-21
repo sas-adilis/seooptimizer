@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+
 class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -48,16 +50,24 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
-        $title = $this->extractTitle($content);
-        $description = $this->extractMetaDescription($content);
+        $extractor = $extractor ?: new HTMLExtractor($content);
+
+        $title = $extractor->extractTitle();
+        $description = $extractor->extractMetaDescription();
         $issues = [];
         $pageSeverity = 'good';
 
+        // HTMLExtractor returns empty string when tag is missing
+        // We treat empty string as "missing" for backwards compatibility
+        $titlePresent = $title !== '';
+        $descPresent = $description !== '';
+
         // Title checks
-        if ($title === null) {
+        if (!$titlePresent) {
             $issues[] = [
                 'type' => 'missing_title',
                 'severity' => 'critical',
@@ -112,7 +122,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
         }
 
         // Meta description checks
-        if ($description === null) {
+        if (!$descPresent) {
             $issues[] = [
                 'type' => 'missing_description',
                 'severity' => 'critical',
@@ -180,43 +190,13 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
         }
 
         $this->results[$url] = [
-            'title' => $title,
-            'title_length' => $title !== null ? mb_strlen($title) : 0,
-            'description' => $description,
-            'description_length' => $description !== null ? mb_strlen($description) : 0,
+            'title' => $titlePresent ? $title : null,
+            'title_length' => $titlePresent ? mb_strlen($title) : 0,
+            'description' => $descPresent ? $description : null,
+            'description_length' => $descPresent ? mb_strlen($description) : 0,
             'issues' => $issues,
             'page_severity' => $pageSeverity,
         ];
-    }
-
-    /**
-     * @param string $content
-     * @return string|null
-     */
-    private function extractTitle(string $content)
-    {
-        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $content, $match)) {
-            return trim(html_entity_decode(strip_tags($match[1]), ENT_QUOTES, 'UTF-8'));
-        }
-
-        return null;
-    }
-
-    /**
-     * @param string $content
-     * @return string|null
-     */
-    private function extractMetaDescription(string $content)
-    {
-        if (preg_match('/<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)["\'][^>]*>/is', $content, $match)) {
-            return trim(html_entity_decode($match[1], ENT_QUOTES, 'UTF-8'));
-        }
-        // Handle reversed attribute order: content before name
-        if (preg_match('/<meta[^>]+content=["\']([^"\']*)["\'][^>]+name=["\']description["\'][^>]*>/is', $content, $match)) {
-            return trim(html_entity_decode($match[1], ENT_QUOTES, 'UTF-8'));
-        }
-
-        return null;
     }
 
     /**

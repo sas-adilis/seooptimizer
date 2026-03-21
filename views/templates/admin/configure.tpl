@@ -5,52 +5,53 @@
                 <ul class="nav navbar-nav">
                     <li class="active">
                         <a href="#tab-dashboard" role="button" data-toggle="collapse">
-                            <i class="icon-dashboard"></i>
+                            <span class="seoo-icon">{include file="module:seooptimizer/views/icons/gauge.svg"}</span>
                             {l s='Dashboard' mod='seooptimizer'}
                         </a>
                     </li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                            <i class="icon-search"></i>
+                            <span class="seoo-icon">{include file="module:seooptimizer/views/icons/magnifying-glass.svg"}</span>
                             {l s='Audits' mod='seooptimizer'} <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a href="#tab-audit-heading-hierarchy" role="button" data-toggle="collapse"><i class="icon-header"></i> {l s='Heading hierarchy (H1-H6)' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-missing-alt" role="button" data-toggle="collapse"><i class="icon-picture"></i> {l s='Missing image alt' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-broken-links" role="button" data-toggle="collapse"><i class="icon-unlink"></i> {l s='Broken links (404)' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-redirected-links" role="button" data-toggle="collapse"><i class="icon-share"></i> {l s='Redirected links' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-page-load-time" role="button" data-toggle="collapse"><i class="icon-dashboard"></i> {l s='Page load time' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-page-weight" role="button" data-toggle="collapse"><i class="icon-hdd-o"></i> {l s='Page weight' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-unsecured-links" role="button" data-toggle="collapse"><i class="icon-unlock"></i> {l s='Unsecured links (HTTP)' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-meta-tags" role="button" data-toggle="collapse"><i class="icon-align-left"></i> {l s='Meta tags (title & description)' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-internal-links" role="button" data-toggle="collapse"><i class="icon-link"></i> {l s='Internal links' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-text-ratio" role="button" data-toggle="collapse"><i class="icon-font"></i> {l s='Text content ratio' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-keyword-check" role="button" data-toggle="collapse"><i class="icon-bullseye"></i> {l s='Keyword check' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-heading-hierarchy" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-h-one.svg"}</span> {l s='Heading hierarchy (H1-H6)' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-missing-alt" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/image.svg"}</span> {l s='Missing image alt' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-broken-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/link-break.svg"}</span> {l s='Broken links (404)' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-redirected-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrows-split.svg"}</span> {l s='Redirected links' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-page-load-time" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/gauge.svg"}</span> {l s='Page load time' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-page-weight" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/hard-drives.svg"}</span> {l s='Page weight' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-unsecured-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/lock-open.svg"}</span> {l s='Unsecured links (HTTP)' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-meta-tags" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-align-left.svg"}</span> {l s='Meta tags (title & description)' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-internal-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/link.svg"}</span> {l s='Internal links' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-text-ratio" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-aa.svg"}</span> {l s='Text content ratio' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-keyword-check" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/crosshair.svg"}</span> {l s='Keyword check' mod='seooptimizer'}</a></li>
                         </ul>
                     </li>
-                    <li><a href="#tab-pages" role="button" data-toggle="collapse"><i class="icon-file-text"></i> {l s='Pages' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-pages" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/file-text.svg"}</span> {l s='Pages' mod='seooptimizer'}</a></li>
                     <li class="seoo-navbar-separator"></li>
-                    <li><a href="#tab-redirects" role="button" data-toggle="collapse"><i class="icon-share"></i> {l s='Redirections' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-indexations" role="button" data-toggle="collapse"><i class="icon-database"></i> {l s='Indexations' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-not-found" role="button" data-toggle="collapse"><i class="icon-unlink"></i> {l s='Pages not found' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-robots-txt" role="button" data-toggle="collapse"><i class="icon-file-text"></i> {l s='Robots.txt' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-llms-txt" role="button" data-toggle="collapse"><i class="icon-file-text"></i> {l s='AI Search' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-canonical-urls" role="button" data-toggle="collapse"><i class="icon-code"></i> {l s='Canonical Urls' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-sitemap" role="button" data-toggle="collapse"><i class="icon-sitemap"></i> {l s='Sitemap' mod='seooptimizer'}</a></li>
-                    <li><a href="#tab-rich-snippets" role="button" data-toggle="collapse"><i class="icon-star"></i> {l s='Rich snippets' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-redirects" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrows-split.svg"}</span> {l s='Redirections' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-indexations" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/database.svg"}</span> {l s='Indexations' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-not-found" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/link-break.svg"}</span> {l s='Pages not found' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-robots-txt" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/robot.svg"}</span> {l s='Robots.txt' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-llms-txt" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/robot.svg"}</span> {l s='AI Search' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-meta-templates" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/pencil-simple.svg"}</span> {l s='Meta templates' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-canonical-urls" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/code.svg"}</span> {l s='Canonical Urls' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-sitemap" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/tree-structure.svg"}</span> {l s='Sitemap' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-rich-snippets" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/star.svg"}</span> {l s='Rich snippets' mod='seooptimizer'}</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                            <i class="icon-wrench"></i>
+                            <span class="seoo-icon">{include file="module:seooptimizer/views/icons/wrench.svg"}</span>
                             {l s='Tools' mod='seooptimizer'} <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a href="#tab-verification-code" role="button" data-toggle="collapse"><i class="icon-code"></i> {l s='Verification code' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-social-configuration" role="button" data-toggle="collapse"><i class="icon-cloud"></i> {l s='Social addresses' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-link-obfuscator" role="button" data-toggle="collapse"><i class="icon-link"></i> {l s='Links obfuscation' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-verification-code" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/seal-check.svg"}</span> {l s='Verification code' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-social-configuration" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/share-network.svg"}</span> {l s='Social addresses' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-link-obfuscator" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/eye-slash.svg"}</span> {l s='Links obfuscation' mod='seooptimizer'}</a></li>
                         </ul>
                     </li>
                     <li class="seoo-navbar-separator"></li>
-                    <li><a href="#tab-settings" role="button" data-toggle="collapse"><i class="icon-cogs"></i> {l s='Configuration' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-settings" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/gear-six.svg"}</span> {l s='Configuration' mod='seooptimizer'}</a></li>
                 </ul>
             </div>
         </div>
@@ -88,7 +89,7 @@
                     <div class="seoo-screen">
                         <div class="seoo-panel-intro">
                             <div class="seoo-panel-intro__content">
-                                <h3 class="seoo-panel-intro__title"><i class="icon-list"></i> {l s='Score by page' mod='seooptimizer'}</h3>
+                                <h3 class="seoo-panel-intro__title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/list.svg"}</span> {l s='Score by page' mod='seooptimizer'}</h3>
                                 <p class="seoo-panel-intro__desc">{l s='Detailed SEO score for each page of your website, sorted by score ascending.' mod='seooptimizer'}</p>
                             </div>
                         </div>
@@ -147,13 +148,13 @@
                         <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-redirections.png" alt="{l s='Redirections' mod='seooptimizer'}">
                     </div>
                     <div class="seoo-panel-intro__content">
-                        <h3 class="seoo-panel-intro__title"><i class="icon-share"></i> {l s='Redirections' mod='seooptimizer'}</h3>
+                        <h3 class="seoo-panel-intro__title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrows-split.svg"}</span> {l s='Redirections' mod='seooptimizer'}</h3>
                         <p class="seoo-panel-intro__desc">{l s='Manage 301 and 302 redirections. Redirect old URLs to new ones to preserve your SEO ranking and avoid 404 errors.' mod='seooptimizer'}</p>
                     </div>
                     <div class="seoo-panel-intro__actions">
-                        <button class="btn btn-default" data-toggle="collapse" data-target="#form-redirection-edit"><i class="icon-plus"></i> {l s='Add new redirection' mod='seooptimizer'}</button>
-                        <button class="btn btn-default" data-toggle="collapse" data-target="#form-redirection-import"><i class="icon-upload"></i> {l s='Import' mod='seooptimizer'}</button>
-                        <a href="{$seoo_export_redirections_url|escape:'htmlall':'UTF-8'}" class="btn btn-default"><i class="icon-download"></i> {l s='Export' mod='seooptimizer'}</a>
+                        <button class="btn btn-default" data-toggle="collapse" data-target="#form-redirection-edit"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/plus.svg"}</span> {l s='Add new redirection' mod='seooptimizer'}</button>
+                        <button class="btn btn-default" data-toggle="collapse" data-target="#form-redirection-import"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/upload-simple.svg"}</span> {l s='Import' mod='seooptimizer'}</button>
+                        <a href="{$seoo_export_redirections_url|escape:'htmlall':'UTF-8'}" class="btn btn-default"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/download-simple.svg"}</span> {l s='Export' mod='seooptimizer'}</a>
                     </div>
                 </div>
                 <div id="form-redirection-edit" class="collapse {if isset($show_form_redirection_edit)}in{/if}">{$form_redirection_edit}</div>
@@ -171,7 +172,7 @@
                         <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-broken-links.png" alt="{l s='Pages not found' mod='seooptimizer'}">
                     </div>
                     <div class="seoo-panel-intro__content">
-                        <h3 class="seoo-panel-intro__title"><i class="icon-unlink"></i> {l s='Pages not found' mod='seooptimizer'}</h3>
+                        <h3 class="seoo-panel-intro__title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/link-break.svg"}</span> {l s='Pages not found' mod='seooptimizer'}</h3>
                         <p class="seoo-panel-intro__desc">{l s='Monitor 404 errors on your website. Identify broken URLs and create redirections to preserve your SEO ranking.' mod='seooptimizer'}</p>
                     </div>
                 </div>
@@ -196,11 +197,11 @@
                         <img src="{$seoo_module_path|escape:'htmlall':'UTF-8'}views/img/panda-indexation.png" alt="{l s='Indexations' mod='seooptimizer'}">
                     </div>
                     <div class="seoo-panel-intro__content">
-                        <h3 class="seoo-panel-intro__title"><i class="icon-database"></i> {l s='Indexations' mod='seooptimizer'}</h3>
+                        <h3 class="seoo-panel-intro__title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/database.svg"}</span> {l s='Indexations' mod='seooptimizer'}</h3>
                         <p class="seoo-panel-intro__desc">{l s='Control how search engines index your pages. Define custom rules and configure indexation behavior for supplier, manufacturer, store and sitemap pages.' mod='seooptimizer'}</p>
                     </div>
                     <div class="seoo-panel-intro__actions">
-                        <button class="btn btn-default" data-toggle="collapse" data-target="#form-indexation-rule"><i class="icon-plus"></i> {l s='Add new rule' mod='seooptimizer'}</button>
+                        <button class="btn btn-default" data-toggle="collapse" data-target="#form-indexation-rule"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/plus.svg"}</span> {l s='Add new rule' mod='seooptimizer'}</button>
                     </div>
                 </div>
                 <div id="form-indexation-rule" class="collapse {if isset($show_form_indexation_rule)}in{/if}">{$form_indexation_rule}</div>
@@ -216,6 +217,7 @@
         <div id="tab-social-configuration" class="tab collapse"><div class="seoo-screen">{$form_social}</div></div>
         <div id="tab-sitemap" class="tab collapse"><div class="seoo-screen">{$form_sitemap}</div></div>
         <div id="tab-link-obfuscator" class="tab collapse"><div class="seoo-screen">{$form_link_obfuscator}</div></div>
+        <div id="tab-meta-templates" class="tab collapse"><div class="seoo-screen">{$form_meta_templates}</div></div>
 
         {* ── Audit tabs ── *}
         <div id="tab-audit-heading-hierarchy" class="tab collapse">{$audit_heading_hierarchy}</div>

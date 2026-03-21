@@ -27,7 +27,7 @@ class AuditMissingAlt implements AuditInterface
 
     public function getIcon(): string
     {
-        return 'icon-picture';
+        return 'image';
     }
 
     public function getVisual(): string

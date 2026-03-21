@@ -61,16 +61,6 @@ class AuditRunStorage
 
         $now = date('Y-m-d H:i:s');
 
-        $row = [
-            'status' => $data['status'] ?? 'running',
-            'total_urls' => (int) ($data['total_urls'] ?? 0),
-            'crawled' => (int) ($data['crawled'] ?? 0),
-            'items_json' => isset($data['items']) ? json_encode($data['items']) : null,
-            'custom_kpis_json' => isset($data['custom_kpis']) ? json_encode($data['custom_kpis']) : null,
-            'urls_json' => isset($data['urls']) ? json_encode($data['urls']) : null,
-            'date_upd' => $now,
-        ];
-
         $existing = \Db::getInstance()->getValue(
             'SELECT id_seooptimizer_audit_run FROM ' . _DB_PREFIX_ . 'seooptimizer_audit_run
             WHERE audit_key = "' . pSQL($auditKey) . '"
@@ -78,13 +68,32 @@ class AuditRunStorage
         );
 
         if ($existing) {
+            // On UPDATE: skip urls_json to avoid rewriting 100KB+ on every batch
+            $row = [
+                'status' => $data['status'] ?? 'running',
+                'total_urls' => (int) ($data['total_urls'] ?? 0),
+                'crawled' => (int) ($data['crawled'] ?? 0),
+                'items_json' => isset($data['items']) ? json_encode($data['items']) : null,
+                'custom_kpis_json' => isset($data['custom_kpis']) ? json_encode($data['custom_kpis']) : null,
+                'date_upd' => $now,
+            ];
             \Db::getInstance()->update('seooptimizer_audit_run', $row, 'id_seooptimizer_audit_run = ' . (int) $existing);
             return (int) $existing;
         }
 
-        $row['audit_key'] = pSQL($auditKey);
-        $row['id_shop'] = (int) $idShop;
-        $row['date_add'] = $now;
+        // On INSERT: store urls_json only once
+        $row = [
+            'audit_key' => pSQL($auditKey),
+            'id_shop' => (int) $idShop,
+            'status' => $data['status'] ?? 'running',
+            'total_urls' => (int) ($data['total_urls'] ?? 0),
+            'crawled' => (int) ($data['crawled'] ?? 0),
+            'items_json' => isset($data['items']) ? json_encode($data['items']) : null,
+            'custom_kpis_json' => isset($data['custom_kpis']) ? json_encode($data['custom_kpis']) : null,
+            'urls_json' => isset($data['urls']) ? json_encode($data['urls']) : null,
+            'date_add' => $now,
+            'date_upd' => $now,
+        ];
         \Db::getInstance()->insert('seooptimizer_audit_run', $row);
 
         return (int) \Db::getInstance()->Insert_ID();

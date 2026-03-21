@@ -6,6 +6,10 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\URLResolver;
+
 class RedirectedLinksObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -28,38 +32,32 @@ class RedirectedLinksObserver extends AbstractCrawlerObserver implements Crawler
     /**
      * @param string $url
      * @param string $content
+     * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content)
+    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
     {
-        $links = $this->extractAnchorLinks($url, $content);
+        $extractor = $extractor ?: new HTMLExtractor($content);
+        $links = $extractor->extractAnchors();
 
         if (empty($links)) {
             return;
         }
 
-        $shopDomain = $this->getShopDomain();
+        $shopDomain = URLResolver::getShopDomain();
         $toCheck = [];
         foreach ($links as $link) {
             $href = $link['href'];
 
-            if (empty($href)
-                || strpos($href, '#') === 0
-                || strpos($href, 'javascript:') === 0
-                || strpos($href, 'mailto:') === 0
-                || strpos($href, 'tel:') === 0
-                || strpos($href, 'data:') === 0
-            ) {
+            if (URLResolver::isSkippable($href)) {
                 continue;
             }
 
-            $resolved = $this->resolveUrl($href, $url);
+            $resolved = URLResolver::resolve($href, $url);
             if (!$resolved) {
                 continue;
             }
 
-            // Only check internal links
-            $linkDomain = parse_url($resolved, PHP_URL_HOST);
-            if ($linkDomain && $linkDomain !== $shopDomain) {
+            if (!URLResolver::isInternal($resolved, $shopDomain)) {
                 continue;
             }
 
@@ -71,119 +69,38 @@ class RedirectedLinksObserver extends AbstractCrawlerObserver implements Crawler
                 continue;
             }
 
-            $toCheck[] = [
-                'resolved' => $resolved,
-                'text' => $link['text'],
-            ];
+            $toCheck[$resolved] = $link['text'];
         }
 
-        $this->batchCheck($url, $toCheck);
-    }
-
-    /**
-     * @param string $pageUrl
-     * @param string $content
-     * @return array
-     */
-    private function extractAnchorLinks(string $pageUrl, string $content): array
-    {
-        $links = [];
-
-        $bodyContent = $content;
-        if (preg_match('/<body[^>]*>(.*)<\/body>/is', $content, $bodyMatch)) {
-            $bodyContent = $bodyMatch[1];
-        }
-
-        if (empty(trim($bodyContent))) {
-            return $links;
-        }
-
-        $dom = new \DOMDocument();
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $bodyContent, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-
-        $anchors = $dom->getElementsByTagName('a');
-        foreach ($anchors as $anchor) {
-            $href = $anchor->getAttribute('href');
-            if ($href) {
-                $links[] = [
-                    'href' => $href,
-                    'text' => trim(strip_tags($anchor->nodeValue)),
-                ];
-            }
-        }
-
-        return $links;
-    }
-
-    /**
-     * @param string $pageUrl
-     * @param array $toCheck
-     */
-    private function batchCheck(string $pageUrl, array $toCheck)
-    {
         if (empty($toCheck)) {
             return;
         }
 
         $this->linksChecked += count($toCheck);
 
-        $multiHandle = curl_multi_init();
-        $handles = [];
+        // Batch check with shared cache (no redirect following)
+        $batchResults = LinkStatusCache::check(array_keys($toCheck));
 
-        foreach ($toCheck as $i => $entry) {
-            $ch = curl_init($entry['resolved']);
-            curl_setopt($ch, CURLOPT_NOBODY, true);
-            curl_setopt($ch, CURLOPT_HEADER, true);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-            curl_multi_add_handle($multiHandle, $ch);
-            $handles[$i] = $ch;
-        }
-
-        $running = 0;
-        do {
-            curl_multi_exec($multiHandle, $running);
-            curl_multi_select($multiHandle);
-        } while ($running > 0);
-
-        foreach ($handles as $i => $ch) {
-            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $resolved = $toCheck[$i]['resolved'];
-            $redirectTo = '';
+        foreach ($batchResults as $checkedUrl => $info) {
+            $httpCode = $info['http_code'];
+            $redirectUrl = $info['redirect_url'];
 
             if (in_array($httpCode, [301, 302, 303, 307, 308], true)) {
-                $redirectTo = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
-                if (empty($redirectTo)) {
-                    $headers = curl_multi_getcontent($ch);
-                    if (preg_match('/^Location:\s*(.+)$/mi', $headers, $m)) {
-                        $redirectTo = trim($m[1]);
-                    }
-                }
-
-                $this->checkedUrls[$resolved] = [
+                $this->checkedUrls[$checkedUrl] = [
                     'redirected' => true,
                     'http_code' => $httpCode,
-                    'redirect_to' => $redirectTo,
+                    'redirect_to' => $redirectUrl,
                 ];
 
-                $this->addResult($pageUrl, $resolved, $toCheck[$i]['text'], $httpCode, $redirectTo);
+                $this->addResult($url, $checkedUrl, $toCheck[$checkedUrl], $httpCode, $redirectUrl);
             } else {
-                $this->checkedUrls[$resolved] = [
+                $this->checkedUrls[$checkedUrl] = [
                     'redirected' => false,
                     'http_code' => $httpCode,
                     'redirect_to' => '',
                 ];
             }
-
-            curl_multi_remove_handle($multiHandle, $ch);
-            curl_close($ch);
         }
-
-        curl_multi_close($multiHandle);
     }
 
     /**
@@ -204,46 +121,6 @@ class RedirectedLinksObserver extends AbstractCrawlerObserver implements Crawler
             'http_code' => $httpCode,
             'redirect_to' => $redirectTo,
         ];
-    }
-
-    /**
-     * @param string $href
-     * @param string $baseUrl
-     * @return string|null
-     */
-    private function resolveUrl(string $href, string $baseUrl)
-    {
-        if (preg_match('#^https?://#i', $href)) {
-            return $href;
-        }
-
-        if (strpos($href, '//') === 0) {
-            $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: 'https';
-            return $scheme . ':' . $href;
-        }
-
-        $parsed = parse_url($baseUrl);
-        if (!$parsed || !isset($parsed['scheme'], $parsed['host'])) {
-            return null;
-        }
-
-        $base = $parsed['scheme'] . '://' . $parsed['host'];
-
-        if (strpos($href, '/') === 0) {
-            return $base . $href;
-        }
-
-        $dir = isset($parsed['path']) ? rtrim(dirname($parsed['path']), '/') : '';
-        return $base . $dir . '/' . $href;
-    }
-
-    /**
-     * @return string
-     */
-    private function getShopDomain(): string
-    {
-        $shopUrl = \Context::getContext()->shop->getBaseURL();
-        return parse_url($shopUrl, PHP_URL_HOST) ?: '';
     }
 
     /**
