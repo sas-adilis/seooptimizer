@@ -1,0 +1,409 @@
+/* ── SEO Optimizer — Tabbed SEO Configuration Panel ── */
+
+$sc-font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$sc-color-text: #1f2937;
+$sc-color-text-light: #6b7280;
+$sc-color-text-muted: #9ca3af;
+$sc-color-border: #e5e7eb;
+$sc-color-bg: #f9fafb;
+$sc-color-primary: #05808b;
+$sc-color-green: #16a34a;
+$sc-color-red: #dc2626;
+
+.seoo-sc {
+    background: #fff;
+    border: 1px solid $sc-color-border;
+    border-radius: 8px;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    font-family: $sc-font-stack;
+    font-size: 13px;
+    color: $sc-color-text;
+}
+
+/* ── Header ── */
+.seoo-sc__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: linear-gradient(-90deg, rgba($sc-color-primary, .1) 0%, rgba(255, 255, 255, 1) 68%);
+}
+
+.seoo-sc__title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.seoo-sc__logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.seoo-sc__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+/* ── Tabs ── */
+.seoo-sc__tabs {
+    display: flex;
+    border-bottom: 2px solid $sc-color-border;
+    background: $sc-color-bg;
+    padding: 0 18px;
+    gap: 0;
+}
+
+.seoo-sc__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $sc-color-text-light;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+    font-family: $sc-font-stack;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        color: $sc-color-text;
+    }
+
+    &--active {
+        color: $sc-color-primary;
+        border-bottom-color: $sc-color-primary;
+    }
+}
+
+/* ── Panes ── */
+.seoo-sc__panes {
+    // No extra styling needed
+}
+
+.seoo-sc__pane {
+    display: none;
+    padding: 18px;
+
+    &--active {
+        display: block;
+    }
+}
+
+/* ── Save status indicator ── */
+.seoo-sc__status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all .3s ease;
+
+    &--idle {
+        opacity: 0;
+    }
+
+    &--saving {
+        opacity: 1;
+        border: 2px solid rgba($sc-color-primary, .3);
+        border-top-color: $sc-color-primary;
+        animation: seoo-sc-spin .6s linear infinite;
+    }
+
+    &--saved {
+        opacity: 1;
+        background: rgba($sc-color-green, .1);
+        color: $sc-color-green;
+    }
+
+    &--error {
+        opacity: 1;
+        background: rgba($sc-color-red, .1);
+        color: $sc-color-red;
+    }
+}
+
+@keyframes seoo-sc-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Sections ── */
+.seoo-sc__section {
+    margin-bottom: 18px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    &--preview {
+        margin-bottom: 22px;
+    }
+
+    &--row {
+        display: flex;
+        gap: 16px;
+
+        .seoo-sc__field-group {
+            flex: 1;
+        }
+    }
+}
+
+.seoo-sc__section-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #374151;
+    margin-bottom: 10px;
+}
+
+.seoo-sc__section-icon {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: $sc-color-primary;
+
+    svg {
+        width: 100%;
+        height: 100%;
+    }
+}
+
+/* ── Separator ── */
+.seoo-sc__separator {
+    border-top: 1px solid $sc-color-border;
+    margin: 20px 0;
+}
+
+/* ── Native fields container (moved from PS form) ── */
+.seoo-sc__native {
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+
+    // Remove card header from native section
+    > .card-header,
+    > .panel-heading,
+    > h3:first-child {
+        display: none;
+    }
+
+    // Clean up card body padding
+    > .card-body,
+    > .card-block,
+    > .panel-body {
+        padding: 0 !important;
+    }
+
+    // Ensure form groups look natural
+    .form-group {
+        margin-bottom: 16px;
+    }
+}
+
+/* ── Google Preview ── */
+.seoo-sc__serp {
+    background: #fff;
+    border: 1px solid $sc-color-border;
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+.seoo-sc__serp-url {
+    font-size: 12px;
+    color: #202124;
+    font-style: normal;
+    display: block;
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+
+.seoo-sc__serp-title {
+    font-size: 18px;
+    font-weight: 400;
+    color: #1a0dab;
+    line-height: 1.3;
+    margin: 0 0 4px;
+    font-family: Arial, sans-serif;
+}
+
+.seoo-sc__serp-desc {
+    font-size: 13px;
+    color: #4d5156;
+    line-height: 1.5;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+/* ── Form fields ── */
+.seoo-sc__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $sc-color-text;
+    margin-bottom: 6px;
+}
+
+.seoo-sc__input,
+.seoo-sc__select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: $sc-font-stack;
+    color: $sc-color-text;
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+    box-sizing: border-box;
+
+    &:focus {
+        outline: none;
+        border-color: $sc-color-primary;
+        box-shadow: 0 0 0 3px rgba($sc-color-primary, .12);
+    }
+
+    &::placeholder {
+        color: $sc-color-text-muted;
+    }
+}
+
+.seoo-sc__select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.seoo-sc__help {
+    font-size: 11px;
+    color: $sc-color-text-muted;
+    margin: 4px 0 0;
+    line-height: 1.4;
+}
+
+/* ── Tag hints ── */
+.seoo-tag-hints__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.seoo-tag-hints__tag {
+    display: inline-block;
+    padding: 3px 8px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    color: $sc-color-primary;
+    background: rgba($sc-color-primary, 0.08);
+    border: 1px solid rgba($sc-color-primary, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+
+    &:hover {
+        background: rgba($sc-color-primary, 0.16);
+        border-color: rgba($sc-color-primary, 0.4);
+    }
+}
+
+/* ── Language tabs (for per-language fields) ── */
+.seoo-sc__lang-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 6px;
+    border-bottom: 1px solid $sc-color-border;
+}
+
+.seoo-sc__lang-tab {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: $sc-color-text-light;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+    font-family: $sc-font-stack;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+
+    &:hover {
+        color: $sc-color-text;
+    }
+
+    &--active {
+        color: $sc-color-primary;
+        border-bottom-color: $sc-color-primary;
+    }
+}
+
+.seoo-sc__lang-field {
+    display: block;
+}
+
+.seoo-sc__lang-field--hidden {
+    display: none;
+}
+
+/* ── Actions ── */
+.seoo-sc__actions {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid $sc-color-border;
+    display: flex;
+    justify-content: flex-end;
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .seoo-sc__section--row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .seoo-sc__tabs {
+        padding: 0 10px;
+    }
+
+    .seoo-sc__tab {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}

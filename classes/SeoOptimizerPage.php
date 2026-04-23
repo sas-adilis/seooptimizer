@@ -24,6 +24,15 @@ class SeoOptimizerPage extends ObjectModel
     /** @var string */
     public $keywords;
 
+    /** @var string */
+    public $canonical_url;
+
+    /** @var int */
+    public $noindex;
+
+    /** @var int */
+    public $nofollow;
+
     /** @var int */
     public $count_critical;
 
@@ -64,6 +73,9 @@ class SeoOptimizerPage extends ObjectModel
             'id_shop' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId'],
             'url' => ['type' => self::TYPE_STRING, 'validate' => 'isUrl', 'size' => 2083],
             'keywords' => ['type' => self::TYPE_STRING, 'size' => 512],
+            'canonical_url' => ['type' => self::TYPE_STRING, 'validate' => 'isUrl', 'size' => 2083],
+            'noindex' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
+            'nofollow' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'count_critical' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'count_warning' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'count_info' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
@@ -451,6 +463,130 @@ class SeoOptimizerPage extends ObjectModel
             'date_add' => $now,
             'date_upd' => $now,
         ]);
+    }
+
+    /**
+     * Get the SEO configuration fields for a given entity.
+     *
+     * @param string $entityType
+     * @param int $idEntity
+     * @param int|null $idLang
+     * @param int|null $idShop
+     * @return array
+     */
+    public static function getSeoConfig(string $entityType, int $idEntity, ?int $idLang = null, ?int $idShop = null): array
+    {
+        $defaults = [
+            'keywords' => '',
+            'canonical_url' => '',
+            'noindex' => 0,
+            'nofollow' => 0,
+        ];
+
+        try {
+            $row = self::getByEntity($entityType, $idEntity, $idLang, $idShop);
+        } catch (\Throwable $e) {
+            return $defaults;
+        }
+
+        if (!$row) {
+            return $defaults;
+        }
+
+        return [
+            'keywords' => isset($row['keywords']) ? (string) $row['keywords'] : '',
+            'canonical_url' => isset($row['canonical_url']) ? (string) $row['canonical_url'] : '',
+            'noindex' => isset($row['noindex']) ? (int) $row['noindex'] : 0,
+            'nofollow' => isset($row['nofollow']) ? (int) $row['nofollow'] : 0,
+        ];
+    }
+
+    /**
+     * Save the SEO configuration fields for a given entity.
+     *
+     * @param string $entityType
+     * @param int $idEntity
+     * @param array $data  Keys: keywords, canonical_url, noindex, nofollow
+     * @param int|null $idLang
+     * @param int|null $idShop
+     * @return bool
+     */
+    public static function saveSeoConfig(string $entityType, int $idEntity, array $data, ?int $idLang = null, ?int $idShop = null): bool
+    {
+        try {
+            if ($idLang === null) {
+                $idLang = (int) Context::getContext()->language->id;
+            }
+            if ($idShop === null) {
+                $idShop = (int) Context::getContext()->shop->id;
+            }
+
+            $now = date('Y-m-d H:i:s');
+
+            $existing = Db::getInstance()->getValue(
+                'SELECT id_seooptimizer_page FROM ' . _DB_PREFIX_ . 'seooptimizer_page
+                WHERE entity_type = "' . pSQL($entityType) . '"
+                AND id_entity = ' . (int) $idEntity . '
+                AND id_lang = ' . (int) $idLang . '
+                AND id_shop = ' . (int) $idShop
+            );
+
+            // Build fields — only include columns that exist in the table
+            $fields = [
+                'keywords' => pSQL(isset($data['keywords']) ? $data['keywords'] : ''),
+                'date_upd' => $now,
+            ];
+
+            // Check if new columns exist before including them
+            if (self::columnExists('canonical_url')) {
+                $fields['canonical_url'] = pSQL(isset($data['canonical_url']) ? $data['canonical_url'] : '', true);
+                $fields['noindex'] = (int) (isset($data['noindex']) ? $data['noindex'] : 0);
+                $fields['nofollow'] = (int) (isset($data['nofollow']) ? $data['nofollow'] : 0);
+            }
+
+            if ($existing) {
+                return (bool) Db::getInstance()->update('seooptimizer_page', $fields, 'id_seooptimizer_page = ' . (int) $existing);
+            }
+
+            $fields['entity_type'] = pSQL($entityType);
+            $fields['id_entity'] = (int) $idEntity;
+            $fields['id_lang'] = (int) $idLang;
+            $fields['id_shop'] = (int) $idShop;
+            $fields['date_add'] = $now;
+
+            return (bool) Db::getInstance()->insert('seooptimizer_page', $fields);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a column exists in the seooptimizer_page table.
+     *
+     * @param string $column
+     * @return bool
+     */
+    private static function columnExists(string $column): bool
+    {
+        static $columns = null;
+
+        if ($columns === null) {
+            $columns = [];
+            try {
+                $rows = Db::getInstance()->executeS(
+                    'SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'seooptimizer_page'
+                );
+                if ($rows) {
+                    foreach ($rows as $row) {
+                        $columns[] = $row['Field'];
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Table might not exist
+            }
+        }
+
+        return in_array($column, $columns, true);
     }
 
     /**

@@ -134,5 +134,25 @@
   border-color: #f3f4f6;
   color: #9ca3af;
 }
+.seoo-grade-badge--pending {
+  cursor: default;
+}
+
+/* ── Spinner inside grade badge ── */
+.seoo-grade-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(156, 163, 175, 0.4);
+  border-top-color: #9ca3af;
+  border-radius: 50%;
+  animation: seoo-grade-spin 0.6s linear infinite;
+}
+
+@keyframes seoo-grade-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /*# sourceMappingURL=entity-audit.css.map */

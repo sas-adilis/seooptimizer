@@ -30,7 +30,7 @@ class SeoOptimizer extends Module
     {
         $this->name = 'seooptimizer';
         $this->tab = 'seo';
-        $this->version = '1.5.1';
+        $this->version = '1.6.0';
         $this->author = 'Adilis';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -96,6 +96,12 @@ class SeoOptimizer extends Module
             && $this->registerHook('displayHeader')
             && $this->registerHook('actionFrontControllerInitBefore')
             && $this->registerHook('actionObjectDeleteBefore')
+            && $this->registerHook('actionCategoryFormBuilderModifier')
+            && $this->registerHook('actionRootCategoryFormBuilderModifier')
+            && $this->registerHook('actionAfterUpdateCategoryFormHandler')
+            && $this->registerHook('actionAfterCreateCategoryFormHandler')
+            && $this->registerHook('actionAfterUpdateRootCategoryFormHandler')
+            && $this->registerHook('actionAfterCreateRootCategoryFormHandler')
             && $this->registerHook('actionSupplierFormBuilderModifier')
             && $this->registerHook('actionOutputHTMLBefore')
             && $this->registerHook('moduleRoutes')
@@ -109,6 +115,10 @@ class SeoOptimizer extends Module
             && $this->registerHook('actionSupplierGridQueryBuilderModifier')
             && $this->registerHook('actionCmsPageGridDefinitionModifier')
             && $this->registerHook('actionCmsPageGridQueryBuilderModifier')
+            && $this->registerHook('displayAdminProductsSeoStepBottom')
+            && $this->registerHook('displayBackOfficeFooter')
+            && $this->registerHook('actionObjectUpdateAfter')
+            && $this->registerHook('actionObjectAddAfter')
             ;
     }
 
@@ -129,6 +139,17 @@ class SeoOptimizer extends Module
 
     public function hookBackOfficeHeader()
     {
+        // Auto-register hooks added after initial install (avoids requiring reinstall)
+        static $hooksChecked = false;
+        if (!$hooksChecked) {
+            $hooksChecked = true;
+            foreach (['actionObjectUpdateAfter', 'actionObjectAddAfter', 'displayBackOfficeFooter'] as $hookName) {
+                if (!$this->isRegisteredInHook($hookName)) {
+                    $this->registerHook($hookName);
+                }
+            }
+        }
+
         if (Tools::getValue('configure') === $this->name) {
             $this->context->controller->addCSS($this->_path . 'views/css/tabs.17.css', 'all');
             $this->context->controller->addCSS($this->_path . 'views/css/table.17.css', 'all');
@@ -195,20 +216,126 @@ class SeoOptimizer extends Module
             $this->context->controller->addJS($this->_path . 'views/js/supplier-form.js');
         }
 
-        // Entity audit panel — load CSS/JS on entity edit pages
-        $entityControllers = ['AdminProducts', 'AdminCategories', 'AdminManufacturers', 'AdminSuppliers', 'AdminCmsContent'];
+        // Entity audit panel + SEO config panel — load CSS/JS on entity edit pages
+        //
+        // Entities with dedicated tab JS (server-rendered HTML + lightweight JS):
+        //   - category → entity-form-tabs.js + category-tabs.js
+        //
+        // Other entities still use the generic JS-built panel:
+        //   - product, manufacturer, supplier, cms → seo-config.js
+        //
+        $entityControllerMap = [
+            'AdminProducts' => 'product',
+            'AdminCategories' => 'category',
+            'AdminManufacturers' => 'manufacturer',
+            'AdminSuppliers' => 'supplier',
+            'AdminCmsContent' => 'cms',
+        ];
+
+        // Entities using the new server-rendered tab system
+        $entityTabEntities = ['category'];
+
         $currentController = Tools::getValue('controller');
-        if (in_array($currentController, $entityControllers, true)) {
+        if (isset($entityControllerMap[$currentController])) {
+            $entityType = $entityControllerMap[$currentController];
+
+            // Common CSS for all entities
             $this->context->controller->addCSS($this->_path . 'views/css/front-audit.css', 'all');
             $this->context->controller->addCSS($this->_path . 'views/css/entity-audit.css', 'all');
-            $this->context->controller->addJS($this->_path . 'views/js/entity-audit.js');
+            $this->context->controller->addCSS($this->_path . 'views/css/seo-config.css', 'all');
+
+            if (in_array($entityType, $entityTabEntities, true)) {
+                // New approach: server-rendered HTML, JS only handles tab + DOM moves
+                $this->context->controller->addJS($this->_path . 'views/js/entity-audit.js');
+                $this->context->controller->addJS($this->_path . 'views/js/entity-form-tabs.js');
+                $this->context->controller->addJS($this->_path . 'views/js/' . $entityType . '-tabs.js');
+
+                // Pass available tags for meta template insertion
+                $entity = Adilis\SeoOptimizer\Entity\EntityRegistry::get($entityType);
+                if ($entity) {
+                    Media::addJsDef([
+                        'SeoOptimizerTags' => $entity->getAvailableTags(),
+                    ]);
+                }
+            } else {
+                // Legacy approach: JS-built panel
+                $this->context->controller->addJS($this->_path . 'views/js/entity-audit.js');
+                $this->context->controller->addJS($this->_path . 'views/js/seo-config.js');
+
+                $idEntity = $this->detectEntityId($entityType);
+
+                if ($idEntity > 0) {
+                    $idLang = (int) $this->context->language->id;
+                    $url = $this->getEntityUrl($entityType, $idEntity, $idLang);
+
+                    $languages = [];
+                    foreach (Language::getLanguages(false) as $lang) {
+                        $languages[] = [
+                            'id_lang' => (int) $lang['id_lang'],
+                            'iso_code' => $lang['iso_code'],
+                            'name' => $lang['name'],
+                        ];
+                    }
+
+                    Media::addJsDef([
+                        'SeoOptimizerConfig' => [
+                            'ajaxUrl' => $this->context->link->getAdminLink('AdminModules', true, [], ['configure' => $this->name]),
+                            'entityType' => $entityType,
+                            'idEntity' => $idEntity,
+                            'entityUrl' => $url,
+                            'logoUrl' => $this->_path . 'logo.png',
+                            'languages' => $languages,
+                            'defaultLang' => (int) Configuration::get('PS_LANG_DEFAULT'),
+                            'i18n' => [
+                                'title' => $this->l('SEO Configuration'),
+                                'googlePreview' => $this->l('Google Preview'),
+                                'loading' => $this->l('Loading...'),
+                                'noTitle' => $this->l('(no title)'),
+                                'noDescription' => $this->l('(no description)'),
+                                'focusKeywords' => $this->l('Focus Keywords'),
+                                'keywordsPlaceholder' => $this->l('e.g. chaussures running, baskets sport'),
+                                'keywordsHelp' => $this->l('Comma-separated keywords that this page should rank for.'),
+                                'canonicalUrl' => $this->l('Canonical URL'),
+                                'canonicalPlaceholder' => $this->l('Leave empty for default (current page URL)'),
+                                'canonicalHelp' => $this->l('Custom canonical URL for this page. Cross-domain supported.'),
+                                'indexation' => $this->l('Indexation'),
+                                'defaultIndex' => $this->l('Default (index)'),
+                                'noindex' => $this->l('Noindex — hide from search engines'),
+                                'linkFollowing' => $this->l('Link following'),
+                                'defaultFollow' => $this->l('Default (follow)'),
+                                'nofollow' => $this->l('Nofollow — do not follow links'),
+                                'save' => $this->l('Save SEO settings'),
+                                'saved' => $this->l('Saved'),
+                                'error' => $this->l('Error'),
+                                'analyzing' => $this->l('Analyse SEO en cours...'),
+                            ],
+                        ],
+                    ]);
+                }
+            }
         }
 
-        // Score column — Symfony grid: post-process grade cells into circle badges
-        $gridControllers = ['AdminProducts', 'AdminCategories', 'AdminManufacturers', 'AdminSuppliers', 'AdminCmsContent'];
-        if (in_array($currentController, $gridControllers, true) && (int) Configuration::get('SEOO_BO_SCORE_COLUMN')) {
+        // Score column — inject badge + batch audit + side panel in BO listings
+        $gridControllerEntityMap = [
+            'AdminProducts' => 'product',
+            'AdminCategories' => 'category',
+            'AdminManufacturers' => 'manufacturer',
+            'AdminSuppliers' => 'supplier',
+            'AdminCmsContent' => 'cms',
+        ];
+        if (isset($gridControllerEntityMap[$currentController]) && (int) Configuration::get('SEOO_BO_SCORE_COLUMN')) {
             $this->context->controller->addCSS($this->_path . 'views/css/entity-audit.css', 'all');
+            $this->context->controller->addCSS($this->_path . 'views/css/front-audit.css', 'all');
             $this->context->controller->addJS($this->_path . 'views/js/bo-score-column-grid.js');
+            $this->context->controller->addJS($this->_path . 'views/js/bo-score-column.js');
+
+            Media::addJsDef([
+                'SeoOptimizerScoreColumn' => [
+                    'ajaxUrl' => $this->context->link->getAdminLink('AdminModules', true, [], ['configure' => $this->name]),
+                    'entityType' => $gridControllerEntityMap[$currentController],
+                    'moduleUrl' => $this->context->link->getAdminLink('AdminModules', true, [], ['configure' => $this->name]),
+                ],
+            ]);
         }
     }
 
@@ -443,6 +570,347 @@ class SeoOptimizer extends Module
     }
 
     /**
+     * AJAX handler: audit a batch of entities (max 10) and return their scores.
+     * Called progressively from the BO listing grids for entities without scores.
+     */
+    public function ajaxProcessBatchEntityAudit()
+    {
+        $entityType = pSQL(Tools::getValue('entity_type'));
+        $ids = Tools::getValue('ids');
+
+        if (empty($entityType) || empty($ids)) {
+            echo json_encode(['status' => 'success', 'data' => []]);
+            exit;
+        }
+
+        $idList = array_map('intval', explode(',', $ids));
+        $idLang = (int) $this->context->language->id;
+        $idShop = (int) $this->context->shop->id;
+        $analyzer = new Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer();
+        $results = [];
+
+        foreach ($idList as $idEntity) {
+            $url = $this->getEntityUrl($entityType, $idEntity, $idLang);
+            if (empty($url)) {
+                continue;
+            }
+
+            $analysis = $analyzer->analyze($url);
+            if (isset($analysis['error'])) {
+                continue;
+            }
+
+            $score = isset($analysis['score']) ? $analysis['score'] : ['score' => 0, 'grade' => '-', 'color' => 'gray'];
+            $scoreValue = (float) $score['score'];
+            $grade = $score['grade'];
+
+            // Upsert into seooptimizer_page
+            $now = date('Y-m-d H:i:s');
+            $existing = Db::getInstance()->getValue(
+                'SELECT id_seooptimizer_page FROM ' . _DB_PREFIX_ . 'seooptimizer_page
+                WHERE entity_type = "' . pSQL($entityType) . '"
+                AND id_entity = ' . (int) $idEntity . '
+                AND id_lang = ' . (int) $idLang . '
+                AND id_shop = ' . (int) $idShop
+            );
+
+            $countCritical = 0;
+            $countWarning = 0;
+            $countInfo = 0;
+            $sections = ['meta', 'headings', 'content', 'images', 'links', 'structured_data', 'indexation', 'performance'];
+            foreach ($sections as $section) {
+                if (!isset($analysis[$section]['checks'])) {
+                    continue;
+                }
+                foreach ($analysis[$section]['checks'] as $check) {
+                    $status = isset($check['status']) ? $check['status'] : 'good';
+                    if ($status === 'critical') {
+                        $countCritical++;
+                    } elseif ($status === 'warning') {
+                        $countWarning++;
+                    } elseif ($status === 'info') {
+                        $countInfo++;
+                    }
+                }
+            }
+
+            $data = [
+                'entity_type' => pSQL($entityType),
+                'id_entity' => (int) $idEntity,
+                'id_lang' => (int) $idLang,
+                'id_shop' => (int) $idShop,
+                'url' => pSQL($url, true),
+                'count_critical' => (int) $countCritical,
+                'count_warning' => (int) $countWarning,
+                'count_info' => (int) $countInfo,
+                'count_total' => (int) ($countCritical + $countWarning + $countInfo),
+                'score' => round($scoreValue, 1),
+                'grade' => pSQL($grade),
+                'date_audit' => $now,
+                'date_upd' => $now,
+            ];
+
+            if ($existing) {
+                Db::getInstance()->update('seooptimizer_page', $data, 'id_seooptimizer_page = ' . (int) $existing);
+            } else {
+                $data['date_add'] = $now;
+                $data['keywords'] = '';
+                Db::getInstance()->insert('seooptimizer_page', $data);
+            }
+
+            $results[$idEntity] = [
+                'score' => $scoreValue,
+                'grade' => $grade,
+                'color' => SeoOptimizerPage::gradeToColor($grade),
+            ];
+        }
+
+        echo json_encode(['status' => 'success', 'data' => $results]);
+        exit;
+    }
+
+    /**
+     * AJAX handler: return entity audit panel HTML for a given entity.
+     * Used when clicking a score badge in the BO listing.
+     */
+    public function ajaxProcessGetEntityAuditPanel()
+    {
+        $entityType = pSQL(Tools::getValue('entity_type'));
+        $idEntity = (int) Tools::getValue('id_entity');
+        $idLang = (int) $this->context->language->id;
+
+        $url = $this->getEntityUrl($entityType, $idEntity, $idLang);
+        if (empty($url)) {
+            echo json_encode(['status' => 'error', 'message' => 'Unable to resolve URL']);
+            exit;
+        }
+
+        $analyzer = new Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer();
+        $result = $analyzer->analyze($url);
+
+        if (isset($result['error'])) {
+            echo json_encode([
+                'status' => 'success',
+                'data' => [
+                    'html' => '<p class="seoo-fa-empty">' . htmlspecialchars($result['error'], ENT_QUOTES, 'UTF-8') . '</p>',
+                    'score' => ['score' => 0, 'grade' => '-', 'color' => 'gray'],
+                    'url' => $url,
+                ],
+            ]);
+            exit;
+        }
+
+        $this->context->smarty->assign([
+            'seoo_audit' => $result,
+            'seoo_module_path' => $this->_path,
+        ]);
+
+        $html = $this->context->smarty->fetch(
+            $this->getLocalPath() . 'views/templates/hook/front-audit-panel.tpl'
+        );
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => ['html' => $html, 'score' => $result['score'], 'url' => $url],
+        ]);
+        exit;
+    }
+
+    /**
+     * Detect the entity ID from the current request (GET/POST params + Symfony route params).
+     *
+     * @param string $entityType
+     * @return int
+     */
+    private function detectEntityId(string $entityType): int
+    {
+        // Parameter names per entity type (Legacy name + Symfony route name)
+        $paramMap = [
+            'product' => ['id_product', 'productId'],
+            'category' => ['id_category', 'categoryId'],
+            'manufacturer' => ['id_manufacturer', 'manufacturerId'],
+            'supplier' => ['id_supplier', 'supplierId'],
+            'cms' => ['id_cms', 'cmsPageId'],
+        ];
+
+        $params = isset($paramMap[$entityType]) ? $paramMap[$entityType] : [];
+
+        // 1. Try GET/POST (Legacy admin)
+        foreach ($params as $param) {
+            $id = (int) Tools::getValue($param);
+            if ($id > 0) {
+                return $id;
+            }
+        }
+
+        // 2. Try Symfony Request attributes (PS 8/9 route params)
+        if (class_exists('Symfony\Component\HttpFoundation\Request')) {
+            try {
+                $request = call_user_func(['Symfony\Component\HttpFoundation\Request', 'createFromGlobals']);
+                // In PS 8/9, the global kernel request has the route attributes
+                if (method_exists($this, 'get') && $this->get('request_stack')) {
+                    $request = $this->get('request_stack')->getCurrentRequest();
+                }
+                if ($request) {
+                    foreach ($params as $param) {
+                        $val = $request->attributes->getInt($param);
+                        if ($val > 0) {
+                            return $val;
+                        }
+                        // Also check query and request bags
+                        $val = (int) $request->get($param, 0);
+                        if ($val > 0) {
+                            return $val;
+                        }
+                    }
+                    // Generic "id"
+                    $val = $request->attributes->getInt('id');
+                    if ($val > 0) {
+                        return $val;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Symfony not available, skip
+            }
+        }
+
+        // 3. Fallback: generic "id" parameter
+        $id = (int) Tools::getValue('id');
+        if ($id > 0) {
+            return $id;
+        }
+
+        // 4. Parse from URL path (last numeric segment: /edit/3 or /3/edit)
+        $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        if (preg_match('/\/(\d+)(?:\/edit|\/update)?(?:\?|$)/', $uri, $matches)) {
+            $id = (int) $matches[1];
+            if ($id > 0) {
+                return $id;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Resolve the front-office URL for a given entity type and ID.
+     *
+     * @param string $entityType
+     * @param int $idEntity
+     * @param int $idLang
+     * @return string
+     */
+    private function getEntityUrl(string $entityType, int $idEntity, int $idLang): string
+    {
+        $link = $this->context->link;
+
+        switch ($entityType) {
+            case 'product':
+                return $link->getProductLink($idEntity, null, null, null, $idLang);
+            case 'category':
+                return $link->getCategoryLink($idEntity, null, $idLang);
+            case 'manufacturer':
+                return $link->getManufacturerLink($idEntity, null, $idLang);
+            case 'supplier':
+                return $link->getSupplierLink($idEntity, null, $idLang);
+            case 'cms':
+                return $link->getCMSLink($idEntity, null, $idLang);
+            default:
+                return '';
+        }
+    }
+
+    /**
+     * AJAX handler: get SEO configuration for an entity.
+     */
+    public function ajaxProcessGetSeoConfig()
+    {
+        $entityType = pSQL(Tools::getValue('entity_type'));
+        $idEntity = (int) Tools::getValue('id_entity');
+
+        if (empty($entityType) || $idEntity <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid parameters']);
+            exit;
+        }
+
+        $allLangs = (int) Tools::getValue('all_langs');
+
+        if ($allLangs) {
+            $data = [];
+            foreach (Language::getLanguages(false) as $lang) {
+                $idLang = (int) $lang['id_lang'];
+                $config = SeoOptimizerPage::getSeoConfig($entityType, $idEntity, $idLang);
+                $data[$idLang] = $config;
+            }
+            echo json_encode(['status' => 'success', 'data' => $data]);
+        } else {
+            $idLang = (int) Tools::getValue('id_lang');
+            $config = SeoOptimizerPage::getSeoConfig($entityType, $idEntity, $idLang > 0 ? $idLang : null);
+            echo json_encode(['status' => 'success', 'data' => $config]);
+        }
+        exit;
+    }
+
+    /**
+     * AJAX handler: save SEO configuration for an entity.
+     */
+    public function ajaxProcessSaveSeoConfig()
+    {
+        $entityType = pSQL(Tools::getValue('entity_type'));
+        $idEntity = (int) Tools::getValue('id_entity');
+
+        if (empty($entityType) || $idEntity <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid parameters']);
+            exit;
+        }
+
+        $noindex = (int) Tools::getValue('noindex');
+        $nofollow = (int) Tools::getValue('nofollow');
+
+        // Multi-lang save: keywords and canonical_url are per-language
+        $langKeywords = Tools::getValue('keywords_lang');
+        $langCanonical = Tools::getValue('canonical_url_lang');
+
+        if (is_array($langKeywords) || is_array($langCanonical)) {
+            // Save per-language fields
+            $success = true;
+            foreach (Language::getLanguages(false) as $lang) {
+                $idLang = (int) $lang['id_lang'];
+                $data = [
+                    'keywords' => is_array($langKeywords) && isset($langKeywords[$idLang])
+                        ? (string) $langKeywords[$idLang]
+                        : '',
+                    'canonical_url' => is_array($langCanonical) && isset($langCanonical[$idLang])
+                        ? (string) $langCanonical[$idLang]
+                        : '',
+                    'noindex' => $noindex,
+                    'nofollow' => $nofollow,
+                ];
+                if (!SeoOptimizerPage::saveSeoConfig($entityType, $idEntity, $data, $idLang)) {
+                    $success = false;
+                }
+            }
+        } else {
+            // Legacy single-lang save
+            $idLang = (int) Tools::getValue('id_lang');
+            $data = [
+                'keywords' => (string) Tools::getValue('keywords'),
+                'canonical_url' => (string) Tools::getValue('canonical_url'),
+                'noindex' => $noindex,
+                'nofollow' => $nofollow,
+            ];
+            $success = SeoOptimizerPage::saveSeoConfig($entityType, $idEntity, $data, $idLang > 0 ? $idLang : null);
+        }
+
+        if ($success) {
+            echo json_encode(['status' => 'success', 'message' => 'SEO configuration saved']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to save']);
+        }
+        exit;
+    }
+
+    /**
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
@@ -579,6 +1047,10 @@ class SeoOptimizer extends Module
         foreach ($action_classes as $class) {
             $html_content .= (new $class())->run();
         }
+
+        // Per-entity noindex/nofollow/canonical from SEO config panel
+        // Applied AFTER CanonicalUrlGenerate so custom canonical overrides auto-generated
+        $this->applyPerEntitySeoConfig();
         $this->context->smarty->assign([
             'seoo_verification_code_google' => Configuration::get('SEOO_CODE_VERIFICATION_GOOGLE'),
             'seoo_verification_code_bing' => Configuration::get('SEOO_CODE_VERIFICATION_BING'),
@@ -611,6 +1083,77 @@ class SeoOptimizer extends Module
     }
 
     /**
+     * Apply per-entity noindex/nofollow and custom canonical from the SEO config panel.
+     */
+    private function applyPerEntitySeoConfig()
+    {
+        try {
+            $controller = Dispatcher::getInstance()->getController();
+            $entityType = null;
+            $idEntity = 0;
+
+            switch ($controller) {
+                case 'product':
+                    $entityType = 'product';
+                    $idEntity = (int) Tools::getValue('id_product');
+                    break;
+                case 'category':
+                    $entityType = 'category';
+                    $idEntity = (int) Tools::getValue('id_category');
+                    break;
+                case 'manufacturer':
+                    $entityType = 'manufacturer';
+                    $idEntity = (int) Tools::getValue('id_manufacturer');
+                    break;
+                case 'supplier':
+                    $entityType = 'supplier';
+                    $idEntity = (int) Tools::getValue('id_supplier');
+                    break;
+                case 'cms':
+                    $entityType = 'cms';
+                    $idEntity = (int) Tools::getValue('id_cms');
+                    break;
+            }
+
+            if (!$entityType || $idEntity <= 0) {
+                return;
+            }
+
+            $config = SeoOptimizerPage::getSeoConfig($entityType, $idEntity);
+
+            // Apply noindex
+            if ((int) $config['noindex'] === 1) {
+                header('X-Robots-Tag: noindex');
+                $page = $this->context->smarty->getTemplateVars('page');
+                $robots = isset($page['meta']['robots']) ? $page['meta']['robots'] : '';
+                if (strpos($robots, 'noindex') === false) {
+                    $page['meta']['robots'] = $robots ? $robots . ', noindex' : 'noindex';
+                }
+                $this->context->smarty->assign('page', $page);
+            }
+
+            // Apply nofollow
+            if ((int) $config['nofollow'] === 1) {
+                $page = $this->context->smarty->getTemplateVars('page');
+                $robots = isset($page['meta']['robots']) ? $page['meta']['robots'] : '';
+                if (strpos($robots, 'nofollow') === false) {
+                    $page['meta']['robots'] = $robots ? $robots . ', nofollow' : 'nofollow';
+                }
+                $this->context->smarty->assign('page', $page);
+            }
+
+            // Apply custom canonical URL (overrides the auto-generated one)
+            if (!empty($config['canonical_url'])) {
+                $page = $this->context->smarty->getTemplateVars('page');
+                $page['canonical'] = $config['canonical_url'];
+                $this->context->smarty->assign('page', $page);
+            }
+        } catch (\Throwable $e) {
+            // Columns may not exist yet (pre-upgrade) — silently skip
+        }
+    }
+
+    /**
      * @return bool
      */
     private function isEmployeeBrowsing(): bool
@@ -628,13 +1171,28 @@ class SeoOptimizer extends Module
             redirect_from = "' . pSQL($_SERVER['REQUEST_URI']) . '"'
         );
 
-        if ($redirect && Validate::isUrl($redirect['redirect_to'])) {
-            Tools::redirect(
-                $redirect['redirect_to'],
-                __PS_BASE_URI__,
-                $this->context->link,
-                (int) $redirect['redirect_type'] == 301 ? 'HTTP/1.1 301 Moved Permanently' : 'HTTP/1.1 302 Moved Temporarily'
-            );
+        if ($redirect) {
+            $type = (int) $redirect['redirect_type'];
+
+            if ($type === 410) {
+                header('HTTP/1.1 410 Gone');
+                exit;
+            }
+
+            if ($type === 404) {
+                header('HTTP/1.1 404 Not Found');
+                $_GET['controller'] = 'pagenotfound';
+                return;
+            }
+
+            if (!empty($redirect['redirect_to']) && Validate::isUrl($redirect['redirect_to'])) {
+                Tools::redirect(
+                    $redirect['redirect_to'],
+                    __PS_BASE_URI__,
+                    $this->context->link,
+                    $type === 301 ? 'HTTP/1.1 301 Moved Permanently' : 'HTTP/1.1 302 Moved Temporarily'
+                );
+            }
         }
     }
 
@@ -654,6 +1212,100 @@ class SeoOptimizer extends Module
         }
     }
 
+    /**
+     * Save custom SEO config fields submitted with the entity form.
+     *
+     * @param array<string, mixed> $params
+     */
+    public function hookActionObjectUpdateAfter(array $params)
+    {
+        $this->processSeoConfigFromPost($params);
+    }
+
+    /**
+     * Save custom SEO config fields when a new entity is created.
+     *
+     * @param array<string, mixed> $params
+     */
+    public function hookActionObjectAddAfter(array $params)
+    {
+        $this->processSeoConfigFromPost($params);
+    }
+
+    /**
+     * Process SEO config fields submitted with a BO entity form.
+     *
+     * Called by actionObjectUpdateAfter / actionObjectAddAfter.
+     * Only acts when the hidden field seoo_config_submitted is present in POST,
+     * indicating our SEO tab was part of the form submission.
+     *
+     * @param array<string, mixed> $params
+     */
+    private function processSeoConfigFromPost(array $params)
+    {
+        // Only process if our form fields were submitted
+        if (!(int) Tools::getValue('seoo_config_submitted')) {
+            return;
+        }
+
+        if (!isset($params['object']) || !($params['object'] instanceof ObjectModel)) {
+            return;
+        }
+
+        $object = $params['object'];
+        $idEntity = (int) $object->id;
+        if ($idEntity <= 0) {
+            return;
+        }
+
+        // Map ObjectModel class names to entity types
+        // Category is handled by actionCategoryFormBuilderModifier + FormHandler
+        $classMap = [
+            // 'Product'      => 'product',
+            // 'Manufacturer' => 'manufacturer',
+            // 'Supplier'     => 'supplier',
+            // 'CMS'          => 'cms',
+        ];
+
+        $className = get_class($object);
+        // Handle namespaced class names (PS 9)
+        if (strpos($className, '\\') !== false) {
+            $className = substr($className, strrpos($className, '\\') + 1);
+        }
+
+        if (!isset($classMap[$className])) {
+            return;
+        }
+
+        $noindex = (int) Tools::getValue('seoo_noindex');
+        $nofollow = (int) Tools::getValue('seoo_nofollow');
+        $langKeywords = Tools::getValue('seoo_keywords_lang');
+        $langCanonical = Tools::getValue('seoo_canonical_url_lang');
+
+        if (is_array($langKeywords) || is_array($langCanonical)) {
+            foreach (Language::getLanguages(false) as $lang) {
+                $idLang = (int) $lang['id_lang'];
+                SeoOptimizerPage::saveSeoConfig($classMap[$className], $idEntity, [
+                    'keywords' => is_array($langKeywords) && isset($langKeywords[$idLang])
+                        ? (string) $langKeywords[$idLang]
+                        : '',
+                    'canonical_url' => is_array($langCanonical) && isset($langCanonical[$idLang])
+                        ? (string) $langCanonical[$idLang]
+                        : '',
+                    'noindex' => $noindex,
+                    'nofollow' => $nofollow,
+                ], $idLang);
+            }
+        } else {
+            SeoOptimizerPage::saveSeoConfig($classMap[$className], $idEntity, [
+                'keywords' => (string) Tools::getValue('seoo_keywords'),
+                'canonical_url' => (string) Tools::getValue('seoo_canonical_url'),
+                'noindex' => $noindex,
+                'nofollow' => $nofollow,
+            ]);
+        }
+    }
+
     public function hookActionSupplierFormBuilderModifier($params) {
         $actions_classes = [
             Adilis\SeoOptimizer\FormBuilderModifier\SupplierFormModifier::class,
@@ -664,6 +1316,54 @@ class SeoOptimizer extends Module
         }
     }
 
+
+    /**
+     * @param array $params
+     */
+    public function hookActionCategoryFormBuilderModifier(array $params)
+    {
+        (new Adilis\SeoOptimizer\FormBuilderModifier\CategoryFormModifier($params))->process();
+    }
+
+    /**
+     * @param array $params
+     */
+    public function hookActionRootCategoryFormBuilderModifier(array $params)
+    {
+        (new Adilis\SeoOptimizer\FormBuilderModifier\CategoryFormModifier($params))->process();
+    }
+
+    /**
+     * @param array $params
+     */
+    public function hookActionAfterUpdateCategoryFormHandler(array $params)
+    {
+        (new Adilis\SeoOptimizer\FormHandler\CategorySeoFormHandler($params))->process();
+    }
+
+    /**
+     * @param array $params
+     */
+    public function hookActionAfterCreateCategoryFormHandler(array $params)
+    {
+        (new Adilis\SeoOptimizer\FormHandler\CategorySeoFormHandler($params))->process();
+    }
+
+    /**
+     * @param array $params
+     */
+    public function hookActionAfterUpdateRootCategoryFormHandler(array $params)
+    {
+        (new Adilis\SeoOptimizer\FormHandler\CategorySeoFormHandler($params))->process();
+    }
+
+    /**
+     * @param array $params
+     */
+    public function hookActionAfterCreateRootCategoryFormHandler(array $params)
+    {
+        (new Adilis\SeoOptimizer\FormHandler\CategorySeoFormHandler($params))->process();
+    }
 
     public function hookActionOutputHTMLBefore($params) {
         $actions_classes = [
@@ -695,27 +1395,115 @@ class SeoOptimizer extends Module
             (int) $this->context->language->id
         );
 
+        // SEO config panel is auto-injected by seo-config.js via SeoOptimizerConfig
         return $this->renderEntityAuditPanel($url);
     }
 
     /**
-     * @param array $params
+     * Output the SEO tab HTML in the BO footer for entity edit pages.
+     * The JS (category-tabs.js / entity-form-tabs.js) moves it into the form.
+     *
      * @return string
      */
-    public function hookDisplayBackOfficeCategory(array $params): string
+    public function hookDisplayBackOfficeFooter(): string
     {
-        $idCategory = (int) ($params['id_category'] ?? Tools::getValue('id_category'));
-        if (!$idCategory) {
+        $entityTabEntities = [
+            'AdminCategories' => 'category',
+        ];
+
+        $currentController = Tools::getValue('controller');
+        if (!isset($entityTabEntities[$currentController])) {
             return '';
         }
 
-        $url = $this->context->link->getCategoryLink(
-            $idCategory,
-            null,
-            (int) $this->context->language->id
+        $entityType = $entityTabEntities[$currentController];
+        $idEntity = $this->detectEntityId($entityType);
+        if ($idEntity <= 0) {
+            return '';
+        }
+
+        return $this->renderEntitySeoTab($entityType, $idEntity);
+    }
+
+    /**
+     * Render the SEO configuration panel for an entity.
+     *
+     * @param string $entityType
+     * @param int $idEntity
+     * @param string $url
+     * @return string
+     */
+    private function renderSeoConfigPanel(string $entityType, int $idEntity, string $url): string
+    {
+        $config = SeoOptimizerPage::getSeoConfig($entityType, $idEntity);
+
+        $languages = Language::getLanguages(false);
+        $defaultLang = (int) Configuration::get('PS_LANG_DEFAULT');
+
+        $keywordsLang = [];
+        $canonicalUrlLang = [];
+        foreach ($languages as $lang) {
+            $lid = (int) $lang['id_lang'];
+            $langConfig = SeoOptimizerPage::getSeoConfig($entityType, $idEntity, $lid);
+            $keywordsLang[$lid] = $langConfig['keywords'];
+            $canonicalUrlLang[$lid] = $langConfig['canonical_url'];
+        }
+
+        $this->context->smarty->assign([
+            'seoo_config_entity_type' => $entityType,
+            'seoo_config_id_entity' => $idEntity,
+            'seoo_config_url' => $url,
+            'seoo_config_keywords' => $config['keywords'],
+            'seoo_config_canonical_url' => $config['canonical_url'],
+            'seoo_config_noindex' => $config['noindex'],
+            'seoo_config_nofollow' => $config['nofollow'],
+            'seoo_config_ajax_url' => $this->context->link->getAdminLink(
+                'AdminModules',
+                true,
+                [],
+                ['configure' => $this->name]
+            ),
+            'seoo_module_path' => $this->_path,
+            'seoo_languages' => $languages,
+            'seoo_default_lang' => $defaultLang,
+            'seoo_keywords_lang' => $keywordsLang,
+            'seoo_canonical_url_lang' => $canonicalUrlLang,
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/admin/seo-config.tpl');
+    }
+
+    /**
+     * Render the complete server-rendered SEO tab for an entity.
+     *
+     * Used by entities that have dedicated tab JS (e.g. category).
+     * Includes: Google Preview, native fields placeholder, custom SEO fields,
+     * save button, and audit panel — all in a single template.
+     *
+     * @param string $entityType
+     * @param int $idEntity
+     * @return string
+     */
+    private function renderEntitySeoTab(string $entityType, int $idEntity): string
+    {
+        $idLang = (int) $this->context->language->id;
+        $url = $this->getEntityUrl($entityType, $idEntity, $idLang);
+        $ajaxUrl = $this->context->link->getAdminLink(
+            'AdminModules',
+            true,
+            [],
+            ['configure' => $this->name]
         );
 
-        return $this->renderEntityAuditPanel($url);
+        $this->context->smarty->assign([
+            'seoo_entity_type' => $entityType,
+            'seoo_id_entity' => $idEntity,
+            'seoo_entity_url' => $url,
+            'seoo_ajax_url' => $ajaxUrl,
+            'seoo_module_path' => $this->_path,
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/admin/' . $entityType . '-seo-tab.tpl');
     }
 
     /**

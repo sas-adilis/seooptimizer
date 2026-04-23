@@ -1,0 +1,21 @@
+{% block seoo_serp_preview_row %}
+    <div class="form-group seoo-serp-preview">
+        <label class="form-control-label">
+            {{ 'SEO preview'|trans({}, 'Admin.Global') }}
+        </label>
+        <div id="seoo-serp" data-entity-url="{{ entity_url|e('html_attr') }}">
+            <div class="serp-preview">
+                <div class="serp-url">
+                    <span class="serp-base-url" id="seoo-sc-serp-baseurl"></span>
+                    <span id="seoo-sc-serp-path"></span>
+                    <i class="material-icons serp-url-more">more_vert</i>
+                </div>
+                <div class="serp-title" id="seoo-sc-serp-title"></div>
+                <div class="serp-description" id="seoo-sc-serp-desc"></div>
+            </div>
+        </div>
+        <small class="form-text">
+            {{ 'Here is a preview of how your page will appear in search engine results.'|trans({}, 'Admin.Global') }}
+        </small>
+    </div>
+{% endblock %}

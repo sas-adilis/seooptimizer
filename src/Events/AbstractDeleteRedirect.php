@@ -27,32 +27,24 @@ abstract class AbstractDeleteRedirect implements DeleteRedirectInterface
                 return;
             }
 
-            foreach ($redirections as &$redirection) {
-                $redirection['redirect_type'] = 301;
-                $redirection['id_shop'] = (int) \Context::getContext()->shop->id;
-                $redirection['date_add'] = date('Y-m-d H:i:s');
-                $redirection['date_upd'] = date('Y-m-d H:i:s');
-            }
-
             $date_now = date('Y-m-d H:i:s');
 
             $query = '
                 INSERT INTO ' . _DB_PREFIX_ . 'seooptimizer_redirect
-                (`redirect_from`, `redirect_to`, `redirect_type`, `id_shop`, `date_add`) VALUES ';
+                (`redirect_from`, `redirect_to`, `redirect_type`, `date_add`) VALUES ';
 
             foreach ($redirections as $redirection) {
                 $query .= sprintf(
-                    '("%s", "%s", %d, %d, "%s"), ',
+                    '("%s", "%s", %d, "%s"), ',
                     pSQL($redirection['redirect_from']),
                     pSQL($redirection['redirect_to']),
                     301,
-                    (int) \Context::getContext()->shop->id,
                     pSQL($date_now)
                 );
             }
 
             $query = rtrim($query, ', ');
-            $query .= ' ON DUPLICATE KEY UPDATE `redirect_to` = VALUES(`redirect_to`), `redirect_type` = VALUES(`redirect_type`), `date_upd` = "' . pSQL($date_now) . '";';
+            $query .= ' ON DUPLICATE KEY UPDATE `redirect_to` = VALUES(`redirect_to`), `redirect_type` = VALUES(`redirect_type`);';
 
             \Db::getInstance()->execute($query);
         }

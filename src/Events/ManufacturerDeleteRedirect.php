@@ -25,8 +25,9 @@ class ManufacturerDeleteRedirect extends AbstractDeleteRedirect implements Delet
     {
         $context = \Context::getContext();
         $redirections = [];
+        $idManufacturer = (int) $this->object->id;
         foreach (\Language::getLanguages() as $lang) {
-            $redirect_from = $context->link->getManufacturerLink($this->object);
+            $redirect_from = $context->link->getManufacturerLink($idManufacturer, null, (int) $lang['id_lang']);
             $base_url = rtrim($context->shop->getBaseURL(true), '/');
             $redirect_from = str_replace($base_url, '', $redirect_from);
             $redirect_to = $context->link->getPageLink('manufacturer', null, $lang['id_lang']);
