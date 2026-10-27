@@ -91,7 +91,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
             } elseif ($titleLen < $this->titleMinLength) {
                 $issues[] = [
                     'type' => 'title_too_short',
-                    'severity' => 'warning',
+                    'severity' => 'info',
                     'field' => 'title',
                     'message' => sprintf(
                         'Title too short (%d chars, min %d)',
@@ -100,9 +100,6 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     ),
                     'length' => $titleLen,
                 ];
-                if ($pageSeverity === 'good') {
-                    $pageSeverity = 'warning';
-                }
             } elseif ($titleLen > $this->titleMaxLength) {
                 $issues[] = [
                     'type' => 'title_too_long',
@@ -125,28 +122,32 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
         if (!$descPresent) {
             $issues[] = [
                 'type' => 'missing_description',
-                'severity' => 'critical',
+                'severity' => 'warning',
                 'field' => 'description',
                 'message' => 'Missing meta description',
                 'length' => 0,
             ];
-            $pageSeverity = 'critical';
+            if ($pageSeverity === 'good') {
+                $pageSeverity = 'warning';
+            }
         } else {
             $descLen = mb_strlen($description);
 
             if ($descLen === 0) {
                 $issues[] = [
                     'type' => 'empty_description',
-                    'severity' => 'critical',
+                    'severity' => 'warning',
                     'field' => 'description',
                     'message' => 'Empty meta description',
                     'length' => 0,
                 ];
-                $pageSeverity = 'critical';
+                if ($pageSeverity === 'good') {
+                    $pageSeverity = 'warning';
+                }
             } elseif ($descLen < $this->descMinLength) {
                 $issues[] = [
                     'type' => 'description_too_short',
-                    'severity' => 'warning',
+                    'severity' => 'info',
                     'field' => 'description',
                     'message' => sprintf(
                         'Meta description too short (%d chars, min %d)',
@@ -155,13 +156,10 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     ),
                     'length' => $descLen,
                 ];
-                if ($pageSeverity === 'good') {
-                    $pageSeverity = 'warning';
-                }
             } elseif ($descLen > $this->descMaxLength) {
                 $issues[] = [
                     'type' => 'description_too_long',
-                    'severity' => 'warning',
+                    'severity' => 'info',
                     'field' => 'description',
                     'message' => sprintf(
                         'Meta description too long (%d chars, max %d)',
@@ -170,9 +168,6 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     ),
                     'length' => $descLen,
                 ];
-                if ($pageSeverity === 'good') {
-                    $pageSeverity = 'warning';
-                }
             }
         }
 
