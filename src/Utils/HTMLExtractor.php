@@ -306,6 +306,85 @@ class HTMLExtractor
     }
 
     /**
+     * Strip the schema.org namespace from a type ("https://schema.org/Product" => "Product").
+     *
+     * @param string $type
+     * @return string
+     */
+    public static function normalizeSchemaType(string $type): string
+    {
+        $type = trim($type);
+        $pos = strrpos($type, '/');
+
+        return $pos === false ? $type : substr($type, $pos + 1);
+    }
+
+    /**
+     * Count every schema.org type found in JSON-LD, including types nested
+     * in other objects (e.g. Offer inside Product.offers).
+     *
+     * @return array<string, int> type => occurrences
+     */
+    public function extractJsonLdTypesDeep(): array
+    {
+        $counts = [];
+        foreach ($this->extractJsonLd() as $item) {
+            $this->collectTypes($item, $counts);
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Count schema.org types declared with microdata (itemtype attribute).
+     *
+     * @return array<string, int> type => occurrences
+     */
+    public function extractMicrodataTypes(): array
+    {
+        $counts = [];
+        $nodes = $this->xpath->query('//*[@itemtype]');
+        if ($nodes === false) {
+            return $counts;
+        }
+        foreach ($nodes as $node) {
+            foreach (preg_split('/\s+/', trim($node->getAttribute('itemtype'))) as $itemtype) {
+                if ($itemtype === '' || stripos($itemtype, 'schema.org') === false) {
+                    continue;
+                }
+                $type = self::normalizeSchemaType($itemtype);
+                $counts[$type] = (isset($counts[$type]) ? $counts[$type] : 0) + 1;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @param mixed $node
+     * @param array<string, int> $counts
+     */
+    private function collectTypes($node, array &$counts)
+    {
+        if (!is_array($node)) {
+            return;
+        }
+        if (isset($node['@type'])) {
+            $types = is_array($node['@type']) ? $node['@type'] : [$node['@type']];
+            foreach ($types as $type) {
+                if (!is_string($type)) {
+                    continue;
+                }
+                $type = self::normalizeSchemaType($type);
+                $counts[$type] = (isset($counts[$type]) ? $counts[$type] : 0) + 1;
+            }
+        }
+        foreach ($node as $value) {
+            $this->collectTypes($value, $counts);
+        }
+    }
+
+    /**
      * Extract all schema.org @type values from JSON-LD.
      *
      * @return array<string, bool> type => true

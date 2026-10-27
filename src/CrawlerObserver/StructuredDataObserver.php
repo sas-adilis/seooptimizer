@@ -10,6 +10,9 @@ use Adilis\SeoOptimizer\Utils\HTMLExtractor;
 
 class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
+    /** Types that must be declared only once per page */
+    const UNIQUE_TYPES = ['BreadcrumbList', 'WebSite', 'Organization', 'WebPage'];
+
     /** @var array */
     private $results = [];
 
@@ -30,20 +33,30 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
         $jsonLdItems = $extractor->extractJsonLd();
         $isProduct = $extractor->isProductPage();
 
-        // Collect all @type values with their count
-        $typeCounts = [];
+        // Top-level JSON-LD types only: used to detect duplicated blocks
+        $topLevelCounts = [];
         foreach ($jsonLdItems as $item) {
             if (!isset($item['@type'])) {
                 continue;
             }
             $itemTypes = is_array($item['@type']) ? $item['@type'] : [$item['@type']];
             foreach ($itemTypes as $type) {
-                if (!isset($typeCounts[$type])) {
-                    $typeCounts[$type] = 0;
+                if (!is_string($type)) {
+                    continue;
                 }
-                $typeCounts[$type]++;
+                $type = HTMLExtractor::normalizeSchemaType($type);
+                $topLevelCounts[$type] = (isset($topLevelCounts[$type]) ? $topLevelCounts[$type] : 0) + 1;
             }
         }
+
+        // All types present on the page: nested JSON-LD types and microdata included
+        $typeCounts = $extractor->extractJsonLdTypesDeep();
+        foreach ($extractor->extractMicrodataTypes() as $type => $count) {
+            $typeCounts[$type] = (isset($typeCounts[$type]) ? $typeCounts[$type] : 0) + $count;
+        }
+
+        // An AggregateOffer carries its own Offers
+        $hasOffer = isset($typeCounts['Offer']) || isset($typeCounts['AggregateOffer']);
 
         // Expected types depend on page type
         $expectedTypes = $isProduct
@@ -55,7 +68,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
 
         // Check expected types
         foreach ($expectedTypes as $type) {
-            $found = isset($typeCounts[$type]);
+            $found = $type === 'Offer' ? $hasOffer : isset($typeCounts[$type]);
             $schemas[] = ['name' => $type, 'found' => $found];
 
             if (!$found) {
@@ -76,9 +89,12 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
             }
         }
 
-        // Check for duplicates
-        foreach ($typeCounts as $type => $count) {
+        // Check for duplicated top-level blocks (only types that must be unique on a page)
+        $duplicates = [];
+        foreach (self::UNIQUE_TYPES as $type) {
+            $count = isset($topLevelCounts[$type]) ? $topLevelCounts[$type] : 0;
             if ($count > 1) {
+                $duplicates[$type] = $count;
                 $issues[] = [
                     'type' => 'duplicate_schema',
                     'severity' => 'warning',
@@ -91,7 +107,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
 
         // Product-specific checks
         if ($isProduct) {
-            if (isset($typeCounts['Product']) && !isset($typeCounts['Offer'])) {
+            if (isset($typeCounts['Product']) && !$hasOffer) {
                 $issues[] = [
                     'type' => 'product_no_offer',
                     'severity' => 'warning',
@@ -100,15 +116,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
                 ];
             }
 
-            if (!isset($typeCounts['AggregateRating']) && preg_match('/avis|review|note|rating/i', $content)) {
-                $schemas[] = ['name' => 'AggregateRating', 'found' => false];
-                $issues[] = [
-                    'type' => 'reviews_not_structured',
-                    'severity' => 'warning',
-                    'message' => 'Reviews detected but no AggregateRating schema',
-                    'schema_type' => 'AggregateRating',
-                ];
-            } elseif (isset($typeCounts['AggregateRating'])) {
+            if (isset($typeCounts['AggregateRating'])) {
                 $schemas[] = ['name' => 'AggregateRating', 'found' => true];
             }
         }
@@ -142,9 +150,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
             'total_blocks' => count($jsonLdItems),
             'is_product' => $isProduct,
             'issues' => $issues,
-            'duplicates' => array_filter($typeCounts, function ($c) {
-                return $c > 1;
-            }),
+            'duplicates' => $duplicates,
         ];
     }
 
