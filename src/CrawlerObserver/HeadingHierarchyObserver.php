@@ -40,14 +40,14 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
         if ($h1Count === 0) {
             $issues[] = [
                 'type' => 'missing_h1',
-                'severity' => 'critical',
+                'severity' => 'warning',
                 'message' => 'No H1 tag found on this page',
             ];
         } elseif ($h1Count > 1) {
             $issues[] = [
                 'type' => 'multiple_h1',
-                'severity' => 'critical',
-                'message' => sprintf('%d H1 tags found (should be exactly 1)', $h1Count),
+                'severity' => 'info',
+                'message' => sprintf('%d H1 tags found (a single H1 is recommended)', $h1Count),
                 'details' => array_column($headings[1], 'text'),
             ];
         }
@@ -58,13 +58,13 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
             if ($len < self::MIN_H1_LENGTH) {
                 $issues[] = [
                     'type' => 'h1_too_short',
-                    'severity' => 'warning',
+                    'severity' => 'info',
                     'message' => sprintf('H1 too short (%d chars, min %d): "%s"', $len, self::MIN_H1_LENGTH, $h1['text']),
                 ];
             } elseif ($len > self::MAX_H1_LENGTH) {
                 $issues[] = [
                     'type' => 'h1_too_long',
-                    'severity' => 'warning',
+                    'severity' => 'info',
                     'message' => sprintf('H1 too long (%d chars, max %d): "%s"', $len, self::MAX_H1_LENGTH, $h1['text']),
                 ];
             }
@@ -202,7 +202,7 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
                 if ($count > 1 && $level <= 3) {
                     $issues[] = [
                         'type' => 'duplicate_heading',
-                        'severity' => $level === 1 ? 'critical' : 'info',
+                        'severity' => $level === 1 ? 'warning' : 'info',
                         'message' => sprintf('Duplicate H%d (%dx): "%s"', $level, $count, $text),
                     ];
                 }
