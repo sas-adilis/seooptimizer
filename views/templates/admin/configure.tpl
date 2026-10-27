@@ -24,7 +24,7 @@
                             <li><a href="#tab-audit-unsecured-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/lock-open.svg"}</span> {l s='Unsecured links (HTTP)' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-meta-tags" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-align-left.svg"}</span> {l s='Meta tags (title & description)' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-internal-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/link.svg"}</span> {l s='Internal links' mod='seooptimizer'}</a></li>
-                            <li><a href="#tab-audit-text-ratio" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-aa.svg"}</span> {l s='Text content ratio' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-text-ratio" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-aa.svg"}</span> {l s='Content length' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-keyword-check" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/crosshair.svg"}</span> {l s='Keyword check' mod='seooptimizer'}</a></li>
                         </ul>
                     </li>

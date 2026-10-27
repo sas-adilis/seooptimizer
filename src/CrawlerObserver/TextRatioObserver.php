@@ -57,14 +57,16 @@ class TextRatioObserver extends AbstractCrawlerObserver implements CrawlerObserv
                 'text_length' => 0,
                 'html_length' => 0,
                 'text_ratio' => 0,
-                'severity' => 'critical',
+                'severity' => 'warning',
             ];
             $this->lowCount++;
             return;
         }
 
-        $htmlLength = strlen($bodyHTML);
-        $bodyText = $extractor->extractBodyText();
+        // Measure the main content when the page has a <main> element, the whole body otherwise
+        $mainHTML = $extractor->extractMainHTML();
+        $htmlLength = strlen($mainHTML !== '' ? $mainHTML : $bodyHTML);
+        $bodyText = $extractor->extractMainText();
         $text = html_entity_decode($bodyText, ENT_QUOTES, 'UTF-8');
         $text = preg_replace('/\s+/', ' ', trim($text));
 
@@ -73,10 +75,10 @@ class TextRatioObserver extends AbstractCrawlerObserver implements CrawlerObserv
         $textRatio = $htmlLength > 0 ? round(($textLength / $htmlLength) * 100, 1) : 0;
 
         if ($wordCount < $this->thresholdLow) {
-            $severity = 'critical';
+            $severity = 'warning';
             $this->lowCount++;
         } elseif ($wordCount < $this->thresholdGood) {
-            $severity = 'warning';
+            $severity = 'info';
             $this->mediumCount++;
         } else {
             $severity = 'good';

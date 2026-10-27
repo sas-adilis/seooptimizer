@@ -184,6 +184,37 @@ class HTMLExtractor
     }
 
     /**
+     * Extract the inner HTML of the <main> element, or an empty string if the page has none.
+     *
+     * @return string
+     */
+    public function extractMainHTML(): string
+    {
+        if (preg_match('/<main[^>]*>(.*)<\/main>/is', $this->html, $m)) {
+            return $m[1];
+        }
+
+        return '';
+    }
+
+    /**
+     * Text of the main content: the <main> element when present, otherwise the whole body.
+     *
+     * @return string
+     */
+    public function extractMainText(): string
+    {
+        $mainHtml = $this->extractMainHTML();
+        if ($mainHtml === '') {
+            return $this->extractBodyText();
+        }
+
+        $mainHtml = preg_replace('/<(script|style|nav|header|footer)[^>]*>.*?<\/\1>/is', '', $mainHtml);
+
+        return strip_tags($mainHtml);
+    }
+
+    /**
      * Extract body HTML (raw, between <body> tags).
      *
      * @return string

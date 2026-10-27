@@ -17,12 +17,12 @@ class AuditTextRatio implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Text content ratio';
+        return 'Content length';
     }
 
     public function getDescription(): string
     {
-        return 'Analyzes the amount of text content on each page. Pages with too little text are poorly indexed by search engines. Thresholds are configurable in the Configuration tab.';
+        return 'Counts the words of the main content of each page (the <main> element when the theme provides one). Pages with very little text may be treated as thin content. Thresholds are configurable in the Configuration tab.';
     }
 
     public function getIcon(): string
@@ -58,8 +58,8 @@ class AuditTextRatio implements AuditInterface
         return [
             ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
             ['key' => 'good_count', 'label' => 'Good (> ' . $thresholdGood . ' words)', 'type' => 'custom'],
-            ['key' => 'medium_count', 'label' => 'Improvable (' . $thresholdLow . '-' . $thresholdGood . ' words)', 'type' => 'custom', 'warning_if_positive' => true],
-            ['key' => 'low_count', 'label' => 'Insufficient (< ' . $thresholdLow . ' words)', 'type' => 'custom', 'danger_if_positive' => true],
+            ['key' => 'medium_count', 'label' => 'Improvable (' . $thresholdLow . '-' . $thresholdGood . ' words)', 'type' => 'custom'],
+            ['key' => 'low_count', 'label' => 'Insufficient (< ' . $thresholdLow . ' words)', 'type' => 'custom', 'warning_if_positive' => true],
         ];
     }
 
@@ -89,10 +89,10 @@ class AuditTextRatio implements AuditInterface
             $wordCount = $entry['word_count'];
 
             if ($wordCount < $thresholdLow) {
-                $severity = 'critical';
+                $severity = 'warning';
                 $statusLabel = 'Insufficient';
             } elseif ($wordCount < $thresholdGood) {
-                $severity = 'warning';
+                $severity = 'info';
                 $statusLabel = 'Improvable';
             } else {
                 $severity = 'good';
@@ -125,14 +125,13 @@ class AuditTextRatio implements AuditInterface
     public function getScoreImpact(): array
     {
         return [
-            'critical' => 20,
             'warning' => 8,
         ];
     }
 
     public function getScoreWeight(): int
     {
-        return 15;
+        return 10;
     }
 
     public function requiresIndexablePage(): bool

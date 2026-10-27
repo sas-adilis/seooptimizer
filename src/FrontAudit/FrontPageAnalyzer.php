@@ -103,7 +103,7 @@ class FrontPageAnalyzer
             ['weight' => 5,  'checks' => $performance['checks'] ?? []],
             ['weight' => 20, 'checks' => $meta['checks'] ?? []],
             ['weight' => 10, 'checks' => $headings['checks'] ?? []],
-            ['weight' => 10, 'checks' => $content['checks'] ?? []],
+            ['weight' => 5,  'checks' => $content['checks'] ?? []],
             ['weight' => 15, 'checks' => $keywordChecks],
             ['weight' => 8,  'checks' => $images['checks'] ?? []],
             ['weight' => 10, 'checks' => $links['checks'] ?? []],
