@@ -75,25 +75,13 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
             $keywordCheck = [
                 'keyword' => $keyword,
                 'zones' => [],
-                'score' => 0,
-                'max_score' => 0,
             ];
 
             foreach ($zones as $zoneName => $zoneData) {
-                $zoneText = $zoneData['text'];
-                $zoneWeight = $zoneData['weight'];
-                $found = TextNormalizer::keywordFoundIn($keyword, $zoneText);
-
                 $keywordCheck['zones'][$zoneName] = [
-                    'found' => $found,
+                    'found' => TextNormalizer::keywordFoundIn($keyword, $zoneData['text']),
                     'importance' => $zoneData['importance'],
-                    'weight' => $zoneWeight,
                 ];
-
-                $keywordCheck['max_score'] += $zoneWeight;
-                if ($found) {
-                    $keywordCheck['score'] += $zoneWeight;
-                }
             }
 
             $checks[] = $keywordCheck;
@@ -141,8 +129,8 @@ class KeywordCheckObserver extends AbstractCrawlerObserver implements CrawlerObs
         $zones['meta_description'] = ['text' => $desc, 'importance' => 'medium', 'weight' => 10, 'label' => 'Meta description'];
 
         // 5. First 100 words of content (MEDIUM)
-        $bodyText = $extractor->extractBodyText();
-        $words = preg_split('/\s+/', $bodyText);
+        $bodyText = $extractor->extractMainText();
+        $words = preg_split('/\s+/', trim($bodyText));
         $first100 = implode(' ', array_slice($words, 0, 100));
         $zones['content_start'] = ['text' => $first100, 'importance' => 'medium', 'weight' => 10, 'label' => 'First 100 words'];
 

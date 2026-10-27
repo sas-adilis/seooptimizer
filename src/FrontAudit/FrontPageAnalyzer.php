@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
 use Adilis\SeoOptimizer\CrawlerObserver\BrokenLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\HeadingHierarchyObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\InternalLinksObserver;
@@ -104,7 +105,7 @@ class FrontPageAnalyzer
             ['weight' => 20, 'checks' => $meta['checks'] ?? []],
             ['weight' => 10, 'checks' => $headings['checks'] ?? []],
             ['weight' => 5,  'checks' => $content['checks'] ?? []],
-            ['weight' => 15, 'checks' => $keywordChecks],
+            ['weight' => 10, 'checks' => $keywordChecks],
             ['weight' => 8,  'checks' => $images['checks'] ?? []],
             ['weight' => 10, 'checks' => $links['checks'] ?? []],
             ['weight' => 8,  'checks' => $structuredData['checks'] ?? []],
@@ -398,22 +399,24 @@ class FrontPageAnalyzer
             $zones = [];
             $details = [];
 
+            // Severity comes from AuditKeywordCheck: zones without severity (URL, image alt)
+            // are displayed but do not count as issues.
             $zoneLabels = [
-                'meta_title' => ['key' => 'title', 'label' => 'Missing in title', 'severity' => 'warning'],
-                'h1' => ['key' => 'h1', 'label' => 'Missing in H1', 'severity' => 'warning'],
-                'url' => ['key' => 'url', 'label' => 'Missing in URL', 'severity' => 'info'],
-                'meta_description' => ['key' => 'meta_description', 'label' => 'Missing in meta description', 'severity' => 'info'],
-                'content_start' => ['key' => 'content', 'label' => 'Missing in content', 'severity' => 'warning'],
-                'image_alt' => ['key' => 'alt_image', 'label' => 'Missing in image alt', 'severity' => 'info'],
+                'meta_title' => ['key' => 'title', 'label' => 'Missing in title'],
+                'h1' => ['key' => 'h1', 'label' => 'Missing in H1'],
+                'url' => ['key' => 'url', 'label' => 'Missing in URL'],
+                'meta_description' => ['key' => 'meta_description', 'label' => 'Missing in meta description'],
+                'content_start' => ['key' => 'content', 'label' => 'Missing in first 100 words'],
+                'image_alt' => ['key' => 'alt_image', 'label' => 'Missing in image alt'],
             ];
 
             foreach ($zoneLabels as $observerZone => $config) {
                 $found = isset($kwCheck['zones'][$observerZone]) && $kwCheck['zones'][$observerZone]['found'];
                 $zones[$config['key']] = $found;
 
-                if (!$found) {
+                if (!$found && isset(AuditKeywordCheck::ZONE_SEVERITY[$observerZone])) {
                     $details[] = [
-                        'status' => $config['severity'],
+                        'status' => AuditKeywordCheck::ZONE_SEVERITY[$observerZone],
                         'title' => $config['label'],
                         'message' => 'Target keyword not found in this zone.',
                     ];
