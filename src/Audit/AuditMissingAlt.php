@@ -22,7 +22,7 @@ class AuditMissingAlt implements AuditInterface
 
     public function getDescription(): string
     {
-        return 'Crawls all pages of your site and detects images with missing or empty alt attributes. Alt text is essential for accessibility and SEO image indexing.';
+        return 'Crawls all pages of your site and detects images without an alt attribute, which is essential for accessibility and SEO image indexing. Empty alt attributes are only reported for information, as they are the correct way to mark decorative images.';
     }
 
     public function getIcon(): string
@@ -43,7 +43,7 @@ class AuditMissingAlt implements AuditInterface
         return [
             ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
             ['key' => 'missing', 'label' => 'Missing alt', 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
-            ['key' => 'empty', 'label' => 'Empty alt', 'type' => 'count_severity', 'value' => 'warning', 'warning_if_positive' => true],
+            ['key' => 'empty', 'label' => 'Empty alt', 'type' => 'count_severity', 'value' => 'info'],
         ];
     }
 
@@ -99,7 +99,6 @@ class AuditMissingAlt implements AuditInterface
     {
         return [
             'critical' => 5,
-            'warning' => 2,
         ];
     }
 

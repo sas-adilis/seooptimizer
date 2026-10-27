@@ -17,12 +17,12 @@ class AuditPageLoadTime implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Page load time';
+        return 'Server response time';
     }
 
     public function getDescription(): string
     {
-        return 'Measures the response time of every page on your site. Slow pages hurt SEO rankings and user experience. Thresholds are configurable in the Configuration tab.';
+        return 'Measures the time to first byte of every page, as seen from your own server. It does not include browser rendering, JavaScript or images, and the first request after a cache flush is usually slower. A slow server response delays the display of the page. Thresholds are configurable in the Configuration tab.';
     }
 
     public function getIcon(): string
@@ -41,7 +41,7 @@ class AuditPageLoadTime implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'load_time_display' => 'Load time',
+            'load_time_display' => 'Response time',
             'status_label' => 'Status',
         ];
     }
@@ -51,8 +51,8 @@ class AuditPageLoadTime implements AuditInterface
      */
     public function getKpiDefinitions(): array
     {
-        $thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 750;
-        $thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1000;
+        $thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 800;
+        $thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1800;
 
         return [
             ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
@@ -80,8 +80,8 @@ class AuditPageLoadTime implements AuditInterface
     {
         $results = [];
         $entries = $observerResults['page_load_time'] ?? [];
-        $thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 750;
-        $thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1000;
+        $thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 800;
+        $thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1800;
 
         foreach ($entries as $entry) {
             $loadTimeMs = $entry['load_time_ms'];
@@ -125,7 +125,7 @@ class AuditPageLoadTime implements AuditInterface
     public function getScoreImpact(): array
     {
         return [
-            'critical' => 40,
+            'critical' => 25,
             'warning' => 15,
         ];
     }

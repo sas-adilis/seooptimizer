@@ -35,7 +35,7 @@ class FormSettings extends FormAbstract implements FormInterface
                     'title' => $this->l('Configuration'),
                     'icon' => 'icon-cogs',
                     'visual' => __PS_BASE_URI__ . 'modules/seooptimizer/views/img/panda-configure.png',
-                    'description' => $this->l('Configure SEO Optimizer settings: title and meta description length thresholds, page load time and weight thresholds for audits.'),
+                    'description' => $this->l('Configure SEO Optimizer settings: title and meta description length thresholds, server response time and weight thresholds for audits.'),
                 ],
                 'input' => [
                     [
@@ -69,13 +69,13 @@ class FormSettings extends FormAbstract implements FormInterface
                     [
                         'type' => 'html',
                         'name' => 'separator_perf',
-                        'html_content' => '<hr><h4><i class="icon-dashboard"></i> ' . $this->l('Page load time thresholds') . '</h4>',
+                        'html_content' => '<hr><h4><i class="icon-dashboard"></i> ' . $this->l('Server response time thresholds') . '</h4>',
                     ],
                     [
                         'type' => 'text',
                         'name' => 'SEOO_PERF_THRESHOLD_GOOD',
                         'label' => $this->l('Good threshold (ms)'),
-                        'desc' => $this->l('Pages loading under this value (in milliseconds) are considered fast. Default: 750'),
+                        'desc' => $this->l('Pages responding in less than this value (in milliseconds) are considered fast. Default: 800'),
                         'suffix' => 'ms',
                         'required' => true,
                     ],
@@ -83,7 +83,7 @@ class FormSettings extends FormAbstract implements FormInterface
                         'type' => 'text',
                         'name' => 'SEOO_PERF_THRESHOLD_SLOW',
                         'label' => $this->l('Slow threshold (ms)'),
-                        'desc' => $this->l('Pages loading above this value (in milliseconds) are considered slow. Between good and slow = medium. Default: 1000'),
+                        'desc' => $this->l('Pages responding in more than this value (in milliseconds) are considered slow. Between good and slow = medium. Default: 1800'),
                         'suffix' => 'ms',
                         'required' => true,
                     ],

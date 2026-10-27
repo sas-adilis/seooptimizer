@@ -43,7 +43,7 @@
                                     {($seoo_audit.performance.load_time_ms / 1000)|string_format:"%.2f"} s
                                 {/if}
                             </span>
-                            <span class="seoo-fa-perf__label">{l s='Load time' mod='seooptimizer'}</span>
+                            <span class="seoo-fa-perf__label">{l s='Server response' mod='seooptimizer'}</span>
                         </div>
                     {/if}
                     {if $seoo_audit.performance.total_kb !== null}

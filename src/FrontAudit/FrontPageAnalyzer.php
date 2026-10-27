@@ -239,7 +239,7 @@ class FrontPageAnalyzer
 
             $checks[] = [
                 'status' => $loadTimeSeverity,
-                'title' => sprintf('Load time: %s', $formatted),
+                'title' => sprintf('Server response: %s', $formatted),
                 'message' => '',
             ];
         }
@@ -446,8 +446,12 @@ class FrontPageAnalyzer
         // MissingAltAttributeObserver: keyed by URL, only present if issues found
         if (isset($observerData[$this->url])) {
             $imgData = $observerData[$this->url];
-            $missingCount = (int) $imgData['missing_alt'] + (int) $imgData['empty_alt'];
-            $checks[] = ['status' => 'warning', 'title' => $missingCount . ' image(s) missing alt attribute', 'message' => ''];
+            if ((int) $imgData['missing_alt'] > 0) {
+                $checks[] = ['status' => 'warning', 'title' => $imgData['missing_alt'] . ' image(s) missing alt attribute', 'message' => ''];
+            }
+            if ((int) $imgData['empty_alt'] > 0) {
+                $checks[] = ['status' => 'info', 'title' => $imgData['empty_alt'] . ' image(s) with empty alt', 'message' => 'Fine if the images are decorative.'];
+            }
         } elseif ($total > 0) {
             $checks[] = ['status' => 'good', 'title' => 'All images have alt attributes', 'message' => ''];
         }

@@ -57,6 +57,12 @@ class MissingAltAttributeObserver extends AbstractCrawlerObserver implements Cra
                 continue;
             }
 
+            // Skip images explicitly marked as decorative
+            $role = strtolower(trim($img->getAttribute('role')));
+            if ($role === 'presentation' || $role === 'none' || strtolower(trim($img->getAttribute('aria-hidden'))) === 'true') {
+                continue;
+            }
+
             $totalImages++;
 
             if (!$img->hasAttribute('alt')) {
@@ -71,8 +77,8 @@ class MissingAltAttributeObserver extends AbstractCrawlerObserver implements Cra
                 $emptyAlt++;
                 $issues[] = [
                     'type' => 'empty_alt',
-                    'severity' => 'warning',
-                    'message' => 'Empty alt attribute',
+                    'severity' => 'info',
+                    'message' => 'Empty alt attribute (fine if the image is decorative)',
                     'src' => $src,
                 ];
             }

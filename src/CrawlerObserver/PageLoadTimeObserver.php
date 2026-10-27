@@ -6,6 +6,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\Utils\CurlBatch;
+
 class PageLoadTimeObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
     /** @var array */
@@ -37,8 +39,8 @@ class PageLoadTimeObserver extends AbstractCrawlerObserver implements CrawlerObs
 
     public function __construct()
     {
-        $this->thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 750;
-        $this->thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1000;
+        $this->thresholdGood = (int) \Configuration::get('SEOO_PERF_THRESHOLD_GOOD') ?: 800;
+        $this->thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1800;
     }
 
     public function getKey(): string
@@ -60,8 +62,10 @@ class PageLoadTimeObserver extends AbstractCrawlerObserver implements CrawlerObs
      */
     public function observeAfterRequest(string $url, string $content)
     {
-        $elapsed = (microtime(true) - $this->startTime) * 1000;
-        $loadTimeMs = round($elapsed);
+        // Prefer the time to first byte measured by cURL; fall back on the elapsed time
+        // since observeBeforeRequest() when the page was not fetched through CurlBatch.
+        $timing = CurlBatch::pullTiming($url);
+        $loadTimeMs = $timing !== null ? $timing : round((microtime(true) - $this->startTime) * 1000);
 
         $this->pagesMeasured++;
         $this->totalLoadTime += $loadTimeMs;

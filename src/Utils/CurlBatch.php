@@ -8,6 +8,28 @@ if (!defined('_PS_VERSION_')) {
 
 class CurlBatch
 {
+    /** @var array<string, int> Time to first byte (ms) of the last fetchPage() call, per URL */
+    private static $timings = [];
+
+    /**
+     * Time to first byte (ms) measured by the last fetchPage() call for this URL.
+     * The value is consumed: a second call returns null until the URL is fetched again.
+     *
+     * @param string $url
+     * @return int|null
+     */
+    public static function pullTiming(string $url)
+    {
+        if (!isset(self::$timings[$url])) {
+            return null;
+        }
+
+        $timing = self::$timings[$url];
+        unset(self::$timings[$url]);
+
+        return $timing;
+    }
+
     /**
      * Perform HEAD requests on multiple URLs in parallel (no redirect following).
      * Returns HTTP code and redirect URL (if any) per URL.
@@ -91,6 +113,7 @@ class CurlBatch
 
         $content = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        self::$timings[$url] = (int) round(curl_getinfo($ch, CURLINFO_STARTTRANSFER_TIME) * 1000);
         curl_close($ch);
 
         if ($content === false || $httpCode >= 400) {
