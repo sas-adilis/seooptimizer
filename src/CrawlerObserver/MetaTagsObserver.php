@@ -219,6 +219,31 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
     }
 
     /**
+     * A page of the crawl could not be fetched (HTTP error or timeout).
+     *
+     * @param string $url
+     */
+    public function observeUnreachable(string $url)
+    {
+        $this->criticalCount++;
+
+        $this->results[$url] = [
+            'title' => null,
+            'title_length' => 0,
+            'description' => null,
+            'description_length' => 0,
+            'issues' => [[
+                'type' => 'page_unreachable',
+                'severity' => 'critical',
+                'field' => 'page',
+                'message' => 'Page unreachable (HTTP error or timeout)',
+                'length' => 0,
+            ]],
+            'page_severity' => 'critical',
+        ];
+    }
+
+    /**
      * @return array
      */
     public function getResults(): array

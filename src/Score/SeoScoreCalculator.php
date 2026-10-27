@@ -45,51 +45,9 @@ class SeoScoreCalculator
                 continue;
             }
 
-            $run = AuditRunStorage::get($key);
-            $results = AuditResultStorage::getByAuditKey($key);
-            $impact = $audit->getScoreImpact();
-
-            // Get all URLs for this audit
-            $auditUrls = [];
-            if ($run && isset($run['urls'])) {
-                foreach ($run['urls'] as $entry) {
-                    $url = is_array($entry) ? ($entry['url'] ?? '') : (string) $entry;
-                    if ($url !== '') {
-                        $auditUrls[] = $url;
-                    }
-                }
-                $auditUrls = array_unique($auditUrls);
-            }
-
-            // Group results by URL
-            $issuesByUrl = [];
-            foreach ($results as $row) {
-                $url = $row['url'] ?? '';
-                if ($url === '') {
-                    continue;
-                }
-                if (!isset($issuesByUrl[$url])) {
-                    $issuesByUrl[$url] = [];
-                }
-                $issuesByUrl[$url][] = $row;
-            }
-
             // Per-page score
-            $auditPageScores = [];
-            foreach ($auditUrls as $url) {
-                $penalty = 0;
-                if (isset($issuesByUrl[$url])) {
-                    foreach ($issuesByUrl[$url] as $issue) {
-                        $severity = $issue['severity'] ?? '';
-                        if (isset($impact[$severity])) {
-                            $penalty += $impact[$severity];
-                        }
-                    }
-                }
-
-                $pageScore = max(0, 100 - $penalty);
-                $auditPageScores[$url] = $pageScore;
-
+            $auditPageScores = $this->computeAuditPageScores($audit);
+            foreach ($auditPageScores as $url => $pageScore) {
                 if (!isset($pageScores[$url])) {
                     $pageScores[$url] = [
                         'url' => $url,
@@ -173,13 +131,37 @@ class SeoScoreCalculator
             return ['score' => 0, 'grade' => '-', 'grade_color' => 'gray'];
         }
 
+        $scores = $this->computeAuditPageScores($audit);
+
+        $avg = count($scores) > 0 ? array_sum($scores) / count($scores) : 100;
+
+        return [
+            'score' => round($avg, 1),
+            'grade' => self::scoreToGrade($avg),
+            'grade_color' => self::gradeToColor(self::scoreToGrade($avg)),
+        ];
+    }
+
+    /**
+     * Score of every page crawled by an audit: 100 minus the penalty of each
+     * issue found on the page (floor 0).
+     *
+     * @param AuditInterface $audit
+     * @return array<string, int|float> URL => score
+     */
+    private function computeAuditPageScores(AuditInterface $audit): array
+    {
+        $key = $audit->getKey();
         $run = AuditRunStorage::get($key);
-        $results = AuditResultStorage::getByAuditKey($key);
         $impact = $audit->getScoreImpact();
 
         $auditUrls = [];
         if ($run && isset($run['urls'])) {
             foreach ($run['urls'] as $entry) {
+                // Pages this audit could not analyze (non-indexable, unreachable) are left out
+                if (is_array($entry) && isset($entry['skip']) && in_array($key, $entry['skip'], true)) {
+                    continue;
+                }
                 $url = is_array($entry) ? ($entry['url'] ?? '') : (string) $entry;
                 if ($url !== '') {
                     $auditUrls[] = $url;
@@ -189,13 +171,10 @@ class SeoScoreCalculator
         }
 
         $issuesByUrl = [];
-        foreach ($results as $row) {
+        foreach (AuditResultStorage::getByAuditKey($key) as $row) {
             $url = $row['url'] ?? '';
             if ($url === '') {
                 continue;
-            }
-            if (!isset($issuesByUrl[$url])) {
-                $issuesByUrl[$url] = [];
             }
             $issuesByUrl[$url][] = $row;
         }
@@ -211,16 +190,10 @@ class SeoScoreCalculator
                     }
                 }
             }
-            $scores[] = max(0, 100 - $penalty);
+            $scores[$url] = max(0, 100 - $penalty);
         }
 
-        $avg = count($scores) > 0 ? array_sum($scores) / count($scores) : 100;
-
-        return [
-            'score' => round($avg, 1),
-            'grade' => self::scoreToGrade($avg),
-            'grade_color' => self::gradeToColor(self::scoreToGrade($avg)),
-        ];
+        return $scores;
     }
 
     public static function scoreToGrade(float $score): string

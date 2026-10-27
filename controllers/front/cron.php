@@ -171,7 +171,7 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
 
             $requiresIndexable = $audit->requiresIndexablePage();
 
-            foreach ($batch as $entry) {
+            foreach ($batch as $batchIndex => $entry) {
                 $url = $entry['url'];
                 $type = $entry['type'];
 
@@ -183,8 +183,14 @@ class SeoOptimizerCronModuleFrontController extends ModuleFrontController
 
                 $content = $this->fetchUrl($url);
 
-                if ($content !== false) {
+                if ($content === false) {
+                    // Unreachable page: reported by the observers able to, otherwise left out of the score
+                    if (!AuditRunner::reportUnreachable($observers, $url)) {
+                        AuditRunner::markSkipped($state['urls'], $offset + $batchIndex, $auditKey);
+                    }
+                } else {
                     if ($requiresIndexable && !AuditRunner::isPageIndexable($content)) {
+                        AuditRunner::markSkipped($state['urls'], $offset + $batchIndex, $auditKey);
                         if (isset($state['items'][$type])) {
                             $state['items'][$type]['crawled']++;
                             $total = $state['items'][$type]['total'];

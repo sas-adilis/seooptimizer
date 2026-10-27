@@ -146,7 +146,9 @@ class FullAuditRunner
             ];
         }
 
-        foreach ($batch as $entry) {
+        // $this->state['crawled'] is the position of the first URL of the batch
+        foreach ($batch as $batchIndex => $entry) {
+            $urlIndex = $this->state['crawled'] + $batchIndex;
             $url = $entry['url'];
             $type = $entry['type'];
 
@@ -162,7 +164,14 @@ class FullAuditRunner
             // Single fetch
             $content = $this->fetchUrl($url);
 
-            if ($content !== false) {
+            if ($content === false) {
+                // Unreachable page: reported by the audits able to, otherwise left out of their score
+                foreach ($auditObservers as $auditKey => $data) {
+                    if (!AuditRunner::reportUnreachable($data['observers'], $url)) {
+                        AuditRunner::markSkipped($this->state['urls'], $urlIndex, $auditKey);
+                    }
+                }
+            } else {
                 $isIndexable = AuditRunner::isPageIndexable($content);
 
                 // Only run observers for audits that apply to this page
@@ -174,6 +183,7 @@ class FullAuditRunner
 
                     // Skip SEO content audits on non-indexable pages
                     if ($audit->requiresIndexablePage() && !$isIndexable) {
+                        AuditRunner::markSkipped($this->state['urls'], $urlIndex, $audit->getKey());
                         continue;
                     }
 

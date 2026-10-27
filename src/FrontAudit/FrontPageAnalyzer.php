@@ -721,9 +721,7 @@ class FrontPageAnalyzer
                     case 'warning':
                         $penalty += 15;
                         break;
-                    case 'info':
-                        $penalty += 3;
-                        break;
+                    // 'info' checks are informational: no penalty (same as the BO audits)
                 }
             }
 

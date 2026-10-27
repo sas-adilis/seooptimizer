@@ -265,7 +265,7 @@ class AuditRunner
         $requiresIndexable = $this->audit->requiresIndexablePage();
 
         // Crawl batch
-        foreach ($batch as $entry) {
+        foreach ($batch as $batchIndex => $entry) {
             $url = $entry['url'];
             $type = $entry['type'];
 
@@ -277,9 +277,15 @@ class AuditRunner
 
             $content = $this->fetchUrl($url);
 
-            if ($content !== false) {
+            if ($content === false) {
+                // Unreachable page: reported by the observers able to, otherwise left out of the score
+                if (!self::reportUnreachable($observers, $url)) {
+                    self::markSkipped($this->state['urls'], $offset + $batchIndex, $auditKey);
+                }
+            } else {
                 // Skip non-indexable pages for SEO content audits
                 if ($requiresIndexable && !self::isPageIndexable($content)) {
+                    self::markSkipped($this->state['urls'], $offset + $batchIndex, $auditKey);
                     // Still count as crawled but don't analyze
                     if (isset($this->state['items'][$type])) {
                         $this->state['items'][$type]['crawled']++;
@@ -384,6 +390,46 @@ class AuditRunner
         }
 
         return true;
+    }
+
+    /**
+     * Tell the observers able to (observeUnreachable) that a page could not be fetched.
+     *
+     * @param object[] $observers
+     * @param string $url
+     * @return bool True if at least one observer reported the page
+     */
+    public static function reportUnreachable(array $observers, string $url): bool
+    {
+        $reported = false;
+        foreach ($observers as $observer) {
+            if (method_exists($observer, 'observeUnreachable')) {
+                $observer->observeUnreachable($url);
+                $reported = true;
+            }
+        }
+
+        return $reported;
+    }
+
+    /**
+     * Flag a URL of the run as not analyzed by an audit, so that it is left out of the score.
+     *
+     * @param array<int, array<string, mixed>> $urls Run URLs
+     * @param int $index Position of the URL in the run
+     * @param string $auditKey
+     */
+    public static function markSkipped(array &$urls, int $index, string $auditKey)
+    {
+        if (!isset($urls[$index])) {
+            return;
+        }
+        if (!isset($urls[$index]['skip'])) {
+            $urls[$index]['skip'] = [];
+        }
+        if (!in_array($auditKey, $urls[$index]['skip'], true)) {
+            $urls[$index]['skip'][] = $auditKey;
+        }
     }
 
     /**
