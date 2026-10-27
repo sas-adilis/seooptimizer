@@ -3,6 +3,9 @@
 namespace Adilis\SeoOptimizer\Admin;
 
 use Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer;
+use Adilis\SeoOptimizer\PageSpeed\PageSpeedClient;
+use Adilis\SeoOptimizer\PageSpeed\PageSpeedSampler;
+use Adilis\SeoOptimizer\Storage\PageSpeedStorage;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -14,6 +17,9 @@ if (!defined('_PS_VERSION_')) {
  */
 class AjaxHandler
 {
+    /** Lighthouse strategy (Google indexes the mobile version first) */
+    const PAGESPEED_STRATEGY = 'mobile';
+
     /** @var \Module */
     private $module;
 
@@ -251,6 +257,51 @@ class AjaxHandler
         $this->jsonExit([
             'status' => 'success',
             'data' => ['html' => $this->renderAuditPanel($result), 'score' => $result['score'], 'url' => $url],
+        ]);
+    }
+
+    /**
+     * PageSpeed Insights analysis, one page per call.
+     * The first call (first_process=true) builds the sample of pages; the following
+     * ones analyze the next pending page until none is left.
+     */
+    public function ajaxProcessPageSpeedRun()
+    {
+        $apiKey = trim((string) \Configuration::get('SEOO_PSI_API_KEY'));
+        if ($apiKey === '') {
+            $this->jsonExit(['status' => 'error', 'message' => 'Missing PageSpeed Insights API key']);
+        }
+
+        if (\Tools::getValue('first_process') === 'true') {
+            $perType = (int) \Configuration::get('SEOO_PSI_PAGES_PER_TYPE') ?: 3;
+            PageSpeedStorage::reset(PageSpeedSampler::getSample($perType), self::PAGESPEED_STRATEGY);
+            $this->jsonExit(['status' => 'success', 'progress' => PageSpeedStorage::getProgress()]);
+        }
+
+        $page = PageSpeedStorage::getNextPending();
+        if ($page === null) {
+            $this->jsonExit(['status' => 'done', 'progress' => PageSpeedStorage::getProgress()]);
+        }
+
+        $result = (new PageSpeedClient())->analyze(
+            $page['url'],
+            $apiKey,
+            $page['strategy'],
+            (string) \Context::getContext()->language->iso_code,
+            \Context::getContext()->shop->getBaseURL(true)
+        );
+
+        if (isset($result['error'])) {
+            PageSpeedStorage::saveError((int) $page['id_seooptimizer_pagespeed'], $result['error']);
+        } else {
+            PageSpeedStorage::saveResult((int) $page['id_seooptimizer_pagespeed'], $result);
+        }
+
+        $this->jsonExit([
+            'status' => PageSpeedStorage::getNextPending() === null ? 'done' : 'success',
+            'progress' => PageSpeedStorage::getProgress(),
+            'url' => $page['url'],
+            'error' => isset($result['error']) ? $result['error'] : '',
         ]);
     }
 

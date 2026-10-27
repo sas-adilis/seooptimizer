@@ -38,7 +38,7 @@ class SeoOptimizer extends Module
     {
         $this->name = 'seooptimizer';
         $this->tab = 'seo';
-        $this->version = '1.6.1';
+        $this->version = '1.7.0';
         $this->author = 'Adilis';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -79,6 +79,8 @@ class SeoOptimizer extends Module
             'SEOO_TEXT_THRESHOLD_GOOD' => 300,
             'SEOO_FRONT_AUDIT_ENABLED' => 0,
             'SEOO_BO_SCORE_COLUMN' => 0,
+            'SEOO_PSI_API_KEY' => '',
+            'SEOO_PSI_PAGES_PER_TYPE' => 3,
 
         ];
     }

@@ -1,0 +1,72 @@
+/* PageSpeed tab */
+.seoo-psi .seoo-psi-table th,
+.seoo-psi .seoo-psi-table td {
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.seoo-psi .seoo-psi-page {
+    max-width: 320px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.seoo-psi .seoo-psi-type {
+    display: block;
+    font-size: 11px;
+    color: #6c868e;
+}
+
+.seoo-psi .seoo-psi-error-cell {
+    white-space: normal;
+}
+
+/* Lighthouse score: round badge */
+.seoo-psi .seoo-psi-score {
+    display: inline-block;
+    min-width: 38px;
+    padding: 4px 0;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.seoo-psi .seoo-psi-score--good { color: #0cce6b; }
+.seoo-psi .seoo-psi-score--average { color: #ffa400; }
+.seoo-psi .seoo-psi-score--poor { color: #ff4e42; }
+.seoo-psi .seoo-psi-score--na { color: #6c868e; }
+
+/* Metric value */
+.seoo-psi .seoo-psi-metric {
+    font-weight: 600;
+}
+
+.seoo-psi .seoo-psi-metric--good { color: #0b8a4a; }
+.seoo-psi .seoo-psi-metric--average { color: #b87400; }
+.seoo-psi .seoo-psi-metric--poor { color: #d92f24; }
+.seoo-psi .seoo-psi-metric--na { color: #6c868e; }
+
+.seoo-psi .seoo-psi-field .seoo-psi-metric {
+    margin-right: 16px;
+}
+
+.seoo-psi .seoo-psi-details > td {
+    background: #fafbfc;
+    white-space: normal;
+}
+
+.seoo-psi .seoo-psi-details h5 {
+    margin: 12px 0 6px;
+    font-weight: 600;
+}
+
+.seoo-psi .seoo-psi-audits {
+    margin: 0 0 8px;
+    padding-left: 18px;
+}
+
+.seoo-psi .seoo-psi-progress {
+    margin-bottom: 16px;
+}

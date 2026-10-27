@@ -38,6 +38,7 @@ class AssetsLoader
         $controller->addCSS($path . 'views/css/tabs.17.css', 'all');
         $controller->addCSS($path . 'views/css/table.17.css', 'all');
         $controller->addCSS($path . 'views/css/seooptimizer.css', 'all');
+        $controller->addCSS($path . 'views/css/pagespeed.css', 'all');
 
         // Chart.js is no longer provided by the PS 9 back office
         $controller->addJS($path . 'views/js/vendor/chart.umd.js');
@@ -46,6 +47,7 @@ class AssetsLoader
         $controller->addJS($path . 'views/js/pages.js');
         $controller->addJS($path . 'views/js/robots-txt.js');
         $controller->addJS($path . 'views/js/llms-txt.js');
+        $controller->addJS($path . 'views/js/pagespeed.js');
 
         $shopUrl = rtrim(\Context::getContext()->shop->getBaseURL(true), '/');
 

@@ -161,6 +161,26 @@ class FormSettings extends FormAbstract implements FormInterface
                             ['id' => 'SEOO_BO_SCORE_COLUMN_off', 'value' => 0, 'label' => $this->l('No')],
                         ],
                     ],
+                    [
+                        'type' => 'html',
+                        'name' => 'separator_pagespeed',
+                        'html_content' => '<hr><h4><i class="icon-dashboard"></i> ' . $this->l('Google PageSpeed Insights (Lighthouse)') . '</h4>' . $this->getPageSpeedHelp(),
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'SEOO_PSI_API_KEY',
+                        'label' => $this->l('PageSpeed Insights API key'),
+                        'desc' => $this->l('Paste the API key created in the Google Cloud console. It is only used by the server to query the PageSpeed Insights API.'),
+                        'class' => 'fixed-width-xxl',
+                        'autocomplete' => false,
+                    ],
+                    [
+                        'type' => 'text',
+                        'name' => 'SEOO_PSI_PAGES_PER_TYPE',
+                        'label' => $this->l('Pages analyzed per page type'),
+                        'desc' => $this->l('The analysis covers the home page plus this number of pages for each type (products, categories, CMS pages...), between 1 and 10. Each page takes 10 to 30 seconds. Default: 3'),
+                        'class' => 'fixed-width-xs',
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -181,7 +201,35 @@ class FormSettings extends FormAbstract implements FormInterface
             'SEOO_TEXT_THRESHOLD_GOOD' => Utils::getValOrConf('SEOO_TEXT_THRESHOLD_GOOD'),
             'SEOO_FRONT_AUDIT_ENABLED' => (int) Utils::getValOrConf('SEOO_FRONT_AUDIT_ENABLED'),
             'SEOO_BO_SCORE_COLUMN' => (int) Utils::getValOrConf('SEOO_BO_SCORE_COLUMN'),
+            'SEOO_PSI_API_KEY' => Utils::getValOrConf('SEOO_PSI_API_KEY'),
+            'SEOO_PSI_PAGES_PER_TYPE' => Utils::getValOrConf('SEOO_PSI_PAGES_PER_TYPE'),
         ]);
+    }
+
+    /**
+     * Step-by-step instructions to get a PageSpeed Insights API key.
+     *
+     * @return string
+     */
+    private function getPageSpeedHelp(): string
+    {
+        $link = function (string $url, string $label): string {
+            return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $label . '</a>';
+        };
+
+        return '<div class="alert alert-info">'
+            . '<p>' . $this->l('PageSpeed Insights runs Lighthouse on your pages from Google servers and returns performance, accessibility, best practices and SEO scores, plus the Core Web Vitals. The API is free; a key is required to avoid the very low quota of anonymous requests.') . '</p>'
+            . '<p><strong>' . $this->l('How to get an API key') . '</strong></p>'
+            . '<ol>'
+            . '<li>' . sprintf($this->l('Sign in to the %s with a Google account and create a project (or select an existing one).'), $link('https://console.cloud.google.com/', $this->l('Google Cloud console'))) . '</li>'
+            . '<li>' . sprintf($this->l('Open the %s page and click "Enable".'), $link('https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com', $this->l('PageSpeed Insights API'))) . '</li>'
+            . '<li>' . sprintf($this->l('Go to %s, click "Create credentials" and choose "API key".'), $link('https://console.cloud.google.com/apis/credentials', $this->l('APIs & Services > Credentials'))) . '</li>'
+            . '<li>' . $this->l('Edit the new key and, under "API restrictions", restrict it to "PageSpeed Insights API" only. An application restriction by website (HTTP referrers) also works if it includes your shop address (for example https://www.myshop.com/*): the module sends your shop URL as referrer. Restricting by the IP address of your server is another option.') . '</li>'
+            . '<li>' . $this->l('Copy the key and paste it in the field below.') . '</li>'
+            . '</ol>'
+            . '<p>' . sprintf($this->l('More information in the %s.'), $link('https://developers.google.com/speed/docs/insights/v5/get-started', $this->l('official documentation'))) . '</p>'
+            . '<p><i class="icon-warning-sign"></i> ' . $this->l('Your shop must be publicly reachable: Google fetches the pages itself, so a local or password-protected site cannot be analyzed. The URLs of the analyzed pages are sent to Google.') . '</p>'
+            . '</div>';
     }
 
     /**
@@ -199,6 +247,15 @@ class FormSettings extends FormAbstract implements FormInterface
      */
     public function postProcess()
     {
+        $psiApiKey = trim((string) \Tools::getValue('SEOO_PSI_API_KEY'));
+        if ($psiApiKey !== '' && !preg_match('/^[A-Za-z0-9_\-]{20,100}$/', $psiApiKey)) {
+            \Context::getContext()->controller->errors[] = $this->l('The PageSpeed Insights API key is not valid: it should only contain letters, digits, dashes and underscores.');
+
+            return;
+        }
+
+        \Configuration::updateValue('SEOO_PSI_API_KEY', $psiApiKey);
+        \Configuration::updateValue('SEOO_PSI_PAGES_PER_TYPE', max(1, min(10, (int) \Tools::getValue('SEOO_PSI_PAGES_PER_TYPE') ?: 3)));
         \Configuration::updateValue('SEOO_TITLE_MIN_LENGTH', (int) \Tools::getValue('SEOO_TITLE_MIN_LENGTH'));
         \Configuration::updateValue('SEOO_TITLE_MAX_LENGTH', (int) \Tools::getValue('SEOO_TITLE_MAX_LENGTH'));
         \Configuration::updateValue('SEOO_META_TITLE_MIN_LENGTH', (int) \Tools::getValue('SEOO_META_TITLE_MIN_LENGTH'));

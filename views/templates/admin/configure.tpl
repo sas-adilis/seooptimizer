@@ -29,6 +29,7 @@
                         </ul>
                     </li>
                     <li><a href="#tab-pages" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/file-text.svg"}</span> {l s='Pages' mod='seooptimizer'}</a></li>
+                    <li><a href="#tab-page-speed" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/gauge.svg"}</span> {l s='PageSpeed' mod='seooptimizer'}</a></li>
                     <li class="seoo-navbar-separator"></li>
                     <li><a href="#tab-redirects" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrows-split.svg"}</span> {l s='Redirections' mod='seooptimizer'}</a></li>
                     <li><a href="#tab-indexations" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/database.svg"}</span> {l s='Indexations' mod='seooptimizer'}</a></li>
@@ -213,6 +214,7 @@
         {* ── Simple form tabs (single HelperForm = single .seoo-screen) ── *}
         <div id="tab-verification-code" class="tab collapse"><div class="seoo-screen">{$form_verification_code}</div></div>
         <div id="tab-settings" class="tab collapse"><div class="seoo-screen">{$form_settings}</div></div>
+        <div id="tab-page-speed" class="tab collapse">{$form_page_speed}</div>
         <div id="tab-rich-snippets" class="tab collapse"><div class="seoo-screen">{$form_rich_snippets}{$form_social_meta_data}</div></div>
         <div id="tab-social-configuration" class="tab collapse"><div class="seoo-screen">{$form_social}</div></div>
         <div id="tab-sitemap" class="tab collapse"><div class="seoo-screen">{$form_sitemap}</div></div>
