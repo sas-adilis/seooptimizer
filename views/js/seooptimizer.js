@@ -256,6 +256,9 @@
      * Chart initialization
      * --------------------------------------------------------------- */
     function initCharts() {
+        if (typeof Chart === 'undefined') {
+            return;
+        }
         $('canvas.chart-bar').each(function(index, element) {
             $.ajax({
                 type: 'POST',
@@ -308,6 +311,9 @@
         });
 
         $('#tab-dashboard').on('shown.bs.collapse', function() {
+            if (typeof Chart === 'undefined') {
+                return;
+            }
             for (var id in Chart.instances) {
                 Chart.instances[id].resize();
             }

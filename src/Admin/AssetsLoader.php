@@ -39,6 +39,8 @@ class AssetsLoader
         $controller->addCSS($path . 'views/css/table.17.css', 'all');
         $controller->addCSS($path . 'views/css/seooptimizer.css', 'all');
 
+        // Chart.js is no longer provided by the PS 9 back office
+        $controller->addJS($path . 'views/js/vendor/chart.umd.js');
         $controller->addJS($path . 'views/js/seooptimizer.js');
         $controller->addJS($path . 'views/js/audit.js');
         $controller->addJS($path . 'views/js/pages.js');
