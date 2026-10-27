@@ -91,7 +91,7 @@ class AuditStructuredData implements AuditInterface
 
         foreach ($sdResults as $url => $data) {
             foreach ($data['issues'] as $issue) {
-                // Skip info-level issues for BO storage (no_faq, etc.)
+                // Skip info-level issues for BO storage
                 if ($issue['severity'] === 'info') {
                     continue;
                 }

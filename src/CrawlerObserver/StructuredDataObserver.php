@@ -113,16 +113,6 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
             }
         }
 
-        // FAQ bonus check
-        if (!isset($typeCounts['FAQPage'])) {
-            $issues[] = [
-                'type' => 'no_faq',
-                'severity' => 'info',
-                'message' => 'No FAQ schema — add FAQ to improve AI search visibility',
-                'schema_type' => 'FAQPage',
-            ];
-        }
-
         // JSON-LD validation: check for malformed blocks
         $scripts = [];
         if (preg_match_all('/<script[^>]*type=["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/is', $content, $matches)) {
