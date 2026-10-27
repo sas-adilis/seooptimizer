@@ -1,123 +1,130 @@
 # SEO Optimizer - Module PrestaShop
 
-**Module complet d'optimisation SEO pour PrestaShop.**
+**Module complet d'optimisation SEO pour PrestaShop : optimisations front, audits par crawl et notation SEO.**
 
 | Info | Valeur |
 |------|--------|
-| Version | 1.0.0 |
+| Version | 1.6.1 |
 | Auteur | Adilis |
-| Compatibilite PS | 1.7.0.0 - 9.x |
+| Compatibilité PS | 1.7.0.0 - 9.x |
 | PHP | 7.1 - 8.3+ |
 
 ---
 
-## Fonctionnalites
+## Fonctionnalités
 
 ### Sitemap XML
-- Generation automatique du sitemap XML avec pagination configurable
-- Images produits, categories, fabricants et fournisseurs dans le sitemap
-- Priorites et frequences configurables par type d'entite
+- Génération du sitemap XML avec pagination configurable
+- Produits (avec images), catégories, pages CMS, fabricants, fournisseurs, pages meta et pages de modules
+- Priorités et fréquences configurables par type d'entité
 - Routes : `/sitemap.xml` (index) et `/sitemap/{type}/{lang}/{page}.xml`
 
-### Redirections 301/302
-- Gestion manuelle des redirections (ajout, edition, suppression)
-- Import en masse via fichier CSV (separateur `,` ou `;`)
-- Redirections automatiques a la suppression/desactivation de produits et categories
+### Redirections
+- Gestion manuelle (ajout, édition, suppression) : 301, 302, 404 et 410
+- Import en masse via fichier CSV (séparateur `,` ou `;`), export CSV
+- Redirections automatiques à la suppression de produits, catégories et fabricants
 
 ### Indexation des pages
-- Controle de l'indexation par type de page (fournisseurs, fabricants, magasins, sitemap)
+- Contrôle de l'indexation par type de page (fournisseurs, fabricants, magasins, sitemap)
 - Actions possibles : ne rien faire, noindex, erreur 404, redirection 301/302
-- Regles d'indexation par pattern d'URL (exact, contient, commence par)
+- Règles d'indexation par pattern d'URL (exact, contient, commence par)
 
 ### URLs canoniques
-- Generation automatique des balises canonical
+- Génération automatique des balises canonical
 - Support hreflang pour les sites multilingues
 - Header HTTP `Link: rel="canonical"` optionnel
-- Liste configurable de parametres a ignorer
+- Liste configurable de paramètres à ignorer
+
+### Configuration SEO par entité
+- Mots-clés cibles, URL canonique personnalisée, noindex et nofollow, par langue
+- Onglet SEO intégré aux fiches catégorie (rendu serveur), et panneau JS sur produit, fabricant, fournisseur et page CMS
+- Aperçu Google (SERP) et panneau d'audit de la page directement dans la fiche
+
+### Templates de meta
+- Meta title / description générés à partir de templates à variables, uniquement quand le champ est vide
+- Variables disponibles par type d'entité
 
 ### Rich Snippets (JSON-LD)
 - Schema.org : BreadcrumbList, WebPage, WebSite, Product, Store
 - Politique de retour marchand (MerchantReturnPolicy)
-- Proprietes additionnelles produit (caracteristiques selectionnables)
-- Liste de produits structuree (ProductItemList)
-- Scanner de rich snippets existants dans le theme
+- Propriétés additionnelles produit (caractéristiques sélectionnables)
+- Liste de produits structurée (ProductItemList)
+- Scanner de rich snippets existants dans le thème
 
-### Metadonnees sociales
-- Balises Open Graph (og:title, og:image, og:type...)
-- Twitter Cards
-- Gestion des profils reseaux sociaux (Instagram, Facebook, X, Pinterest, YouTube, LinkedIn, TikTok)
+### Métadonnées sociales
+- Balises Open Graph et Twitter Cards
+- Profils de réseaux sociaux (Instagram, Facebook, X, Pinterest, YouTube, LinkedIn, TikTok)
 
-### Codes de verification
-- Google Search Console
-- Bing Webmaster Tools
-- Pinterest
+### Codes de vérification
+- Google Search Console, Bing Webmaster Tools, Pinterest
 
-### Robots.txt
-- Edition directe du fichier robots.txt
-- Sauvegarde automatique des versions precedentes
-- Reinitialisation aux valeurs par defaut
-
-### Correction des legendes d'images
-- Methode texte : regle avec variables (`{product_title}`, `{product_meta_title}`, `{counter}`)
-- Methode IA : generation automatique via prompt configurable
-- Support multilingue
+### Robots.txt et llms.txt
+- Édition directe de `robots.txt` avec validation en direct et testeur d'URL
+- Édition de `llms.txt` avec validation de structure
+- Presets, sauvegarde des versions précédentes, réinitialisation
 
 ### Obfuscation de liens
-- Masquage des URLs aux robots via attribut `data-obfuscate`
-- Gestion du "link juice" interne
+- Masquage des URLs aux robots via l'attribut `data-obfuscate`
+- Gestion du « link juice » interne
+
+### Suivi des erreurs 404
+- Enregistrement de chaque requête 404 (URL, referrer, IP)
+- Historique sur 6 mois, graphique de fréquence, pages les plus touchées
 
 ---
 
-## Audits SEO (crawler)
+## Audits SEO
 
-Le module embarque 5 audits qui crawlent l'ensemble des pages du site :
+### Audits par crawl (12)
 
-| Audit | Cle | Description |
+Les audits parcourent l'ensemble des pages du site. Chacun implémente `AuditInterface` et est déclaré dans `AuditRegistry`.
+
+| Audit | Clé | Description |
 |-------|-----|-------------|
-| Alt manquants | `missing_alt` | Detecte les images sans attribut alt ou avec alt vide |
-| Liens casses | `broken_links` | Verifie tous les liens internes (pages, images, CSS, JS) pour les erreurs 404 |
-| Temps de chargement | `page_load_time` | Mesure le temps de reponse de chaque page (seuils : Good/Medium/Slow) |
-| Poids des pages | `page_weight` | Mesure le poids total (HTML, images, CSS, JS) avec detail par type |
-| Hierarchie des titres | `heading_hierarchy` | Analyse la structure H1-H6 (H1 manquant, doublons, niveaux sautes) |
+| Hiérarchie des titres | `heading_hierarchy` | Structure H1-H6 (H1 manquant, doublons, niveaux sautés) |
+| Alt manquants | `missing_alt` | Images sans attribut alt ou avec alt vide |
+| Liens cassés | `broken_links` | Liens internes en erreur (pages, images, CSS, JS) |
+| Liens redirigés | `redirected_links` | Liens internes pointant vers du contenu redirigé |
+| Temps de chargement | `page_load_time` | Temps de réponse par page |
+| Poids des pages | `page_weight` | Poids total (HTML, images, CSS, JS) avec détail par type |
+| Liens non sécurisés | `unsecured_links` | Liens HTTP sur des pages HTTPS (contenu mixte) |
+| Balises meta | `meta_tags` | Longueur des titres et meta descriptions |
+| Maillage interne | `internal_links` | Liens internes entrants et sortants |
+| Ratio texte | `text_ratio` | Part de texte par rapport au HTML |
+| Mots-clés | `keyword_check` | Présence des mots-clés cibles dans la page |
+| Données structurées | `structured_data` | Présence et validité du JSON-LD |
 
 Chaque audit :
-- Traite les URLs par batch de 10
-- Affiche la progression en temps reel (KPIs, barres de progression par entite)
-- Stocke les resultats en cache JSON
-- Permet l'export CSV des resultats
+- Traite les URLs par lots de 10 avec progression en temps réel
+- Stocke ses résultats en base (`audit_run` / `audit_result`)
+- Permet l'export CSV
+- Déclare ses KPI, ses pénalités de score et son poids dans la note globale
+
+### Notation SEO
+- Note de A+ à F par page et note globale du site (`Score/`)
+- Colonne « SEO » optionnelle dans les listings BO produits, catégories, fabricants, fournisseurs et pages CMS, avec audit progressif des entités non notées
+- Vue d'ensemble des pages avec leurs problèmes critiques et avertissements, et ré-audit d'une page à la demande
+
+### Audit front
+Panneau d'audit affiché sur le site aux employés connectés au back-office (option « Front audit »).
+
+### Cron
+`controllers/front/cron.php` lance les audits hors BO, protégé par la clé `secure_key`. L'URL est affichée dans la configuration du module.
+
+| Paramètre | Valeur |
+|-----------|--------|
+| `token` | clé secrète du module |
+| `audit` | `all` (défaut), `list`, ou la clé d'un audit |
 
 ### Seuils configurables
 
-| Parametre | Defaut |
+| Paramètre | Défaut |
 |-----------|--------|
-| Temps de reponse "Good" | 750 ms |
-| Temps de reponse "Slow" | 1000 ms |
-| Poids "Light" | 1024 KB |
-| Poids "Heavy" | 3072 KB |
-| Longueur titre min/max | 50 / 70 caracteres |
-| Longueur meta description min/max | 140 / 170 caracteres |
-
----
-
-## Rapports d'analyse
-
-| Rapport | Description |
-|---------|-------------|
-| Longueur des titres | Pages dont le titre est trop court ou trop long |
-| Longueur meta description | Meta descriptions hors limites recommandees |
-| Liens non securises | Liens HTTP sur des pages HTTPS (contenu mixte) |
-| Liens rediriges | Liens internes pointant vers du contenu redirige |
-| Liens 404 | Liens internes casses detectes |
-| Legendes images | Images sans legende / alt vide |
-
----
-
-## Suivi des erreurs 404
-
-- Enregistrement automatique de chaque requete 404 (URL, referrer, IP)
-- Historique sur 6 mois
-- Graphique de frequence
-- Tableau de bord avec les pages les plus touchees
+| Temps de réponse « Good » / « Slow » | 750 / 1000 ms |
+| Poids « Light » / « Heavy » | 1024 / 3072 KB |
+| Ratio texte « Low » / « Good » | 100 / 300 |
+| Longueur titre min / max | 50 / 70 caractères |
+| Longueur meta description min / max | 140 / 170 caractères |
 
 ---
 
@@ -125,69 +132,81 @@ Chaque audit :
 
 ```
 seooptimizer/
-|-- seooptimizer.php              # Classe principale
+|-- seooptimizer.php              # Classe principale (install, hooks délégués, getContent)
 |-- composer.json                 # Autoloader PSR-4
-|-- controllers/
-|   +-- front/
-|       +-- sitemap.php           # Controleur front sitemap XML
-|-- sql/
-|   |-- install.sql
-|   +-- uninstall.sql
+|-- classes/                      # ObjectModel (redirection, 404, page, règle d'indexation)
+|-- controllers/front/            # sitemap, cron, pageaudit
+|-- sql/                          # install.sql, uninstall.sql, install.php
+|-- upgrade/                      # Scripts de mise à jour
 |-- src/
-|   |-- Actions/                  # Hooks frontend (canonical, rich snippets, social, 404)
-|   |-- Audit/                    # 5 audits + runner + interface
-|   |-- CrawlerObserver/          # Observeurs de crawl (alt, liens, temps, poids, headings)
-|   |-- Content/
-|   |   |-- DataList/             # Listes admin (redirections, regles, 404)
-|   |   +-- Report/               # Rapports d'analyse (titres, meta, liens)
-|   |-- EntityDefinition/         # Definitions d'entites (produit, categorie, CMS...)
-|   |-- Events/                   # Evenements suppression (redirections auto)
-|   |-- Form/                     # 17 formulaires de configuration
-|   |-- FormBuilderModifier/      # Extension formulaire fournisseur
+|   |-- Actions/                  # Hooks front : canonical, rich snippets, social, 404,
+|   |                             #   indexation, config SEO par entité, redirections, audit front
+|   |-- Admin/                    # BO : assets, AJAX, page de configuration, panneaux, colonnes de grille
+|   |-- Audit/                    # Audits, registre, runner, KPI
+|   |-- Content/DataList/         # Listes admin (redirections, règles, 404)
+|   |-- CrawlerObserver/          # Observeurs de crawl (un par audit)
+|   |-- Entity/                   # Définitions d'entités (produit, catégorie, CMS...)
+|   |-- Events/                   # Redirections automatiques à la suppression
+|   |-- Form/                     # Formulaires de configuration
+|   |-- FormBuilderModifier/      # Extension des formulaires Symfony (catégorie, fournisseur)
+|   |-- FormHandler/              # Sauvegarde des champs SEO de la catégorie
+|   |-- FrontAudit/               # Analyse d'une page unique (panneau d'audit)
 |   |-- HtmlOutputBefore/         # Obfuscation de liens
-|   +-- SitemapIndexer/           # Indexeurs par type d'entite pour le sitemap
-|-- views/
-|   |-- css/                      # SCSS organise en partiels
-|   |-- js/
-|   |-- img/                      # Illustrations panda
-|   +-- templates/
-|       |-- admin/                # Templates back-office (configure, audit)
-|       +-- hook/                 # Templates hooks (header, rich snippets, social)
-+-- vendor/                       # Dependances Composer
+|   |-- MetaTemplate/             # Moteur de templates de meta
+|   |-- Pages/                    # Audit complet, audit d'une page, agrégation
+|   |-- Score/                    # Calcul de la note et correspondance note / lettre
+|   |-- SitemapIndexer/           # Indexeurs par type d'entité
+|   |-- Storage/                  # Persistance des audits
+|   |-- Utils/                    # Crawl cURL, extraction HTML, URLs
+|   `-- Routes.php                # Routes du sitemap
+`-- views/
+    |-- css/                      # SCSS en partiels + CSS compilés
+    |-- js/
+    |-- icons/ img/
+    `-- templates/                # admin/ et hook/ (Smarty)
 ```
 
 ---
 
-## Tables en base de donnees
+## Tables en base de données
 
 | Table | Description |
 |-------|-------------|
-| `ps_seooptimizer_redirect` | Redirections manuelles (from, to, type 301/302) |
-| `ps_seooptimizer_log_404` | Journal des erreurs 404 (URL, referrer, IP, date) |
-| `ps_seooptimizer_indexation_rule` | Regles d'indexation par pattern d'URL |
+| `seooptimizer_redirect` | Redirections manuelles |
+| `seooptimizer_log_404` | Journal des erreurs 404 |
+| `seooptimizer_page` | Note SEO, mots-clés, canonical et noindex/nofollow par entité, langue et boutique |
+| `seooptimizer_audit_run` | Exécutions d'audit |
+| `seooptimizer_audit_result` | Résultats d'audit |
+| `seooptimizer_indexation_rule` | Règles d'indexation par pattern d'URL |
 
 ---
 
-## Hooks utilises
+## Hooks utilisés
 
 | Hook | Utilisation |
 |------|-------------|
-| `backOfficeHeader` | Chargement CSS/JS en back-office |
-| `displayBeforeBodyClosingTag` | Rich snippets, surveillance 404 |
-| `displayHeader` | Canonical, social meta, verification codes, indexation |
-| `actionFrontControllerInitBefore` | Execution des redirections |
-| `actionObjectDeleteBefore` | Redirections automatiques a la suppression |
-| `actionSupplierFormBuilderModifier` | Champs SEO sur le formulaire fournisseur |
+| `backOfficeHeader` | CSS/JS du back-office |
+| `displayBackOfficeFooter` | Onglet SEO des fiches catégorie |
+| `displayAdminProductsSeoStepBottom` | Panneau d'audit sur la fiche produit |
+| `displayHeader` | Templates de meta, indexation, canonical, social, codes de vérification |
+| `displayBeforeBodyClosingTag` | Rich snippets, suivi 404, panneau d'audit front |
+| `actionFrontControllerInitBefore` | Exécution des redirections |
+| `actionObjectDeleteBefore` | Redirections automatiques à la suppression |
 | `actionOutputHTMLBefore` | Obfuscation des liens |
-| `moduleRoutes` | Routes sitemap XML |
+| `actionCategoryFormBuilderModifier`, `actionRootCategoryFormBuilderModifier` | Onglet SEO catégorie |
+| `actionAfter{Create,Update}{,Root}CategoryFormHandler` | Sauvegarde des champs SEO catégorie |
+| `actionSupplierFormBuilderModifier` | Champs SEO sur le formulaire fournisseur |
+| `action{Product,Category,Manufacturer,Supplier,CmsPage}Grid{Definition,QueryBuilder}Modifier` | Colonne « SEO » des listings |
+| `moduleRoutes` | Routes du sitemap XML |
 
 ---
 
 ## Architecture technique
 
-- **Namespace** : `Adilis\SeoOptimizer` (PSR-4 via Composer)
-- **Controleurs** : Legacy uniquement (pas de Symfony)
-- **Templates** : Smarty (`.tpl`)
-- **Cache** : Fichiers JSON dans `var/cache/seooptimizer/`
-- **Securite** : Tokens CSRF, pSQL(), cast (int), validation MIME uploads
-- **Multi-shop** : Gestion du contexte shop sur les configurations et les tables
+- **Namespace** : `Adilis\SeoOptimizer` (PSR-4 via Composer, dossier `src/`)
+- **Contrôleurs** : Legacy uniquement
+- **Templates** : Smarty (`.tpl`), CSS et JS externalisés
+- **Traductions** : système Legacy ; les chaînes passées au JS restent dans `seooptimizer.php` pour conserver leurs clés
+- **Sécurité** : tokens CSRF, `pSQL()`, cast `(int)`, clé secrète pour le cron
+- **Multi-boutique** : contexte shop sur les configurations et les tables
+- **Mise en forme** : `make fix` lance php-cs-fixer
