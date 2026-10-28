@@ -111,3 +111,13 @@ CREATE TABLE IF NOT EXISTS `PREFIX_seooptimizer_pagespeed` (
     PRIMARY KEY (`id_seooptimizer_pagespeed`),
     KEY `shop_status` (`id_shop`, `status`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_seooptimizer_link_status` (
+    `url_hash` CHAR(32) NOT NULL,
+    `url` VARCHAR(2083) NOT NULL,
+    `http_code` SMALLINT(5) UNSIGNED NOT NULL DEFAULT 0,
+    `redirect_url` VARCHAR(2083) NOT NULL DEFAULT '',
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`url_hash`),
+    KEY `date_upd` (`date_upd`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4;

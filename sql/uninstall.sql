@@ -5,3 +5,4 @@ DROP TABLE IF EXISTS `PREFIX_seooptimizer_redirect`;
 DROP TABLE IF EXISTS `PREFIX_seooptimizer_log_404`;
 DROP TABLE IF EXISTS `PREFIX_seooptimizer_indexation_rule`;
 DROP TABLE IF EXISTS `PREFIX_seooptimizer_pagespeed`;
+DROP TABLE IF EXISTS `PREFIX_seooptimizer_link_status`;

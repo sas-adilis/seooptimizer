@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Adilis\SeoOptimizer\CrawlerObserver\LinkStatusCache;
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
 use Adilis\SeoOptimizer\Utils\Message;
 use Adilis\SeoOptimizer\Utils\JsonResponse;
@@ -195,6 +196,8 @@ class AuditRunner
         $auditKey = $this->audit->getKey();
 
         if ($firstProcess) {
+            // A new audit checks the links again
+            LinkStatusCache::reset();
             $urlsByType = $this->collectAllUrls();
 
             $urls = [];

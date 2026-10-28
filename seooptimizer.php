@@ -38,7 +38,7 @@ class SeoOptimizer extends Module
     {
         $this->name = 'seooptimizer';
         $this->tab = 'seo';
-        $this->version = '1.7.0';
+        $this->version = '1.7.1';
         $this->author = 'Adilis';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [

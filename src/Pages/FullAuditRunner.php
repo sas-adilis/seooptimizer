@@ -9,6 +9,7 @@ if (!defined('_PS_VERSION_')) {
 use Adilis\SeoOptimizer\Audit\AuditInterface;
 use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Audit\AuditRunner;
+use Adilis\SeoOptimizer\CrawlerObserver\LinkStatusCache;
 use Adilis\SeoOptimizer\Audit\KpiMapper;
 use Adilis\SeoOptimizer\Utils\CurlBatch;
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
@@ -38,6 +39,8 @@ class FullAuditRunner
     public function run(bool $firstProcess)
     {
         if ($firstProcess) {
+            // A new audit checks the links again
+            LinkStatusCache::reset();
             $this->initState();
             $this->returnJson('success');
         }
