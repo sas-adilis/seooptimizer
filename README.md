@@ -4,7 +4,7 @@
 
 | Info | Valeur |
 |------|--------|
-| Version | 1.6.1 |
+| Version | 1.8.0 |
 | Auteur | Adilis |
 | Compatibilité PS | 1.7.0.0 - 9.x |
 | PHP | 7.1 - 8.3+ |
@@ -75,7 +75,7 @@
 
 ## Audits SEO
 
-### Audits par crawl (12)
+### Audits par crawl (14)
 
 Les audits parcourent l'ensemble des pages du site. Chacun implémente `AuditInterface` et est déclaré dans `AuditRegistry`.
 
@@ -92,12 +92,15 @@ Les audits parcourent l'ensemble des pages du site. Chacun implémente `AuditInt
 | Maillage interne | `internal_links` | Liens internes entrants et sortants |
 | Ratio texte | `text_ratio` | Part de texte par rapport au HTML |
 | Mots-clés | `keyword_check` | Présence des mots-clés cibles dans la page |
-| Données structurées | `structured_data` | Présence et validité du JSON-LD |
+| Données structurées | `structured_data` | Présence et validité du JSON-LD (schema Product complet) |
+| Indexation | `indexation` | `X-Robots-Tag`, meta robots, canonique, `robots.txt`, redirections |
+| Balises sociales | `social_tags` | Open Graph, Twitter Cards, `lang`, viewport |
 
 Chaque audit :
 - Traite les URLs par lots de 10 avec progression en temps réel
 - Stocke ses résultats en base (`audit_run` / `audit_result`)
 - Permet l'export CSV
+- Enregistre sa note à chaque exécution dans l'historique
 - Déclare ses KPI, ses pénalités de score et son poids dans la note globale
 
 ### Notation SEO
@@ -105,8 +108,22 @@ Chaque audit :
 - Colonne « SEO » optionnelle dans les listings BO produits, catégories, fabricants, fournisseurs et pages CMS, avec audit progressif des entités non notées
 - Vue d'ensemble des pages avec leurs problèmes critiques et avertissements, et ré-audit d'une page à la demande
 
+### Cache de vérification des liens
+Les statuts HTTP des liens vérifiés sont mis en cache en base (`seooptimizer_link_status`, 15 minutes). Le cache est purgé au démarrage d'un audit.
+
+### Historique des notes
+- Une ligne par audit, par page et par jour (`seooptimizer_history`) : note et nombre de problèmes critiques / avertissements / infos, sans le détail de l'audit
+- Clé `*` pour la note globale de la page ; URL vide pour le site entier
+- Conservation de 400 jours
+- Enregistrement en fin d'audit complet ou unitaire, à l'audit d'une page et à la synchronisation PageSpeed ; un échec n'interrompt jamais l'audit
+- Graphiques d'évolution (SVG générés côté serveur) dans le tableau des audits, le dashboard et le panneau d'audit de chaque page (note globale et évolution par audit)
+
+### PageSpeed / Lighthouse
+- Notes Lighthouse par page via l'API PageSpeed Insights (`src/PageSpeed/`), échantillonnage des pages et synchronisation dans les audits
+- Métriques LCP, TBT et CLS affichées dans le panneau d'audit
+
 ### Audit front
-Panneau d'audit affiché sur le site aux employés connectés au back-office (option « Front audit »).
+Panneau d'audit affiché sur le site aux employés connectés au back-office (option « Front audit »), et dans les fiches et listings du BO. Il utilise les mêmes audits et la même note que l'audit complet. Il ajoute, pour la page : métriques Lighthouse, indexation, balises sociales, images (dimensions, lazy-loading), validation hreflang et évolution de la note.
 
 ### Cron
 `controllers/front/cron.php` lance les audits hors BO, protégé par la clé `secure_key`. L'URL est affichée dans la configuration du module.
@@ -154,9 +171,10 @@ seooptimizer/
 |   |-- HtmlOutputBefore/         # Obfuscation de liens
 |   |-- MetaTemplate/             # Moteur de templates de meta
 |   |-- Pages/                    # Audit complet, audit d'une page, agrégation
-|   |-- Score/                    # Calcul de la note et correspondance note / lettre
+|   |-- PageSpeed/                # Client PageSpeed Insights, échantillonnage, notes Lighthouse
+|   |-- Score/                    # Calcul de la note, correspondance note / lettre, historique
 |   |-- SitemapIndexer/           # Indexeurs par type d'entité
-|   |-- Storage/                  # Persistance des audits
+|   |-- Storage/                  # Persistance des audits, cache des liens, historique
 |   |-- Utils/                    # Crawl cURL, extraction HTML, URLs
 |   `-- Routes.php                # Routes du sitemap
 `-- views/
@@ -178,6 +196,8 @@ seooptimizer/
 | `seooptimizer_audit_run` | Exécutions d'audit |
 | `seooptimizer_audit_result` | Résultats d'audit |
 | `seooptimizer_indexation_rule` | Règles d'indexation par pattern d'URL |
+| `seooptimizer_link_status` | Cache des statuts HTTP des liens vérifiés |
+| `seooptimizer_history` | Historique des notes par audit, page et date |
 
 ---
 
@@ -206,7 +226,7 @@ seooptimizer/
 - **Namespace** : `Adilis\SeoOptimizer` (PSR-4 via Composer, dossier `src/`)
 - **Contrôleurs** : Legacy uniquement
 - **Templates** : Smarty (`.tpl`), CSS et JS externalisés
-- **Traductions** : système Legacy ; les chaînes passées au JS restent dans `seooptimizer.php` pour conserver leurs clés
+- **Traductions** : système Legacy ; les chaînes passées au JS restent dans `seooptimizer.php` pour conserver leurs clés. Les messages d'audit sont stockés en anglais (`Message::t()`) et traduits à l'affichage (`Message::translate()`)
 - **Sécurité** : tokens CSRF, `pSQL()`, cast `(int)`, clé secrète pour le cron
 - **Multi-boutique** : contexte shop sur les configurations et les tables
 - **Mise en forme** : `make fix` lance php-cs-fixer
