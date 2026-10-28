@@ -23,14 +23,20 @@
 
 /* Lighthouse score: round badge */
 .seoo-psi .seoo-psi-score {
-    display: inline-block;
-    min-width: 38px;
-    padding: 4px 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: 2px solid currentColor;
-    text-align: center;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1;
+}
+
+.seoo-psi .seoo-psi-center {
+    text-align: center;
 }
 
 .seoo-psi .seoo-psi-score--good { color: #0cce6b; }

@@ -44,15 +44,15 @@
                         <thead>
                             <tr>
                                 <th>{l s='Page' mod='seooptimizer'}</th>
-                                <th>{l s='Performance' mod='seooptimizer'}</th>
-                                <th>{l s='Accessibility' mod='seooptimizer'}</th>
-                                <th>{l s='Best practices' mod='seooptimizer'}</th>
-                                <th>{l s='SEO' mod='seooptimizer'}</th>
-                                <th title="{l s='Largest Contentful Paint' mod='seooptimizer'}">LCP</th>
-                                <th title="{l s='Cumulative Layout Shift' mod='seooptimizer'}">CLS</th>
-                                <th title="{l s='Total Blocking Time' mod='seooptimizer'}">TBT</th>
-                                <th title="{l s='Server response time' mod='seooptimizer'}">TTFB</th>
-                                <th>{l s='Weight' mod='seooptimizer'}</th>
+                                <th class="seoo-psi-center">{l s='Performance' mod='seooptimizer'}</th>
+                                <th class="seoo-psi-center">{l s='Accessibility' mod='seooptimizer'}</th>
+                                <th class="seoo-psi-center">{l s='Best practices' mod='seooptimizer'}</th>
+                                <th class="seoo-psi-center">{l s='SEO' mod='seooptimizer'}</th>
+                                <th title="{l s='Largest Contentful Paint' mod='seooptimizer'}" class="seoo-psi-center">LCP</th>
+                                <th title="{l s='Cumulative Layout Shift' mod='seooptimizer'}" class="seoo-psi-center">CLS</th>
+                                <th title="{l s='Total Blocking Time' mod='seooptimizer'}" class="seoo-psi-center">TBT</th>
+                                <th title="{l s='Server response time' mod='seooptimizer'}" class="seoo-psi-center">TTFB</th>
+                                <th class="seoo-psi-center">{l s='Weight' mod='seooptimizer'}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -65,10 +65,10 @@
                                     </td>
                                     {if $row.status == 'done'}
                                         {foreach from=$row.scores item=score}
-                                            <td><span class="seoo-psi-score seoo-psi-score--{$score.class|escape:'htmlall':'UTF-8'}">{if $score.value !== null}{$score.value|intval}{else}-{/if}</span></td>
+                                            <td class="seoo-psi-center"><span class="seoo-psi-score seoo-psi-score--{$score.class|escape:'htmlall':'UTF-8'}">{if $score.value !== null}{$score.value|intval}{else}-{/if}</span></td>
                                         {/foreach}
                                         {foreach from=['lcp', 'cls', 'tbt', 'ttfb', 'weight'] item=key}
-                                            <td>
+                                            <td class="seoo-psi-center">
                                                 {if isset($row.metrics[$key])}
                                                     <span class="seoo-psi-metric seoo-psi-metric--{$row.metrics[$key].class|escape:'htmlall':'UTF-8'}">{$row.metrics[$key].display|escape:'htmlall':'UTF-8'}</span>
                                                 {else}-{/if}
