@@ -4,6 +4,7 @@
  * Audit start/pause/resume, batch processing, full audit,
  * CSV export, and audit UI rendering.
  */
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function($) {
 
     /* ---------------------------------------------------------------
@@ -18,7 +19,7 @@
         var auditKey = $btn.data('audit-key');
         auditPaused[auditKey] = false;
 
-        $btn.prop('disabled', true).text('Crawling...');
+        $btn.prop('disabled', true).text(SeoOptimizerTr('Crawling...'));
         $audit.find('.seoo-audit__progress-table').show();
         $audit.find('.seoo-audit__results').hide();
         $audit.find('.seoo-audit__pause-btn').show();
@@ -31,9 +32,9 @@
         auditPaused[auditKey] = true;
 
         $audit.find('.seoo-audit__pause-btn').hide();
-        $btn.prop('disabled', false).html('<i class="icon-play"></i> Resume');
+        $btn.prop('disabled', false).html('<i class="icon-play"></i> ' + SeoOptimizerTr('Resume'));
 
-        var msg = 'Audit interrupted';
+        var msg = SeoOptimizerTr('Audit interrupted');
         if (httpStatus) {
             msg += ' (HTTP ' + httpStatus + ')';
         }
@@ -59,10 +60,10 @@
                         ? 'bg-processing progress-bar-striped progress-bar-animated'
                         : '';
                 var statusText = item.status === 'done'
-                    ? 'Done'
+                    ? SeoOptimizerTr('Done')
                     : item.status === 'processing'
-                        ? 'In progress'
-                        : 'Waiting';
+                        ? SeoOptimizerTr('In progress')
+                        : SeoOptimizerTr('Waiting');
                 var badgeClass = item.issues_count > 0
                     ? 'seoo-report__badge--danger'
                     : 'seoo-report__badge--success';
@@ -99,9 +100,9 @@
 
                 var $statusLabel = $row.find('.seoo-report__status-label');
                 if (item.status === 'done') {
-                    $statusLabel.text('Done');
+                    $statusLabel.text(SeoOptimizerTr('Done'));
                 } else if (item.status === 'processing') {
-                    $statusLabel.text('In progress');
+                    $statusLabel.text(SeoOptimizerTr('In progress'));
                 }
 
                 $row.find('.seoo-report__progress-value').text(item.crawled + ' / ' + item.total);
@@ -223,7 +224,7 @@
 
             var $audit = $(this).closest('.seoo-audit');
             var $startBtn = $audit.find('.seoo-audit__start-btn');
-            $startBtn.prop('disabled', false).html('<i class="icon-play"></i> Resume');
+            $startBtn.prop('disabled', false).html('<i class="icon-play"></i> ' + SeoOptimizerTr('Resume'));
         });
     }
 
@@ -252,7 +253,7 @@
                 return;
             }
 
-            $btn.addClass('loading').prop('disabled', true).html('<i class="icon-refresh" style="animation:seoo-spin 1s linear infinite"></i> Crawling...');
+            $btn.addClass('loading').prop('disabled', true).html('<i class="icon-refresh" style="animation:seoo-spin 1s linear infinite"></i> ' + SeoOptimizerTr('Crawling...'));
             $panel.show();
             $itemsContainer.html('');
 
@@ -299,7 +300,7 @@
         }
 
         function resetBtn($btn) {
-            $btn.removeClass('loading').prop('disabled', false).html('<i class="process-icon-search"></i> Start full audit');
+            $btn.removeClass('loading').prop('disabled', false).html('<i class="process-icon-search"></i> ' + SeoOptimizerTr('Start full audit'));
         }
     }
 

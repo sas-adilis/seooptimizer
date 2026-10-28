@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\TextRatioObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditTextRatio implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditTextRatio implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Content length';
+        return Message::tr('Content length');
     }
 
     public function getDescription(): string
     {
-        return 'Counts the words of the main content of each page (the <main> element when the theme provides one). Pages with very little text may be treated as thin content. Thresholds are configurable in the Configuration tab.';
+        return Message::tr('Counts the words of the main content of each page (the <main> element when the theme provides one). Pages with very little text may be treated as thin content. Thresholds are configurable in the Configuration tab.');
     }
 
     public function getIcon(): string
@@ -41,9 +43,9 @@ class AuditTextRatio implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'word_count_display' => 'Words',
-            'text_ratio_display' => 'Text ratio',
-            'status_label' => 'Status',
+            'word_count_display' => Message::tr('Words'),
+            'text_ratio_display' => Message::tr('Text ratio'),
+            'status_label' => Message::tr('Status'),
         ];
     }
 
@@ -56,10 +58,10 @@ class AuditTextRatio implements AuditInterface
         $thresholdGood = (int) \Configuration::get('SEOO_TEXT_THRESHOLD_GOOD') ?: 300;
 
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'good_count', 'label' => 'Good (> ' . $thresholdGood . ' words)', 'type' => 'custom'],
-            ['key' => 'medium_count', 'label' => 'Improvable (' . $thresholdLow . '-' . $thresholdGood . ' words)', 'type' => 'custom'],
-            ['key' => 'low_count', 'label' => 'Insufficient (< ' . $thresholdLow . ' words)', 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'good_count', 'label' => Message::tr('Good (> %d words)', $thresholdGood), 'type' => 'custom'],
+            ['key' => 'medium_count', 'label' => Message::tr('Improvable (%d-%d words)', $thresholdLow, $thresholdGood), 'type' => 'custom'],
+            ['key' => 'low_count', 'label' => Message::tr('Insufficient (< %d words)', $thresholdLow), 'type' => 'custom', 'warning_if_positive' => true],
         ];
     }
 
@@ -103,7 +105,7 @@ class AuditTextRatio implements AuditInterface
                 'url' => $entry['url'],
                 'type' => 'text_ratio',
                 'severity' => $severity,
-                'message' => $wordCount . ' words (' . $entry['text_ratio'] . '% text)',
+                'message' => Message::t('%d words (%s%% text)', $wordCount, $entry['text_ratio']),
                 'word_count_display' => number_format($wordCount),
                 'text_ratio_display' => $entry['text_ratio'] . '%',
                 'status_label' => $statusLabel,

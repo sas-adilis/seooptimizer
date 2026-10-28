@@ -2,6 +2,8 @@
 
 namespace Adilis\SeoOptimizer\Actions;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -41,6 +43,7 @@ class FrontAuditPanel
         );
 
         \Media::addJsDef([
+            'SeoOptimizerI18n' => Message::getJsStrings(),
             'SeoOptimizerFrontAudit' => [
                 'ajaxUrl' => \Context::getContext()->link->getModuleLink($module->name, 'pageaudit'),
                 'currentUrl' => \Tools::getCurrentUrlProtocolPrefix() . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],

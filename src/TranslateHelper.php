@@ -33,7 +33,7 @@ class TranslateHelper
     /**
      * @throws \Exception
      */
-    public function l($string, $source = '', $locale = null)
+    public function l($string, $source = 'seooptimizer', $locale = null)
     {
         return \Translate::getModuleTranslation('seooptimizer', $string, $source, null, false, $locale);
     }

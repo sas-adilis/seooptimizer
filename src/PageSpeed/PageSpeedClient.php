@@ -2,6 +2,8 @@
 
 namespace Adilis\SeoOptimizer\PageSpeed;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -86,12 +88,12 @@ class PageSpeedClient
         curl_close($ch);
 
         if ($body === false) {
-            return ['error' => 'Unable to reach the PageSpeed Insights API: ' . $curlError];
+            return ['error' => Message::tr('Unable to reach the PageSpeed Insights API: %s', $curlError)];
         }
 
         $json = json_decode((string) $body, true);
         if (!is_array($json)) {
-            return ['error' => 'Invalid response from the PageSpeed Insights API (HTTP ' . $httpCode . ').'];
+            return ['error' => Message::tr('Invalid response from the PageSpeed Insights API (HTTP %d).', $httpCode)];
         }
 
         if ($httpCode !== 200 || isset($json['error'])) {
@@ -99,7 +101,7 @@ class PageSpeedClient
         }
 
         if (!isset($json['lighthouseResult']) || !is_array($json['lighthouseResult'])) {
-            return ['error' => 'The PageSpeed Insights API returned no Lighthouse result.'];
+            return ['error' => Message::tr('The PageSpeed Insights API returned no Lighthouse result.')];
         }
 
         return $this->normalize($json);
@@ -116,10 +118,10 @@ class PageSpeedClient
         $message = isset($json['error']['message']) ? (string) $json['error']['message'] : '';
 
         if ($httpCode === 429) {
-            return 'PageSpeed Insights quota exceeded. Try again later.';
+            return Message::tr('PageSpeed Insights quota exceeded. Try again later.');
         }
         if ($message === '') {
-            return 'PageSpeed Insights API error (HTTP ' . $httpCode . ').';
+            return Message::tr('PageSpeed Insights API error (HTTP %d).', $httpCode);
         }
 
         return mb_substr($message, 0, 300);

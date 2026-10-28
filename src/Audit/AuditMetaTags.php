@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\MetaTagsObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditMetaTags implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditMetaTags implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Meta tags (title & description)';
+        return Message::tr('Meta tags (title & description)');
     }
 
     public function getDescription(): string
     {
-        return 'Crawls all pages and checks the <title> tag and meta description for missing, empty, too short or too long values. Thresholds are configurable in the Configuration tab.';
+        return Message::tr('Crawls all pages and checks the <title> tag and meta description for missing, empty, too short or too long values. Thresholds are configurable in the Configuration tab.');
     }
 
     public function getIcon(): string
@@ -41,10 +43,10 @@ class AuditMetaTags implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'field' => 'Field',
-            'message' => 'Issue',
-            'length' => 'Length',
-            'value_preview' => 'Preview',
+            'field' => Message::tr('Field'),
+            'message' => Message::tr('Issue'),
+            'length' => Message::tr('Length'),
+            'value_preview' => Message::tr('Preview'),
         ];
     }
 
@@ -59,21 +61,21 @@ class AuditMetaTags implements AuditInterface
         $descMax = (int) \Configuration::get('SEOO_META_TITLE_MAX_LENGTH') ?: 170;
 
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
             [
                 'key' => 'good_count',
-                'label' => 'Good (title ' . $titleMin . '-' . $titleMax . ' / desc ' . $descMin . '-' . $descMax . ')',
+                'label' => Message::tr('Good (title %d-%d / desc %d-%d)', $titleMin, $titleMax, $descMin, $descMax),
                 'type' => 'custom',
             ],
             [
                 'key' => 'warning_count',
-                'label' => 'Warnings (too short/long)',
+                'label' => Message::tr('Warnings (too short/long)'),
                 'type' => 'custom',
                 'warning_if_positive' => true,
             ],
             [
                 'key' => 'critical_count',
-                'label' => 'Critical (missing/empty)',
+                'label' => Message::tr('Critical (missing/empty)'),
                 'type' => 'custom',
                 'danger_if_positive' => true,
             ],

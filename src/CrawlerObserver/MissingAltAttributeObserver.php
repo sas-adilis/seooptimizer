@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\Message;
 
 class MissingAltAttributeObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
@@ -70,7 +71,7 @@ class MissingAltAttributeObserver extends AbstractCrawlerObserver implements Cra
                 $issues[] = [
                     'type' => 'missing_alt',
                     'severity' => 'critical',
-                    'message' => 'Missing alt attribute',
+                    'message' => Message::t('Missing alt attribute'),
                     'src' => $src,
                 ];
             } elseif (trim($img->getAttribute('alt')) === '') {
@@ -78,7 +79,7 @@ class MissingAltAttributeObserver extends AbstractCrawlerObserver implements Cra
                 $issues[] = [
                     'type' => 'empty_alt',
                     'severity' => 'info',
-                    'message' => 'Empty alt attribute (fine if the image is decorative)',
+                    'message' => Message::t('Empty alt attribute (fine if the image is decorative)'),
                     'src' => $src,
                 ];
             }

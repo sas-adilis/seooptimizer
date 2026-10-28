@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\MissingAltAttributeObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditMissingAlt implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditMissingAlt implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Missing image alt attributes';
+        return Message::tr('Missing image alt attributes');
     }
 
     public function getDescription(): string
     {
-        return 'Crawls all pages of your site and detects images without an alt attribute, which is essential for accessibility and SEO image indexing. Empty alt attributes are only reported for information, as they are the correct way to mark decorative images.';
+        return Message::tr('Crawls all pages of your site and detects images without an alt attribute, which is essential for accessibility and SEO image indexing. Empty alt attributes are only reported for information, as they are the correct way to mark decorative images.');
     }
 
     public function getIcon(): string
@@ -41,9 +43,9 @@ class AuditMissingAlt implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'missing', 'label' => 'Missing alt', 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
-            ['key' => 'empty', 'label' => 'Empty alt', 'type' => 'count_severity', 'value' => 'info'],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'missing', 'label' => Message::tr('Missing alt'), 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
+            ['key' => 'empty', 'label' => Message::tr('Empty alt'), 'type' => 'count_severity', 'value' => 'info'],
         ];
     }
 
@@ -63,8 +65,8 @@ class AuditMissingAlt implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'src' => 'Image',
-            'message' => 'Issue',
+            'src' => Message::tr('Image'),
+            'message' => Message::tr('Issue'),
         ];
     }
 

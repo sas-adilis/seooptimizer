@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\UnsecuredLinksAuditObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditUnsecuredLinks implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditUnsecuredLinks implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Unsecured links (HTTP)';
+        return Message::tr('Unsecured links (HTTP)');
     }
 
     public function getDescription(): string
     {
-        return 'Crawls all pages and detects resources loaded over HTTP instead of HTTPS. Mixed content degrades security, triggers browser warnings, and can negatively impact SEO ranking.';
+        return Message::tr('Crawls all pages and detects resources loaded over HTTP instead of HTTPS. Mixed content degrades security, triggers browser warnings, and can negatively impact SEO ranking.');
     }
 
     public function getIcon(): string
@@ -41,9 +43,9 @@ class AuditUnsecuredLinks implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'unsecured_url' => 'Unsecured URL',
-            'element' => 'Element',
-            'link_text' => 'Link text',
+            'unsecured_url' => Message::tr('Unsecured URL'),
+            'element' => Message::tr('Element'),
+            'link_text' => Message::tr('Link text'),
         ];
     }
 
@@ -53,9 +55,9 @@ class AuditUnsecuredLinks implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'links_checked', 'label' => 'Links checked', 'type' => 'custom'],
-            ['key' => 'issues', 'label' => 'Unsecured links', 'type' => 'total_issues', 'danger_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'links_checked', 'label' => Message::tr('Links checked'), 'type' => 'custom'],
+            ['key' => 'issues', 'label' => Message::tr('Unsecured links'), 'type' => 'total_issues', 'danger_if_positive' => true],
         ];
     }
 
@@ -83,7 +85,7 @@ class AuditUnsecuredLinks implements AuditInterface
                 'url' => $entry['page_url'],
                 'type' => 'unsecured_link',
                 'severity' => 'warning',
-                'message' => 'HTTP resource: ' . $entry['element'],
+                'message' => Message::t('HTTP resource: %s', $entry['element']),
                 'unsecured_url' => $entry['unsecured_url'],
                 'element' => $entry['element'],
                 'link_text' => $entry['link_text'],

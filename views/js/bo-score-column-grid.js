@@ -10,6 +10,7 @@
  *   3. Audits them in batches of 10
  *   4. Makes badges clickable to open the audit side panel
  */
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function () {
     if (typeof SeoOptimizerScoreColumn === 'undefined') {
         return;
@@ -180,7 +181,7 @@
             // Mark remaining failed ones as gray "-"
             batch.forEach(function (item) {
                 if (item.cell.querySelector('.seoo-grade-badge--pending')) {
-                    item.cell.innerHTML = '<span class="seoo-grade-badge seoo-grade-badge--gray" title="Audit failed">-</span>';
+                    item.cell.innerHTML = '<span class="seoo-grade-badge seoo-grade-badge--gray" title="' + SeoOptimizerTr('Audit failed') + '">-</span>';
                 }
             });
 
@@ -202,7 +203,7 @@
         panel.id = 'seoo-bo-panel';
         panel.className = 'seoo-fa-panel';
         panel.innerHTML = '<div class="seoo-fa-panel__header">'
-            + '<span class="seoo-fa-panel__title">SEO Audit</span>'
+            + '<span class="seoo-fa-panel__title">' + SeoOptimizerTr('SEO Audit') + '</span>'
             + '<button class="seoo-fa-panel__close" type="button" onclick="document.getElementById(\'seoo-bo-panel\').classList.remove(\'seoo-fa-panel--open\');">&times;</button>'
             + '</div>'
             + '<div id="seoo-bo-panel-body" class="seoo-fa-panel__body">'
@@ -245,7 +246,7 @@
                         panelBody.innerHTML = '<div class="seoo-fa-loading"><p>' + (response.message || 'Error') + '</p></div>';
                     }
                 } catch (e) {
-                    panelBody.innerHTML = '<div class="seoo-fa-loading"><p>Parse error</p></div>';
+                    panelBody.innerHTML = '<div class="seoo-fa-loading"><p>' + SeoOptimizerTr('Parse error') + '</p></div>';
                 }
             } else {
                 panelBody.innerHTML = '<div class="seoo-fa-loading"><p>HTTP ' + xhr.status + '</p></div>';

@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
+use Adilis\SeoOptimizer\Utils\Message;
 use Adilis\SeoOptimizer\SitemapIndexer\SitemapIndexer;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
@@ -164,7 +165,7 @@ class AuditRunner
         $output = fopen('php://output', 'w');
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-        $headerRow = ['Severity', 'URL'];
+        $headerRow = [Message::tr('Severity'), 'URL'];
         foreach ($columns as $colLabel) {
             $headerRow[] = $colLabel;
         }
@@ -547,6 +548,24 @@ class AuditRunner
     /**
      * @param string $status
      */
+    /**
+     * Labels of the page types, translated when sent to the browser.
+     *
+     * @param array<string, array<string, mixed>> $items
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function translateItems(array $items): array
+    {
+        foreach ($items as $type => $item) {
+            if (isset($item['label'])) {
+                $items[$type]['label'] = Message::translateString((string) $item['label']);
+            }
+        }
+
+        return $items;
+    }
+
     private function returnJson(string $status)
     {
         $results = AuditResultStorage::getByAuditKey($this->audit->getKey());
@@ -574,7 +593,7 @@ class AuditRunner
                     ? round((($this->state['crawled'] ?? 0) / $this->state['total_urls']) * 100)
                     : 0,
                 'kpis' => $kpis,
-                'items' => $this->state['items'] ?? [],
+                'items' => self::translateItems($this->state['items'] ?? []),
                 'score' => $auditScore,
             ],
         ]);

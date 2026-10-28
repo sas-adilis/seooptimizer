@@ -5,22 +5,23 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer;
+use Adilis\SeoOptimizer\Utils\Message;
 
 class SeoOptimizerPageauditModuleFrontController extends ModuleFrontController
 {
     public function initContent()
     {
         if (!$this->isEmployeeBrowsing()) {
-            $this->returnJson('error', 'Unauthorized');
+            $this->returnJson('error', Message::tr('Unauthorized'));
         }
 
         if (!(int) Configuration::get('SEOO_FRONT_AUDIT_ENABLED')) {
-            $this->returnJson('error', 'Front audit is disabled');
+            $this->returnJson('error', Message::tr('Front audit is disabled'));
         }
 
         $url = Tools::getValue('audit_url');
         if (empty($url) || !Validate::isUrl($url)) {
-            $this->returnJson('error', 'Invalid URL');
+            $this->returnJson('error', Message::tr('Invalid URL'));
         }
 
         $analyzer = new FrontPageAnalyzer();

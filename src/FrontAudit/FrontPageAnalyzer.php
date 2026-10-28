@@ -16,6 +16,7 @@ use Adilis\SeoOptimizer\CrawlerObserver\MissingAltAttributeObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\PageLoadTimeObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\PageWeightObserver;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedScore;
+use Adilis\SeoOptimizer\Utils\Message;
 use Adilis\SeoOptimizer\CrawlerObserver\RedirectedLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\StructuredDataObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\TextRatioObserver;
@@ -240,7 +241,7 @@ class FrontPageAnalyzer
 
             $checks[] = [
                 'status' => $loadTimeSeverity,
-                'title' => sprintf('Server response: %s', $formatted),
+                'title' => Message::tr('Server response: %s', $formatted),
                 'message' => '',
             ];
         }
@@ -250,7 +251,7 @@ class FrontPageAnalyzer
         if ($lighthouse !== null) {
             $checks[] = [
                 'status' => PageSpeedScore::severity($lighthouse),
-                'title' => sprintf('Lighthouse performance: %d/100', $lighthouse),
+                'title' => Message::tr('Lighthouse performance: %d/100', $lighthouse),
                 'message' => '',
             ];
         }
@@ -281,7 +282,7 @@ class FrontPageAnalyzer
 
             $checks[] = [
                 'status' => $weightSeverity,
-                'title' => sprintf('Page weight: %s', $formatted),
+                'title' => Message::tr('Page weight: %s', $formatted),
                 'message' => !empty($breakdown) ? implode(' | ', $breakdown) : '',
             ];
         }
@@ -310,7 +311,7 @@ class FrontPageAnalyzer
         foreach ($pageData['issues'] as $issue) {
             $checks[] = [
                 'status' => $issue['severity'],
-                'title' => $issue['message'],
+                'title' => Message::translate($issue['message']),
                 'message' => '',
             ];
         }
@@ -319,8 +320,8 @@ class FrontPageAnalyzer
         if (empty($checks)) {
             $titleLen = mb_strlen($pageData['title'] ?: '');
             $descLen = mb_strlen($pageData['description'] ?: '');
-            $checks[] = ['status' => 'good', 'title' => sprintf('Meta title — %d chars', $titleLen), 'message' => ''];
-            $checks[] = ['status' => 'good', 'title' => sprintf('Meta description — %d chars', $descLen), 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Meta title — %d chars', $titleLen), 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Meta description — %d chars', $descLen), 'message' => ''];
         }
 
         return [
@@ -348,14 +349,14 @@ class FrontPageAnalyzer
             foreach ($observerData[$this->url]['issues'] as $issue) {
                 $checks[] = [
                     'status' => $issue['severity'],
-                    'title' => $issue['message'],
+                    'title' => Message::translate($issue['message']),
                     'message' => '',
                 ];
             }
         }
 
         if (empty($checks)) {
-            $checks[] = ['status' => 'good', 'title' => 'Heading hierarchy OK', 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Heading hierarchy OK'), 'message' => ''];
         }
 
         return ['tree' => $tree, 'checks' => $checks];
@@ -379,7 +380,7 @@ class FrontPageAnalyzer
         $wordCount = $pageData ? (int) $pageData['word_count'] : 0;
         $severity = $pageData ? $pageData['severity'] : 'good';
         $ratio = $pageData ? $pageData['text_ratio'] : 0;
-        $message = sprintf('%d words (%s%% text)', $wordCount, $ratio);
+        $message = Message::tr('%d words (%s%% text)', $wordCount, $ratio);
 
         $checks = [];
         $checks[] = ['status' => $severity, 'title' => $message, 'message' => ''];
@@ -415,12 +416,12 @@ class FrontPageAnalyzer
             // Severity comes from AuditKeywordCheck: zones without severity (URL, image alt)
             // are displayed but do not count as issues.
             $zoneLabels = [
-                'meta_title' => ['key' => 'title', 'label' => 'Missing in title'],
-                'h1' => ['key' => 'h1', 'label' => 'Missing in H1'],
-                'url' => ['key' => 'url', 'label' => 'Missing in URL'],
-                'meta_description' => ['key' => 'meta_description', 'label' => 'Missing in meta description'],
-                'content_start' => ['key' => 'content', 'label' => 'Missing in first 100 words'],
-                'image_alt' => ['key' => 'alt_image', 'label' => 'Missing in image alt'],
+                'meta_title' => ['key' => 'title', 'label' => Message::tr('Missing in title')],
+                'h1' => ['key' => 'h1', 'label' => Message::tr('Missing in H1')],
+                'url' => ['key' => 'url', 'label' => Message::tr('Missing in URL')],
+                'meta_description' => ['key' => 'meta_description', 'label' => Message::tr('Missing in meta description')],
+                'content_start' => ['key' => 'content', 'label' => Message::tr('Missing in first 100 words')],
+                'image_alt' => ['key' => 'alt_image', 'label' => Message::tr('Missing in image alt')],
             ];
 
             foreach ($zoneLabels as $observerZone => $config) {
@@ -431,7 +432,7 @@ class FrontPageAnalyzer
                     $details[] = [
                         'status' => AuditKeywordCheck::ZONE_SEVERITY[$observerZone],
                         'title' => $config['label'],
-                        'message' => 'Target keyword not found in this zone.',
+                        'message' => Message::tr('Target keyword not found in this zone.'),
                     ];
                 }
             }
@@ -460,13 +461,13 @@ class FrontPageAnalyzer
         if (isset($observerData[$this->url])) {
             $imgData = $observerData[$this->url];
             if ((int) $imgData['missing_alt'] > 0) {
-                $checks[] = ['status' => 'warning', 'title' => $imgData['missing_alt'] . ' image(s) missing alt attribute', 'message' => ''];
+                $checks[] = ['status' => 'warning', 'title' => Message::tr('%d image(s) missing alt attribute', $imgData['missing_alt']), 'message' => ''];
             }
             if ((int) $imgData['empty_alt'] > 0) {
-                $checks[] = ['status' => 'info', 'title' => $imgData['empty_alt'] . ' image(s) with empty alt', 'message' => 'Fine if the images are decorative.'];
+                $checks[] = ['status' => 'info', 'title' => Message::tr('%d image(s) with empty alt', $imgData['empty_alt']), 'message' => Message::tr('Fine if the images are decorative.')];
             }
         } elseif ($total > 0) {
-            $checks[] = ['status' => 'good', 'title' => 'All images have alt attributes', 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('All images have alt attributes'), 'message' => ''];
         }
 
         // Image format check (not covered by observer — FO-only bonus check)
@@ -481,9 +482,9 @@ class FrontPageAnalyzer
         $hasOld = isset($formats['jpg']) || isset($formats['jpeg']) || isset($formats['png']) || isset($formats['gif']);
 
         if ($hasWebp && !$hasOld) {
-            $checks[] = ['status' => 'good', 'title' => 'Optimized formats', 'message' => 'All images use next-gen formats.'];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Optimized formats'), 'message' => Message::tr('All images use next-gen formats.')];
         } elseif ($hasOld) {
-            $checks[] = ['status' => 'info', 'title' => $hasWebp ? 'Mixed formats' : 'Classic formats', 'message' => 'Some images still use JPG/PNG.'];
+            $checks[] = ['status' => 'info', 'title' => $hasWebp ? 'Mixed formats' : 'Classic formats', 'message' => Message::tr('Some images still use JPG/PNG.')];
         }
 
         return ['total' => $total, 'checks' => $checks];
@@ -513,22 +514,22 @@ class FrontPageAnalyzer
         if ($pageInternalData) {
             $uniqueCount = (int) $pageInternalData['unique_count'];
             if ($internal === 0) {
-                $checks[] = ['status' => 'critical', 'title' => 'No outgoing internal links', 'message' => ''];
+                $checks[] = ['status' => 'critical', 'title' => Message::tr('No outgoing internal links'), 'message' => ''];
             } elseif ($uniqueCount < 3) {
-                $checks[] = ['status' => 'warning', 'title' => 'Only ' . $uniqueCount . ' unique outgoing internal link(s)', 'message' => ''];
+                $checks[] = ['status' => 'warning', 'title' => Message::tr('Only %d unique outgoing internal link(s)', $uniqueCount), 'message' => ''];
             } else {
-                $checks[] = ['status' => 'good', 'title' => 'Internal linking', 'message' => $uniqueCount . ' unique internal links.'];
+                $checks[] = ['status' => 'good', 'title' => Message::tr('Internal linking'), 'message' => Message::tr('%d unique internal links.', $uniqueCount)];
             }
             if ((int) $pageInternalData['empty_anchors'] > 0) {
-                $checks[] = ['status' => 'warning', 'title' => $pageInternalData['empty_anchors'] . ' link(s) with empty anchor text', 'message' => ''];
+                $checks[] = ['status' => 'warning', 'title' => Message::tr('%d link(s) with empty anchor text', $pageInternalData['empty_anchors']), 'message' => ''];
             }
         } else {
-            $checks[] = ['status' => 'good', 'title' => 'Internal linking', 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Internal linking'), 'message' => ''];
         }
 
         // External links
         if ($external > 0) {
-            $checks[] = ['status' => 'info', 'title' => 'External links', 'message' => $external . ' external links detected.'];
+            $checks[] = ['status' => 'info', 'title' => Message::tr('External links'), 'message' => Message::tr('%d external links detected.', $external)];
         }
 
         // Broken links from observer
@@ -536,9 +537,9 @@ class FrontPageAnalyzer
             return $e['page_url'] === $this->url;
         }));
         if ($brokenCount > 0) {
-            $checks[] = ['status' => 'critical', 'title' => $brokenCount . ' broken link(s)', 'message' => 'HTTP 404 or unreachable.'];
+            $checks[] = ['status' => 'critical', 'title' => Message::tr('%d broken link(s)', $brokenCount), 'message' => Message::tr('HTTP 404 or unreachable.')];
         } else {
-            $checks[] = ['status' => 'good', 'title' => 'No broken links', 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('No broken links'), 'message' => ''];
         }
 
         // Redirected links from observer
@@ -546,7 +547,7 @@ class FrontPageAnalyzer
             return $e['page_url'] === $this->url;
         }));
         if ($redirectedCount > 0) {
-            $checks[] = ['status' => 'warning', 'title' => $redirectedCount . ' redirected link(s)', 'message' => 'Update to final URL.'];
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('%d redirected link(s)', $redirectedCount), 'message' => Message::tr('Update to final URL.')];
         }
 
         return ['total' => $total, 'internal' => $internal, 'external' => $external, 'checks' => $checks];
@@ -572,7 +573,7 @@ class FrontPageAnalyzer
         foreach ($pageData['issues'] as $issue) {
             $checks[] = [
                 'status' => $issue['severity'],
-                'title' => $issue['message'],
+                'title' => Message::translate($issue['message']),
                 'message' => '',
             ];
         }
@@ -582,17 +583,17 @@ class FrontPageAnalyzer
         $isProduct = $pageData['is_product'];
 
         if ($isProduct && isset($typeCounts['Product']) && isset($typeCounts['Offer'])) {
-            $checks[] = ['status' => 'good', 'title' => 'Product schema complete', 'message' => 'Product + Offer present.'];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Product schema complete'), 'message' => Message::tr('Product + Offer present.')];
         }
         if (isset($typeCounts['AggregateRating'])) {
-            $checks[] = ['status' => 'good', 'title' => 'Reviews structured', 'message' => 'AggregateRating detected.'];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Reviews structured'), 'message' => Message::tr('AggregateRating detected.')];
         }
         if (isset($typeCounts['BreadcrumbList']) && empty($pageData['duplicates']['BreadcrumbList'])) {
-            $checks[] = ['status' => 'good', 'title' => 'BreadcrumbList present', 'message' => ''];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('BreadcrumbList present'), 'message' => ''];
         }
 
         if (empty($checks)) {
-            $checks[] = ['status' => 'good', 'title' => 'Structured data OK', 'message' => $pageData['total_types'] . ' schema type(s) found.'];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Structured data OK'), 'message' => Message::tr('%d schema type(s) found.', $pageData['total_types'])];
         }
 
         return [
@@ -615,40 +616,40 @@ class FrontPageAnalyzer
         // Canonical
         $canonical = $this->extractor->extractCanonical();
         if (!empty($canonical)) {
-            $checks[] = ['status' => 'good', 'title' => 'Canonical URL defined', 'message' => $canonical];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Canonical URL defined'), 'message' => $canonical];
         } else {
-            $checks[] = ['status' => 'warning', 'title' => 'Canonical URL missing', 'message' => ''];
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('Canonical URL missing'), 'message' => ''];
         }
 
         // Meta robots
         if ($this->extractor->isNoindex()) {
-            $checks[] = ['status' => 'critical', 'title' => 'Page not indexable', 'message' => 'Meta robots noindex detected.'];
+            $checks[] = ['status' => 'critical', 'title' => Message::tr('Page not indexable'), 'message' => Message::tr('Meta robots noindex detected.')];
         } elseif ($this->isBlockedByRobotsTxt()) {
-            $checks[] = ['status' => 'critical', 'title' => 'Blocked by robots.txt', 'message' => ''];
+            $checks[] = ['status' => 'critical', 'title' => Message::tr('Blocked by robots.txt'), 'message' => ''];
         } else {
-            $checks[] = ['status' => 'good', 'title' => 'Page indexable', 'message' => 'No noindex, no robots.txt blocking.'];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Page indexable'), 'message' => Message::tr('No noindex, no robots.txt blocking.')];
         }
 
         // Hreflang
         $hreflangs = $this->extractor->extractHreflangs();
         if (!empty($hreflangs)) {
             $langs = implode(' ', array_map(function ($h) { return $h['lang'] . ' ✓'; }, $hreflangs));
-            $checks[] = ['status' => 'good', 'title' => 'Hreflang', 'message' => $langs];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Hreflang'), 'message' => $langs];
         }
 
         // Clean URL
         $parsed = parse_url($this->url);
         $issues = [];
         if (!empty($parsed['query'])) {
-            $issues[] = 'dynamic parameters';
+            $issues[] = Message::tr('dynamic parameters');
         }
         if (mb_strlen(isset($parsed['path']) ? $parsed['path'] : '') > 115) {
-            $issues[] = 'URL too long';
+            $issues[] = Message::tr('URL too long');
         }
         if (empty($issues)) {
-            $checks[] = ['status' => 'good', 'title' => 'Clean URL', 'message' => 'Length OK (' . mb_strlen($this->url) . ' chars).'];
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Clean URL'), 'message' => Message::tr('Length OK (%d chars).', mb_strlen($this->url))];
         } else {
-            $checks[] = ['status' => 'warning', 'title' => 'URL needs improvement', 'message' => ucfirst(implode(', ', $issues)) . '.'];
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('URL needs improvement'), 'message' => ucfirst(implode(', ', $issues)) . '.'];
         }
 
         // LLMS.txt
@@ -657,9 +658,9 @@ class FrontPageAnalyzer
             $llmsContent = file_get_contents($llmsPath);
             $urlPath = parse_url($this->url, PHP_URL_PATH) ?: '';
             if (strpos($llmsContent, $urlPath) !== false || strpos($llmsContent, $this->url) !== false) {
-                $checks[] = ['status' => 'good', 'title' => 'Page included in llms.txt', 'message' => ''];
+                $checks[] = ['status' => 'good', 'title' => Message::tr('Page included in llms.txt'), 'message' => ''];
             } else {
-                $checks[] = ['status' => 'info', 'title' => 'Page absent from llms.txt', 'message' => ''];
+                $checks[] = ['status' => 'info', 'title' => Message::tr('Page absent from llms.txt'), 'message' => ''];
             }
         }
 

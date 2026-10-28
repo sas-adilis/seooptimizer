@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\Message;
 
 class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
@@ -72,7 +73,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                 'type' => 'missing_title',
                 'severity' => 'critical',
                 'field' => 'title',
-                'message' => 'Missing <title> tag',
+                'message' => Message::t('Missing <title> tag'),
                 'length' => 0,
             ];
             $pageSeverity = 'critical';
@@ -84,7 +85,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     'type' => 'empty_title',
                     'severity' => 'critical',
                     'field' => 'title',
-                    'message' => 'Empty <title> tag',
+                    'message' => Message::t('Empty <title> tag'),
                     'length' => 0,
                 ];
                 $pageSeverity = 'critical';
@@ -93,7 +94,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     'type' => 'title_too_short',
                     'severity' => 'info',
                     'field' => 'title',
-                    'message' => sprintf(
+                    'message' => Message::t(
                         'Title too short (%d chars, min %d)',
                         $titleLen,
                         $this->titleMinLength
@@ -105,7 +106,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     'type' => 'title_too_long',
                     'severity' => 'warning',
                     'field' => 'title',
-                    'message' => sprintf(
+                    'message' => Message::t(
                         'Title too long (%d chars, max %d)',
                         $titleLen,
                         $this->titleMaxLength
@@ -124,7 +125,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                 'type' => 'missing_description',
                 'severity' => 'warning',
                 'field' => 'description',
-                'message' => 'Missing meta description',
+                'message' => Message::t('Missing meta description'),
                 'length' => 0,
             ];
             if ($pageSeverity === 'good') {
@@ -138,7 +139,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     'type' => 'empty_description',
                     'severity' => 'warning',
                     'field' => 'description',
-                    'message' => 'Empty meta description',
+                    'message' => Message::t('Empty meta description'),
                     'length' => 0,
                 ];
                 if ($pageSeverity === 'good') {
@@ -149,7 +150,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     'type' => 'description_too_short',
                     'severity' => 'info',
                     'field' => 'description',
-                    'message' => sprintf(
+                    'message' => Message::t(
                         'Meta description too short (%d chars, min %d)',
                         $descLen,
                         $this->descMinLength
@@ -161,7 +162,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                     'type' => 'description_too_long',
                     'severity' => 'info',
                     'field' => 'description',
-                    'message' => sprintf(
+                    'message' => Message::t(
                         'Meta description too long (%d chars, max %d)',
                         $descLen,
                         $this->descMaxLength
@@ -236,7 +237,7 @@ class MetaTagsObserver extends AbstractCrawlerObserver implements CrawlerObserve
                 'type' => 'page_unreachable',
                 'severity' => 'critical',
                 'field' => 'page',
-                'message' => 'Page unreachable (HTTP error or timeout)',
+                'message' => Message::t('Page unreachable (HTTP error or timeout)'),
                 'length' => 0,
             ]],
             'page_severity' => 'critical',

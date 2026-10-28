@@ -221,8 +221,7 @@ abstract class DataList implements DataListInterface
 
     protected function l($string)
     {
-        // todo: implement translation
-        return $string;
+        return \Translate::getModuleTranslation('seooptimizer', $string, 'seooptimizer');
     }
 
     /**

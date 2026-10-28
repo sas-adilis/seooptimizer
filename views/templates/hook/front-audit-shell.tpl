@@ -10,7 +10,7 @@
 {* -- Side Panel -- *}
 <div id="seoo-fa-panel" class="seoo-fa-panel">
     <div class="seoo-fa-panel__header">
-        <span class="seoo-fa-panel__title">SEO Audit</span>
+        <span class="seoo-fa-panel__title">{l s='SEO Audit' mod='seooptimizer'}</span>
         <button class="seoo-fa-panel__close" type="button" onclick="document.getElementById('seoo-fa-panel').classList.remove('seoo-fa-panel--open');document.getElementById('seoo-fa-btn').classList.remove('seoo-fa-btn--hidden');">&times;</button>
     </div>
     <div id="seoo-fa-panel-body" class="seoo-fa-panel__body">

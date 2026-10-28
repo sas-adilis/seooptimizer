@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\RedirectedLinksObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditRedirectedLinks implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditRedirectedLinks implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Redirected links';
+        return Message::tr('Redirected links');
     }
 
     public function getDescription(): string
     {
-        return 'Detects internal links that point to a URL which redirects (301, 302) to another page. These links should be updated to point directly to the final destination to avoid unnecessary redirects, improve page load speed and preserve link equity.';
+        return Message::tr('Detects internal links that point to a URL which redirects (301, 302) to another page. These links should be updated to point directly to the final destination to avoid unnecessary redirects, improve page load speed and preserve link equity.');
     }
 
     public function getIcon(): string
@@ -41,10 +43,10 @@ class AuditRedirectedLinks implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'link_url' => 'Link URL',
-            'link_text' => 'Link text',
-            'http_code' => 'HTTP code',
-            'redirect_to' => 'Redirects to',
+            'link_url' => Message::tr('Link URL'),
+            'link_text' => Message::tr('Link text'),
+            'http_code' => Message::tr('HTTP code'),
+            'redirect_to' => Message::tr('Redirects to'),
         ];
     }
 
@@ -54,9 +56,9 @@ class AuditRedirectedLinks implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'links_checked', 'label' => 'Links checked', 'type' => 'custom'],
-            ['key' => 'redirected_count', 'label' => 'Redirected links', 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'links_checked', 'label' => Message::tr('Links checked'), 'type' => 'custom'],
+            ['key' => 'redirected_count', 'label' => Message::tr('Redirected links'), 'type' => 'custom', 'warning_if_positive' => true],
         ];
     }
 
@@ -86,7 +88,7 @@ class AuditRedirectedLinks implements AuditInterface
                 'url' => $entry['page_url'],
                 'type' => 'redirected_link',
                 'severity' => $severity,
-                'message' => sprintf('HTTP %d → %s', $entry['http_code'], $entry['redirect_to']),
+                'message' => Message::t('HTTP %d → %s', $entry['http_code'], $entry['redirect_to']),
                 'link_url' => $entry['link_url'],
                 'link_text' => $entry['link_text'],
                 'http_code' => $entry['http_code'],

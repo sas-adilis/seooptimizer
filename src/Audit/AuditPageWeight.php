@@ -9,6 +9,8 @@ if (!defined('_PS_VERSION_')) {
 use Adilis\SeoOptimizer\CrawlerObserver\PageWeightObserver;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedScore;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditPageWeight implements AuditInterface, ScoredAuditInterface
 {
     public function getKey(): string
@@ -18,12 +20,12 @@ class AuditPageWeight implements AuditInterface, ScoredAuditInterface
 
     public function getTitle(): string
     {
-        return 'Page weight';
+        return Message::tr('Page weight');
     }
 
     public function getDescription(): string
     {
-        return 'Measures the total weight of each page including HTML, images, CSS and JavaScript. Heavy pages slow down loading and hurt SEO. Thresholds are configurable in the Configuration tab. When a page has been analyzed by Lighthouse (PageSpeed tab), its Lighthouse performance score replaces this measure.';
+        return Message::tr('Measures the total weight of each page including HTML, images, CSS and JavaScript. Heavy pages slow down loading and hurt SEO. Thresholds are configurable in the Configuration tab. When a page has been analyzed by Lighthouse (PageSpeed tab), its Lighthouse performance score replaces this measure.');
     }
 
     public function getIcon(): string
@@ -42,13 +44,13 @@ class AuditPageWeight implements AuditInterface, ScoredAuditInterface
     public function getResultColumns(): array
     {
         return [
-            'total_display' => 'Total',
-            'html_display' => 'HTML',
-            'images_display' => 'Images',
-            'css_display' => 'CSS',
-            'js_display' => 'JS',
-            'assets_count' => 'Assets',
-            'status_label' => 'Status',
+            'total_display' => Message::tr('Total'),
+            'html_display' => Message::tr('HTML'),
+            'images_display' => Message::tr('Images'),
+            'css_display' => Message::tr('CSS'),
+            'js_display' => Message::tr('JS'),
+            'assets_count' => Message::tr('Assets'),
+            'status_label' => Message::tr('Status'),
         ];
     }
 
@@ -61,10 +63,10 @@ class AuditPageWeight implements AuditInterface, ScoredAuditInterface
         $thresholdHeavy = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_HEAVY') ?: 3072;
 
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'light_count', 'label' => 'Light (< ' . $this->formatSize($thresholdLight) . ')', 'type' => 'custom'],
-            ['key' => 'moderate_count', 'label' => 'Moderate (' . $this->formatSize($thresholdLight) . '-' . $this->formatSize($thresholdHeavy) . ')', 'type' => 'custom', 'warning_if_positive' => true],
-            ['key' => 'heavy_count', 'label' => 'Heavy (> ' . $this->formatSize($thresholdHeavy) . ')', 'type' => 'custom', 'danger_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'light_count', 'label' => Message::tr('Light (< %s)', $this->formatSize($thresholdLight)), 'type' => 'custom'],
+            ['key' => 'moderate_count', 'label' => Message::tr('Moderate (%s-%s)', $this->formatSize($thresholdLight), $this->formatSize($thresholdHeavy)), 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'heavy_count', 'label' => Message::tr('Heavy (> %s)', $this->formatSize($thresholdHeavy)), 'type' => 'custom', 'danger_if_positive' => true],
         ];
     }
 
@@ -122,13 +124,15 @@ class AuditPageWeight implements AuditInterface, ScoredAuditInterface
         $lighthouse = PageSpeedScore::forUrl($row['url']);
         if ($lighthouse !== null) {
             $row['severity'] = PageSpeedScore::severity($lighthouse);
-            $row['status_label'] = 'Lighthouse ' . $lighthouse . '/100';
+            $row['status_label'] = 'Lighthouse';
+            $row['message'] = Message::t('Lighthouse score: %d/100', $lighthouse);
             $row['lighthouse'] = $lighthouse;
 
             return $row;
         }
 
-        unset($row['lighthouse']);
+        unset($row['lighthouse'], $row['message_key'], $row['message_args']);
+        $row['message'] = $row['total_display'] ?? $row['message'];
         $thresholdLight = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_LIGHT') ?: 1024;
         $thresholdHeavy = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_HEAVY') ?: 3072;
 

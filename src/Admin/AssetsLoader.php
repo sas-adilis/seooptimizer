@@ -3,6 +3,7 @@
 namespace Adilis\SeoOptimizer\Admin;
 
 use Adilis\SeoOptimizer\Entity\EntityRegistry;
+use Adilis\SeoOptimizer\Utils\Message;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -52,6 +53,7 @@ class AssetsLoader
         $shopUrl = rtrim(\Context::getContext()->shop->getBaseURL(true), '/');
 
         \Media::addJsDef([
+            'SeoOptimizerI18n' => Message::getJsStrings(),
             'SeoOptimizerAjaxUrl' => $this->getAjaxUrl(),
             'SeoOptimizerRobots' => [
                 'shopUrl' => $shopUrl,
@@ -97,6 +99,8 @@ class AssetsLoader
             $controller->addJS($path . 'views/js/entity-form-tabs.js');
             $controller->addJS($path . 'views/js/' . $entityType . '-tabs.js');
 
+            \Media::addJsDef(['SeoOptimizerI18n' => Message::getJsStrings()]);
+
             // Pass available tags for meta template insertion
             $entity = EntityRegistry::get($entityType);
             if ($entity) {
@@ -130,6 +134,7 @@ class AssetsLoader
         }
 
         \Media::addJsDef([
+            'SeoOptimizerI18n' => Message::getJsStrings(),
             'SeoOptimizerConfig' => [
                 'ajaxUrl' => $this->getAjaxUrl(),
                 'entityType' => $entityType,
@@ -163,6 +168,7 @@ class AssetsLoader
         $controller->addJS($path . 'views/js/bo-score-column.js');
 
         \Media::addJsDef([
+            'SeoOptimizerI18n' => Message::getJsStrings(),
             'SeoOptimizerScoreColumn' => [
                 'ajaxUrl' => $this->getAjaxUrl(),
                 'entityType' => EntityHelper::CONTROLLER_MAP[$currentController],

@@ -306,7 +306,7 @@ class FullAuditRunner
                 'percentage' => ($this->state['total_urls'] ?? 0) > 0
                     ? round((($this->state['crawled'] ?? 0) / ($this->state['total_urls'] ?? 1)) * 100)
                     : 0,
-                'items' => $this->state['items'] ?? [],
+                'items' => AuditRunner::translateItems($this->state['items'] ?? []),
             ],
         ]);
         exit;

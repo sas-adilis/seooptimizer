@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\BrokenLinksObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditBrokenLinks implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditBrokenLinks implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Broken links (404)';
+        return Message::tr('Broken links (404)');
     }
 
     public function getDescription(): string
     {
-        return 'Crawls all pages and checks every internal link (pages, images, scripts, stylesheets) for 404 errors. Broken links hurt SEO and user experience.';
+        return Message::tr('Crawls all pages and checks every internal link (pages, images, scripts, stylesheets) for 404 errors. Broken links hurt SEO and user experience.');
     }
 
     public function getIcon(): string
@@ -41,9 +43,9 @@ class AuditBrokenLinks implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'broken_url' => 'Broken URL',
-            'link_text' => 'Link text',
-            'http_code' => 'HTTP code',
+            'broken_url' => Message::tr('Broken URL'),
+            'link_text' => Message::tr('Link text'),
+            'http_code' => Message::tr('HTTP code'),
         ];
     }
 
@@ -53,9 +55,9 @@ class AuditBrokenLinks implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'links_checked', 'label' => 'Links checked', 'type' => 'custom'],
-            ['key' => 'issues', 'label' => 'Broken links', 'type' => 'total_issues', 'danger_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'links_checked', 'label' => Message::tr('Links checked'), 'type' => 'custom'],
+            ['key' => 'issues', 'label' => Message::tr('Broken links'), 'type' => 'total_issues', 'danger_if_positive' => true],
         ];
     }
 
@@ -83,7 +85,7 @@ class AuditBrokenLinks implements AuditInterface
                 'url' => $entry['page_url'],
                 'type' => 'broken_link',
                 'severity' => $entry['http_code'] === 404 ? 'critical' : 'warning',
-                'message' => sprintf('HTTP %d', $entry['http_code']),
+                'message' => Message::t('HTTP %d', $entry['http_code']),
                 'broken_url' => $entry['broken_url'],
                 'link_text' => $entry['link_text'],
                 'http_code' => $entry['http_code'],

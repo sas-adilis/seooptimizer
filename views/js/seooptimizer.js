@@ -4,6 +4,7 @@
  * Form field visibility toggles, chart initialization, tab navigation,
  * copy buttons, generic AJAX handlers, and shared utilities.
  */
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function($) {
 
     /* ---------------------------------------------------------------
@@ -221,7 +222,7 @@
         $('button.process-icon-stop').on('click', function(e) {
             e.preventDefault();
             if ($(this).closest('form').hasClass('loading')) {
-                if (confirm('Are you sure you want to stop the process?')) {
+                if (confirm(SeoOptimizerTr('Are you sure you want to stop the process?'))) {
                     shouldStopRunningAjax = true;
                 }
             }
@@ -381,7 +382,7 @@
         }
 
         if (process === 'getResume' && window.isAjaxRunning) {
-            alert('TEXT TO DEFINE');
+            alert(SeoOptimizerTr('A process is already running.'));
             return false;
         }
 
@@ -445,9 +446,9 @@
 
                         var $statusLabel = $elementRow.find('.seoo-report__status-label');
                         if (element.status === 'done') {
-                            $statusLabel.text('Done');
+                            $statusLabel.text(SeoOptimizerTr('Done'));
                         } else if (element.status === 'processing') {
-                            $statusLabel.text('In progress');
+                            $statusLabel.text(SeoOptimizerTr('In progress'));
                         }
 
                         $elementRow.find('.report__fixed').html(element.fixed_count);
@@ -511,7 +512,7 @@
      * ESC key handler
      * --------------------------------------------------------------- */
     $(document).on('keydown', function(e) {
-        if (e.keyCode === 27 && confirm('Are you sure you want to stop the process?')) {
+        if (e.keyCode === 27 && confirm(SeoOptimizerTr('Are you sure you want to stop the process?'))) {
             shouldStopRunningAjax = true;
         }
     });

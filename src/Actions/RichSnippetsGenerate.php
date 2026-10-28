@@ -213,7 +213,7 @@ class RichSnippetsGenerate
 
     private function l(string $string): string
     {
-        return \Translate::getModuleTranslation('seooptimizer', $string, 'RichSnippetsGenerate');
+        return \Translate::getModuleTranslation('seooptimizer', $string, 'seooptimizer');
     }
 
     private function generateProductsItemListSnippet()

@@ -1,3 +1,4 @@
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function () {
     if (typeof SeoOptimizerFrontAudit === 'undefined') {
         return;
@@ -22,10 +23,10 @@
                     if (response.status === 'success') {
                         onAuditLoaded(response.data);
                     } else {
-                        onAuditError(response.message || 'Audit failed');
+                        onAuditError(response.message || SeoOptimizerTr('Audit failed'));
                     }
                 } catch (e) {
-                    onAuditError('Parse error');
+                    onAuditError(SeoOptimizerTr('Parse error'));
                 }
             } else {
                 onAuditError('HTTP ' + xhr.status);

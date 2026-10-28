@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\Message;
 
 class HeadingHierarchyObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
@@ -41,13 +42,13 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
             $issues[] = [
                 'type' => 'missing_h1',
                 'severity' => 'warning',
-                'message' => 'No H1 tag found on this page',
+                'message' => Message::t('No H1 tag found on this page'),
             ];
         } elseif ($h1Count > 1) {
             $issues[] = [
                 'type' => 'multiple_h1',
                 'severity' => 'info',
-                'message' => sprintf('%d H1 tags found (a single H1 is recommended)', $h1Count),
+                'message' => Message::t('%d H1 tags found (a single H1 is recommended)', $h1Count),
                 'details' => array_column($headings[1], 'text'),
             ];
         }
@@ -59,13 +60,13 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
                 $issues[] = [
                     'type' => 'h1_too_short',
                     'severity' => 'info',
-                    'message' => sprintf('H1 too short (%d chars, min %d): "%s"', $len, self::MIN_H1_LENGTH, $h1['text']),
+                    'message' => Message::t('H1 too short (%d chars, min %d): "%s"', $len, self::MIN_H1_LENGTH, $h1['text']),
                 ];
             } elseif ($len > self::MAX_H1_LENGTH) {
                 $issues[] = [
                     'type' => 'h1_too_long',
                     'severity' => 'info',
-                    'message' => sprintf('H1 too long (%d chars, max %d): "%s"', $len, self::MAX_H1_LENGTH, $h1['text']),
+                    'message' => Message::t('H1 too long (%d chars, max %d): "%s"', $len, self::MAX_H1_LENGTH, $h1['text']),
                 ];
             }
         }
@@ -78,20 +79,20 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
                     $issues[] = [
                         'type' => 'heading_too_short',
                         'severity' => 'info',
-                        'message' => sprintf('H%d too short (%d chars): "%s"', $level, $len, $heading['text']),
+                        'message' => Message::t('H%d too short (%d chars): "%s"', $level, $len, $heading['text']),
                     ];
                 } elseif ($len > self::MAX_HEADING_LENGTH) {
                     $issues[] = [
                         'type' => 'heading_too_long',
                         'severity' => 'info',
-                        'message' => sprintf('H%d too long (%d chars): "%s"', $level, $len, $heading['text']),
+                        'message' => Message::t('H%d too long (%d chars): "%s"', $level, $len, $heading['text']),
                     ];
                 }
                 if (empty(trim($heading['text']))) {
                     $issues[] = [
                         'type' => 'empty_heading',
                         'severity' => 'warning',
-                        'message' => sprintf('Empty H%d tag found', $level),
+                        'message' => Message::t('Empty H%d tag found', $level),
                     ];
                 }
             }
@@ -154,7 +155,7 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
             $issues[] = [
                 'type' => 'first_heading_not_h1',
                 'severity' => 'warning',
-                'message' => sprintf('First heading is H%d instead of H1', $ordered[0]['level']),
+                'message' => Message::t('First heading is H%d instead of H1', $ordered[0]['level']),
             ];
         }
 
@@ -170,7 +171,7 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
                 $issues[] = [
                     'type' => 'skipped_level',
                     'severity' => 'warning',
-                    'message' => sprintf(
+                    'message' => Message::t(
                         'Skipped heading level: H%d to H%d (missing %s)',
                         $previousLevel,
                         $level,
@@ -203,7 +204,7 @@ class HeadingHierarchyObserver extends AbstractCrawlerObserver implements Crawle
                     $issues[] = [
                         'type' => 'duplicate_heading',
                         'severity' => $level === 1 ? 'warning' : 'info',
-                        'message' => sprintf('Duplicate H%d (%dx): "%s"', $level, $count, $text),
+                        'message' => Message::t('Duplicate H%d (%dx): "%s"', $level, $count, $text),
                     ];
                 }
             }

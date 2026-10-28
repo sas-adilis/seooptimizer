@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\KeywordCheckObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditKeywordCheck implements AuditInterface
 {
     /**
@@ -38,12 +40,12 @@ class AuditKeywordCheck implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Keyword check';
+        return Message::tr('Keyword check');
     }
 
     public function getDescription(): string
     {
-        return 'Checks if the target keywords of each page are present in its key SEO zones. A keyword missing from the title or the H1 is a warning; a keyword missing from the meta description or the first 100 words is only a hint. URL, image alt and category are shown for information. Matching is accent-insensitive with partial term support.';
+        return Message::tr('Checks if the target keywords of each page are present in its key SEO zones. A keyword missing from the title or the H1 is a warning; a keyword missing from the meta description or the first 100 words is only a hint. URL, image alt and category are shown for information. Matching is accent-insensitive with partial term support.');
     }
 
     public function getIcon(): string
@@ -62,9 +64,9 @@ class AuditKeywordCheck implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'keyword' => 'Keyword',
-            'zones_summary' => 'Zones found',
-            'missing_zones' => 'Missing in',
+            'keyword' => Message::tr('Keyword'),
+            'zones_summary' => Message::tr('Zones found'),
+            'missing_zones' => Message::tr('Missing in'),
         ];
     }
 
@@ -85,11 +87,11 @@ class AuditKeywordCheck implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'pages_with_keywords', 'label' => 'Pages with keywords', 'type' => 'custom'],
-            ['key' => 'pages_without_keywords', 'label' => 'Pages without keywords', 'type' => 'custom'],
-            ['key' => 'total_keywords_checked', 'label' => 'Keywords checked', 'type' => 'custom'],
-            ['key' => 'issues', 'label' => 'Issues found', 'type' => 'total_issues', 'warning_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'pages_with_keywords', 'label' => Message::tr('Pages with keywords'), 'type' => 'custom'],
+            ['key' => 'pages_without_keywords', 'label' => Message::tr('Pages without keywords'), 'type' => 'custom'],
+            ['key' => 'total_keywords_checked', 'label' => Message::tr('Keywords checked'), 'type' => 'custom'],
+            ['key' => 'issues', 'label' => Message::tr('Issues found'), 'type' => 'total_issues', 'warning_if_positive' => true],
         ];
     }
 
@@ -119,7 +121,7 @@ class AuditKeywordCheck implements AuditInterface
                     'url' => $url,
                     'type' => 'no_keywords',
                     'severity' => 'info',
-                    'message' => 'No target keyword defined',
+                    'message' => Message::t('No target keyword defined'),
                     'keyword' => '-',
                     'zones_summary' => '-',
                     'missing_zones' => 'No keywords to check',
@@ -159,7 +161,7 @@ class AuditKeywordCheck implements AuditInterface
                     'url' => $url,
                     'type' => 'keyword_missing',
                     'severity' => $severity,
-                    'message' => 'Keyword missing in: ' . implode(', ', $missingCounted),
+                    'message' => Message::t('Keyword missing in: %s', array_values($missingCounted)),
                     'keyword' => $check['keyword'],
                     'zones_summary' => implode(', ', $foundZones) ?: 'None',
                     'missing_zones' => implode(', ', $missingZones) ?: '-',

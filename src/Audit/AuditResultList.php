@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
+use Adilis\SeoOptimizer\Utils\Message;
 
 class AuditResultList
 {
@@ -44,7 +45,7 @@ class AuditResultList
         $this->helper->shopLinkType = '';
         $this->helper->simple_header = false;
         $this->helper->show_toolbar = true;
-        $this->helper->title = 'Audit details';
+        $this->helper->title = Message::tr('Audit details');
         $this->helper->title_icon = $this->audit->getIcon();
         $this->helper->_default_pagination = 50;
         $this->helper->_pagination = [20, 50, 100, 300, 1000];
@@ -97,7 +98,7 @@ class AuditResultList
         $this->fieldsListDef = [];
 
         $this->fieldsListDef['severity'] = [
-            'title' => 'Severity',
+            'title' => Message::tr('Severity'),
             'type' => 'text',
             'orderby' => true,
             'search' => true,
@@ -108,7 +109,7 @@ class AuditResultList
         ];
 
         $this->fieldsListDef['url'] = [
-            'title' => 'Page',
+            'title' => Message::tr('Page'),
             'type' => 'text',
             'orderby' => true,
             'search' => true,
@@ -117,7 +118,7 @@ class AuditResultList
         ];
 
         $this->fieldsListDef['message'] = [
-            'title' => 'Message',
+            'title' => Message::tr('Message'),
             'type' => 'text',
             'orderby' => true,
             'search' => true,

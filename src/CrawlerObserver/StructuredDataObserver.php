@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\Message;
 
 class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerObserverInterface
 {
@@ -76,7 +77,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
                 $issues[] = [
                     'type' => 'missing_schema',
                     'severity' => $severity,
-                    'message' => sprintf('Schema %s missing', $type),
+                    'message' => Message::t('Schema %s missing', $type),
                     'schema_type' => $type,
                 ];
             }
@@ -98,7 +99,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
                 $issues[] = [
                     'type' => 'duplicate_schema',
                     'severity' => 'warning',
-                    'message' => sprintf('Schema %s declared %d times', $type, $count),
+                    'message' => Message::t('Schema %s declared %d times', $type, $count),
                     'schema_type' => $type,
                     'count' => $count,
                 ];
@@ -111,7 +112,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
                 $issues[] = [
                     'type' => 'product_no_offer',
                     'severity' => 'warning',
-                    'message' => 'Product schema without Offer — price won\'t show in results',
+                    'message' => Message::t('Product schema without Offer — price won\'t show in results'),
                     'schema_type' => 'Offer',
                 ];
             }
@@ -137,7 +138,7 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
             $issues[] = [
                 'type' => 'malformed_jsonld',
                 'severity' => 'critical',
-                'message' => sprintf('%d malformed JSON-LD block(s)', $malformedCount),
+                'message' => Message::t('%d malformed JSON-LD block(s)', $malformedCount),
                 'schema_type' => '',
             ];
         }

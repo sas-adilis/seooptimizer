@@ -6,7 +6,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-
+use Adilis\SeoOptimizer\Utils\Message;
 use Symfony\Component\Form\FormBuilder;
 
 class SupplierFormModifier
@@ -27,12 +27,12 @@ class SupplierFormModifier
             [
                 'type' => 'select',
                 'name' => 'sitemap_priority',
-                'label' => 'Sitemap priority',
+                'label' => Message::tr('Sitemap priority'),
                 'required' => true,
                 'options' => [
                     'default' => [
                         'value' => null,
-                        'label' => ('Pick an option'),
+                        'label' => Message::tr('Pick an option'),
                     ],
                     'query' => [
 

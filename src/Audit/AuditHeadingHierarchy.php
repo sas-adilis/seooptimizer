@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\HeadingHierarchyObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditHeadingHierarchy implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditHeadingHierarchy implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Heading hierarchy (H1-H6)';
+        return Message::tr('Heading hierarchy (H1-H6)');
     }
 
     public function getDescription(): string
     {
-        return 'Crawls all pages of your site and analyzes the heading structure (H1 to H6): missing H1, duplicates, skipped levels, length issues.';
+        return Message::tr('Crawls all pages of your site and analyzes the heading structure (H1 to H6): missing H1, duplicates, skipped levels, length issues.');
     }
 
     public function getIcon(): string
@@ -41,10 +43,10 @@ class AuditHeadingHierarchy implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'message' => 'Issue',
-            'h1' => 'H1',
-            'h2' => 'H2',
-            'h3' => 'H3',
+            'message' => Message::tr('Issue'),
+            'h1' => Message::tr('H1'),
+            'h2' => Message::tr('H2'),
+            'h3' => Message::tr('H3'),
         ];
     }
 
@@ -54,9 +56,9 @@ class AuditHeadingHierarchy implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'critical', 'label' => 'Critical', 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
-            ['key' => 'warnings', 'label' => 'Warnings', 'type' => 'count_severity', 'value' => 'warning', 'warning_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'critical', 'label' => Message::tr('Critical'), 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
+            ['key' => 'warnings', 'label' => Message::tr('Warnings'), 'type' => 'count_severity', 'value' => 'warning', 'warning_if_positive' => true],
         ];
     }
 

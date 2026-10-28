@@ -2,12 +2,20 @@
 
 namespace Adilis\SeoOptimizer\Storage;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
 class AuditResultStorage
 {
+    /** Stored labels translated when displayed */
+    const TRANSLATED_FIELDS = ['status_label', 'type_label', 'source_label'];
+
+    /** Stored lists of labels (separated by ", ") translated when displayed */
+    const TRANSLATED_LISTS = ['zones_summary', 'missing_zones'];
+
     /**
      * Insert multiple results at once.
      *
@@ -39,6 +47,13 @@ class AuditResultStorage
                 if (!in_array($k, $knownFields, true)) {
                     $extra[$k] = $v;
                 }
+            }
+
+            // Keep the template of the message, translated when displayed
+            $template = Message::lookup((string) ($row['message'] ?? ''));
+            if ($template !== null) {
+                $extra['message_key'] = $template[0];
+                $extra['message_args'] = $template[1];
             }
 
             $url = $row['url'] ?? '';
@@ -355,7 +370,25 @@ class AuditResultStorage
             }
             unset($row['data_json']);
 
-            $hydrated[] = array_merge($row, $extra);
+            $row = array_merge($row, $extra);
+
+            // Translated in the language of the employee
+            if (isset($row['message_key'])) {
+                $row['message'] = Message::render((string) $row['message_key'], is_array($row['message_args'] ?? null) ? $row['message_args'] : []);
+            }
+            foreach (self::TRANSLATED_FIELDS as $field) {
+                if (isset($row[$field]) && is_string($row[$field])) {
+                    $row[$field] = Message::translateString($row[$field]);
+                }
+            }
+
+            foreach (self::TRANSLATED_LISTS as $field) {
+                if (isset($row[$field]) && is_string($row[$field])) {
+                    $row[$field] = implode(', ', array_map([Message::class, 'translateString'], explode(', ', $row[$field])));
+                }
+            }
+
+            $hydrated[] = $row;
         }
 
         return $hydrated;

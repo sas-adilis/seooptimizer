@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\StructuredDataObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditStructuredData implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditStructuredData implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Structured data (Schema.org)';
+        return Message::tr('Structured data (Schema.org)');
     }
 
     public function getDescription(): string
     {
-        return 'Checks JSON-LD structured data for missing schemas, duplicates, and malformed blocks.';
+        return Message::tr('Checks JSON-LD structured data for missing schemas, duplicates, and malformed blocks.');
     }
 
     public function getIcon(): string
@@ -41,8 +43,8 @@ class AuditStructuredData implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'schema_type' => 'Schema',
-            'message' => 'Issue',
+            'schema_type' => Message::tr('Schema'),
+            'message' => Message::tr('Issue'),
         ];
     }
 
@@ -52,17 +54,17 @@ class AuditStructuredData implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
             [
                 'key' => 'critical_count',
-                'label' => 'Critical',
+                'label' => Message::tr('Critical'),
                 'type' => 'count_severity',
                 'value' => 'critical',
                 'danger_if_positive' => true,
             ],
             [
                 'key' => 'warning_count',
-                'label' => 'Warnings',
+                'label' => Message::tr('Warnings'),
                 'type' => 'count_severity',
                 'value' => 'warning',
                 'warning_if_positive' => true,

@@ -130,7 +130,6 @@ abstract class FormAbstract implements FormInterface
 
     protected function l($string)
     {
-        // todo: implement translation
-        return $string;
+        return \Translate::getModuleTranslation('seooptimizer', $string, 'seooptimizer');
     }
 }

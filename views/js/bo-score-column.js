@@ -7,6 +7,7 @@
  * - Audits unscored entities in batches of 10
  * - Click on a scored badge opens the SEO audit side panel
  */
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function () {
     if (typeof SeoOptimizerScoreColumn === 'undefined') {
         return;
@@ -128,7 +129,7 @@
         var badge = document.createElement('a');
         badge.href = '#';
         badge.className = 'seoo-grade-badge seoo-grade-badge--' + score.color;
-        badge.title = 'Score: ' + Math.round(score.score) + '/100';
+        badge.title = SeoOptimizerTr('Score') + ': ' + Math.round(score.score) + '/100';
         badge.textContent = score.grade;
         badge.addEventListener('click', function (e) {
             e.preventDefault();
@@ -183,7 +184,7 @@
                 if (row) {
                     var td = row.row.querySelector('.seoo-score-cell');
                     if (td && td.querySelector('.seoo-grade-badge--pending')) {
-                        td.innerHTML = '<span class="seoo-grade-badge seoo-grade-badge--gray" title="Audit failed">-</span>';
+                        td.innerHTML = '<span class="seoo-grade-badge seoo-grade-badge--gray" title="' + SeoOptimizerTr('Audit failed') + '">-</span>';
                     }
                 }
             });
@@ -206,7 +207,7 @@
         panel.id = 'seoo-bo-panel';
         panel.className = 'seoo-fa-panel';
         panel.innerHTML = '<div class="seoo-fa-panel__header">'
-            + '<span class="seoo-fa-panel__title">SEO Audit</span>'
+            + '<span class="seoo-fa-panel__title">' + SeoOptimizerTr('SEO Audit') + '</span>'
             + '<button class="seoo-fa-panel__close" type="button" onclick="document.getElementById(\'seoo-bo-panel\').classList.remove(\'seoo-fa-panel--open\');">&times;</button>'
             + '</div>'
             + '<div id="seoo-bo-panel-body" class="seoo-fa-panel__body">'
@@ -246,10 +247,10 @@
                     if (response.status === 'success' && response.data) {
                         panelBody.innerHTML = response.data.html || '';
                     } else {
-                        panelBody.innerHTML = '<div class="seoo-fa-loading"><p>' + (response.message || 'Error') + '</p></div>';
+                        panelBody.innerHTML = '<div class="seoo-fa-loading"><p>' + (response.message || SeoOptimizerTr('Error')) + '</p></div>';
                     }
                 } catch (e) {
-                    panelBody.innerHTML = '<div class="seoo-fa-loading"><p>Parse error</p></div>';
+                    panelBody.innerHTML = '<div class="seoo-fa-loading"><p>' + SeoOptimizerTr('Parse error') + '</p></div>';
                 }
             } else {
                 panelBody.innerHTML = '<div class="seoo-fa-loading"><p>HTTP ' + xhr.status + '</p></div>';

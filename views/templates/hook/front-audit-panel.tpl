@@ -85,7 +85,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/eye.svg"}</span>
-                    APERCU GOOGLE
+                    {l s='GOOGLE PREVIEW' mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
@@ -117,16 +117,16 @@
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/crosshair.svg"}</span>
                     {if $seoo_audit.keywords.available && $seoo_audit.keywords.keywords|count > 0}
-                        MOT-CL&Eacute; CIBLE : &laquo; {$seoo_audit.keywords.keywords[0].keyword|upper|escape:'htmlall':'UTF-8'} &raquo;
+                        {assign var='seoo_kw_upper' value=$seoo_audit.keywords.keywords[0].keyword|upper|escape:'htmlall':'UTF-8'}{l s='TARGET KEYWORD: "%s"' sprintf=[$seoo_kw_upper] mod='seooptimizer'}
                     {else}
-                        MOT-CL&Eacute; CIBLE
+                        {l s='TARGET KEYWORD' mod='seooptimizer'}
                     {/if}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
             <div class="seoo-fa-section__body" onclick="event.stopPropagation()">
                 {if !$seoo_audit.keywords.available}
-                    <p class="seoo-fa-empty">Aucun mot-cl&eacute; d&eacute;fini pour cette page.</p>
+                    <p class="seoo-fa-empty">{l s='No target keyword defined for this page.' mod='seooptimizer'}</p>
                 {else}
                     {foreach $seoo_audit.keywords.keywords as $kw}
                         <div class="seoo-fa-kw-grid">
@@ -151,7 +151,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/article.svg"}</span>
-                    CONTENU &mdash; {$seoo_audit.content.word_count|intval} MOTS
+                    {l s='CONTENT — %d WORDS' sprintf=[$seoo_audit.content.word_count|intval] mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
@@ -173,7 +173,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/list-numbers.svg"}</span>
-                    STRUCTURE DES TITRES
+                    {l s='HEADING STRUCTURE' mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
@@ -198,7 +198,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/brackets-curly.svg"}</span>
-                    DONN&Eacute;ES STRUCTUR&Eacute;ES (SCHEMA.ORG)
+                    {l s='STRUCTURED DATA (SCHEMA.ORG)' mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
@@ -224,7 +224,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/link.svg"}</span>
-                    URL &amp; INDEXATION
+                    {l s='URL & INDEXATION' mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
@@ -242,7 +242,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/image.svg"}</span>
-                    IMAGES ({$seoo_audit.images.total|intval} D&Eacute;TECT&Eacute;ES)
+                    {l s='IMAGES (%d DETECTED)' sprintf=[$seoo_audit.images.total|intval] mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
@@ -260,7 +260,7 @@
             <div class="seoo-fa-section__header">
                 <span class="seoo-fa-section__title">
                     <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/globe.svg"}</span>
-                    LIENS ({$seoo_audit.links.total|intval} D&Eacute;TECT&Eacute;S)
+                    {l s='LINKS (%d DETECTED)' sprintf=[$seoo_audit.links.total|intval] mod='seooptimizer'}
                 </span>
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>

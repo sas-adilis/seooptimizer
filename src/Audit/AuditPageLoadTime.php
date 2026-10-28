@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\PageLoadTimeObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditPageLoadTime implements AuditInterface
 {
     public function getKey(): string
@@ -17,12 +19,12 @@ class AuditPageLoadTime implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Server response time';
+        return Message::tr('Server response time');
     }
 
     public function getDescription(): string
     {
-        return 'Measures the time to first byte of every page, as seen from your own server. It does not include browser rendering, JavaScript or images, and the first request after a cache flush is usually slower. A slow server response delays the display of the page. Thresholds are configurable in the Configuration tab.';
+        return Message::tr('Measures the time to first byte of every page, as seen from your own server. It does not include browser rendering, JavaScript or images, and the first request after a cache flush is usually slower. A slow server response delays the display of the page. Thresholds are configurable in the Configuration tab.');
     }
 
     public function getIcon(): string
@@ -41,8 +43,8 @@ class AuditPageLoadTime implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'load_time_display' => 'Response time',
-            'status_label' => 'Status',
+            'load_time_display' => Message::tr('Response time'),
+            'status_label' => Message::tr('Status'),
         ];
     }
 
@@ -55,10 +57,10 @@ class AuditPageLoadTime implements AuditInterface
         $thresholdSlow = (int) \Configuration::get('SEOO_PERF_THRESHOLD_SLOW') ?: 1800;
 
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'good_count', 'label' => 'Good (< ' . $thresholdGood . ' ms)', 'type' => 'custom'],
-            ['key' => 'medium_count', 'label' => 'Medium (' . $thresholdGood . '-' . $thresholdSlow . ' ms)', 'type' => 'custom', 'warning_if_positive' => true],
-            ['key' => 'slow_count', 'label' => 'Slow (> ' . $thresholdSlow . ' ms)', 'type' => 'custom', 'danger_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'good_count', 'label' => Message::tr('Good (< %d ms)', $thresholdGood), 'type' => 'custom'],
+            ['key' => 'medium_count', 'label' => Message::tr('Medium (%d-%d ms)', $thresholdGood, $thresholdSlow), 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'slow_count', 'label' => Message::tr('Slow (> %d ms)', $thresholdSlow), 'type' => 'custom', 'danger_if_positive' => true],
         ];
     }
 

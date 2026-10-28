@@ -2,6 +2,7 @@
  * PageSpeed tab: runs the Lighthouse analysis page by page (one AJAX call per page)
  * and shows the details of each analyzed page.
  */
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function($) {
     'use strict';
 
@@ -47,10 +48,10 @@
             } else if (result.status === 'done') {
                 finish();
             } else {
-                showError(result.message || 'Error');
+                showError(result.message || SeoOptimizerTr('Error'));
             }
         }).fail(function() {
-            showError('The analysis was interrupted. Click the button again to resume it.');
+            showError(SeoOptimizerTr('The analysis was interrupted. Click the button again to resume it.'));
             $('#seoo-psi-run').prop('disabled', false);
         });
     }
@@ -73,11 +74,11 @@
                 updateProgress(result.progress);
                 step();
             } else {
-                showError(result.message || 'Error');
+                showError(result.message || SeoOptimizerTr('Error'));
                 $button.prop('disabled', false);
             }
         }).fail(function() {
-            showError('Unable to start the analysis.');
+            showError(SeoOptimizerTr('Unable to start the analysis.'));
             $button.prop('disabled', false);
         });
     }

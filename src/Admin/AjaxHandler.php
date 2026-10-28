@@ -7,6 +7,7 @@ use Adilis\SeoOptimizer\PageSpeed\PageSpeedAuditSync;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedClient;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedSampler;
 use Adilis\SeoOptimizer\Storage\PageSpeedStorage;
+use Adilis\SeoOptimizer\Utils\Message;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -66,7 +67,7 @@ class AjaxHandler
     {
         $url = \Tools::getValue('url');
         if (empty($url) || !\Validate::isUrl($url)) {
-            $this->jsonExit(['status' => 'error', 'message' => 'Invalid URL']);
+            $this->jsonExit(['status' => 'error', 'message' => Message::tr('Invalid URL')]);
         }
 
         $auditor = new \Adilis\SeoOptimizer\Pages\SinglePageAuditor();
@@ -239,7 +240,7 @@ class AjaxHandler
 
         $url = EntityHelper::getEntityUrl($entityType, $idEntity, $idLang);
         if (empty($url)) {
-            $this->jsonExit(['status' => 'error', 'message' => 'Unable to resolve URL']);
+            $this->jsonExit(['status' => 'error', 'message' => Message::tr('Unable to resolve URL')]);
         }
 
         $result = (new FrontPageAnalyzer())->analyze($url);
@@ -270,7 +271,7 @@ class AjaxHandler
     {
         $apiKey = trim((string) \Configuration::get('SEOO_PSI_API_KEY'));
         if ($apiKey === '') {
-            $this->jsonExit(['status' => 'error', 'message' => 'Missing PageSpeed Insights API key']);
+            $this->jsonExit(['status' => 'error', 'message' => Message::tr('Missing PageSpeed Insights API key')]);
         }
 
         if (\Tools::getValue('first_process') === 'true') {
@@ -321,7 +322,7 @@ class AjaxHandler
         $idEntity = (int) \Tools::getValue('id_entity');
 
         if (empty($entityType) || $idEntity <= 0) {
-            $this->jsonExit(['status' => 'error', 'message' => 'Invalid parameters']);
+            $this->jsonExit(['status' => 'error', 'message' => Message::tr('Invalid parameters')]);
         }
 
         if ((int) \Tools::getValue('all_langs')) {
@@ -348,7 +349,7 @@ class AjaxHandler
         $idEntity = (int) \Tools::getValue('id_entity');
 
         if (empty($entityType) || $idEntity <= 0) {
-            $this->jsonExit(['status' => 'error', 'message' => 'Invalid parameters']);
+            $this->jsonExit(['status' => 'error', 'message' => Message::tr('Invalid parameters')]);
         }
 
         $noindex = (int) \Tools::getValue('noindex');
@@ -389,10 +390,10 @@ class AjaxHandler
         }
 
         if ($success) {
-            $this->jsonExit(['status' => 'success', 'message' => 'SEO configuration saved']);
+            $this->jsonExit(['status' => 'success', 'message' => Message::tr('SEO configuration saved')]);
         }
 
-        $this->jsonExit(['status' => 'error', 'message' => 'Failed to save']);
+        $this->jsonExit(['status' => 'error', 'message' => Message::tr('Failed to save')]);
     }
 
     /**
@@ -439,7 +440,7 @@ class AjaxHandler
                 ]);
                 break;
             default:
-                $this->jsonExit(['status' => 'error', 'message' => 'Invalid chart']);
+                $this->jsonExit(['status' => 'error', 'message' => Message::tr('Invalid chart')]);
         }
     }
 

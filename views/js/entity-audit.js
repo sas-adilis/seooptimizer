@@ -1,3 +1,4 @@
+window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.SeoOptimizerI18n && window.SeoOptimizerI18n[s]) || s; };
 (function () {
     var panel = document.getElementById('seoo-ea');
     if (!panel) {
@@ -32,10 +33,10 @@
                     if (response.status === 'success' && response.data) {
                         onLoaded(response.data);
                     } else {
-                        onError(response.message || 'Audit failed');
+                        onError(response.message || SeoOptimizerTr('Audit failed'));
                     }
                 } catch (e) {
-                    onError('Parse error');
+                    onError(SeoOptimizerTr('Parse error'));
                 }
             } else {
                 onError('HTTP ' + xhr.status);

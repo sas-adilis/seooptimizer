@@ -5,7 +5,7 @@
     <div class="seoo-ea__header">
         <div class="seoo-ea__title-row">
             <img class="seoo-ea__logo" src="{$seoo_module_path|escape:'htmlall':'UTF-8'}logo.png" alt="SEO Optimizer">
-            <h4 class="seoo-ea__title">SEO Audit</h4>
+            <h4 class="seoo-ea__title">{l s='SEO Audit' mod='seooptimizer'}</h4>
             <span id="seoo-ea-badge" class="seoo-ea__badge seoo-ea__badge--loading">
                 <span class="seoo-fa-spinner"></span>
             </span>

@@ -8,6 +8,8 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\CrawlerObserver\InternalLinksObserver;
 
+use Adilis\SeoOptimizer\Utils\Message;
+
 class AuditInternalLinks implements AuditInterface
 {
     const MIN_OUTGOING_LINKS = 3;
@@ -19,12 +21,12 @@ class AuditInternalLinks implements AuditInterface
 
     public function getTitle(): string
     {
-        return 'Internal links';
+        return Message::tr('Internal links');
     }
 
     public function getDescription(): string
     {
-        return 'Analyzes the internal linking structure of your site: pages with no or too few outgoing internal links, orphan pages with no incoming links, empty anchor texts and nofollow links.';
+        return Message::tr('Analyzes the internal linking structure of your site: pages with no or too few outgoing internal links, orphan pages with no incoming links, empty anchor texts and nofollow links.');
     }
 
     public function getIcon(): string
@@ -43,10 +45,10 @@ class AuditInternalLinks implements AuditInterface
     public function getResultColumns(): array
     {
         return [
-            'message' => 'Issue',
-            'outgoing' => 'Outgoing',
-            'incoming' => 'Incoming',
-            'detail' => 'Detail',
+            'message' => Message::tr('Issue'),
+            'outgoing' => Message::tr('Outgoing'),
+            'incoming' => Message::tr('Incoming'),
+            'detail' => Message::tr('Detail'),
         ];
     }
 
@@ -56,11 +58,11 @@ class AuditInternalLinks implements AuditInterface
     public function getKpiDefinitions(): array
     {
         return [
-            ['key' => 'crawled', 'label' => 'Pages crawled', 'type' => 'crawled'],
-            ['key' => 'links_checked', 'label' => 'Internal links found', 'type' => 'custom'],
-            ['key' => 'no_outgoing_count', 'label' => 'No outgoing links', 'type' => 'custom', 'danger_if_positive' => true],
-            ['key' => 'few_outgoing_count', 'label' => 'Few outgoing links (< ' . self::MIN_OUTGOING_LINKS . ')', 'type' => 'custom', 'warning_if_positive' => true],
-            ['key' => 'critical_issues', 'label' => 'Critical (orphan/no links)', 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
+            ['key' => 'crawled', 'label' => Message::tr('Pages crawled'), 'type' => 'crawled'],
+            ['key' => 'links_checked', 'label' => Message::tr('Internal links found'), 'type' => 'custom'],
+            ['key' => 'no_outgoing_count', 'label' => Message::tr('No outgoing links'), 'type' => 'custom', 'danger_if_positive' => true],
+            ['key' => 'few_outgoing_count', 'label' => Message::tr('Few outgoing links (< %d)', self::MIN_OUTGOING_LINKS), 'type' => 'custom', 'warning_if_positive' => true],
+            ['key' => 'critical_issues', 'label' => Message::tr('Critical (orphan/no links)'), 'type' => 'count_severity', 'value' => 'critical', 'danger_if_positive' => true],
         ];
     }
 
@@ -99,7 +101,7 @@ class AuditInternalLinks implements AuditInterface
                     'url' => $url,
                     'type' => 'no_outgoing',
                     'severity' => 'critical',
-                    'message' => 'No outgoing internal links',
+                    'message' => Message::t('No outgoing internal links'),
                     'outgoing' => 0,
                     'incoming' => $this->getIncomingCount($url, $incoming),
                     'detail' => '',
@@ -110,7 +112,7 @@ class AuditInternalLinks implements AuditInterface
                     'url' => $url,
                     'type' => 'few_outgoing',
                     'severity' => 'warning',
-                    'message' => sprintf('Only %d unique outgoing internal link(s)', $count),
+                    'message' => Message::t('Only %d unique outgoing internal link(s)', $count),
                     'outgoing' => $count,
                     'incoming' => $this->getIncomingCount($url, $incoming),
                     'detail' => '',
@@ -123,7 +125,7 @@ class AuditInternalLinks implements AuditInterface
                     'url' => $url,
                     'type' => 'empty_anchor',
                     'severity' => 'warning',
-                    'message' => sprintf('%d link(s) with empty anchor text', $emptyAnchors),
+                    'message' => Message::t('%d link(s) with empty anchor text', $emptyAnchors),
                     'outgoing' => $count,
                     'incoming' => $this->getIncomingCount($url, $incoming),
                     'detail' => sprintf('%d empty', $emptyAnchors),
@@ -138,7 +140,7 @@ class AuditInternalLinks implements AuditInterface
                         'url' => $url,
                         'type' => 'excessive_nofollow',
                         'severity' => 'warning',
-                        'message' => sprintf('%d/%d internal links are nofollow (%d%%)', $nofollowCount, $pageData['count'], $pct),
+                        'message' => Message::t('%d/%d internal links are nofollow (%d%%)', $nofollowCount, $pageData['count'], $pct),
                         'outgoing' => $count,
                         'incoming' => $this->getIncomingCount($url, $incoming),
                         'detail' => sprintf('%d nofollow', $nofollowCount),
@@ -157,7 +159,7 @@ class AuditInternalLinks implements AuditInterface
                     'url' => $url,
                     'type' => 'orphan_page',
                     'severity' => 'critical',
-                    'message' => 'Orphan page — no internal link points to this page',
+                    'message' => Message::t('Orphan page — no internal link points to this page'),
                     'outgoing' => $outCount,
                     'incoming' => 0,
                     'detail' => 'Orphan',
