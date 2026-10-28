@@ -157,6 +157,8 @@
 
 /* Re-audit button */
 .seoo-pages__reaudit-btn {
+    white-space: nowrap;
+
     &.loading {
         pointer-events: none;
         opacity: 0.6;

@@ -1501,6 +1501,9 @@ textarea {
 }
 
 /* Re-audit button */
+.seoo-pages__reaudit-btn {
+  white-space: nowrap;
+}
 .seoo-pages__reaudit-btn.loading {
   pointer-events: none;
   opacity: 0.6;
