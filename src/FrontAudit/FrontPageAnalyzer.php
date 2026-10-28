@@ -7,6 +7,8 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
+use Adilis\SeoOptimizer\Audit\AuditRegistry;
+use Adilis\SeoOptimizer\Audit\ScoredAuditInterface;
 use Adilis\SeoOptimizer\CrawlerObserver\BrokenLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\HeadingHierarchyObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\InternalLinksObserver;
@@ -24,6 +26,7 @@ use Adilis\SeoOptimizer\CrawlerObserver\UnsecuredLinksAuditObserver;
 use Adilis\SeoOptimizer\Score\ScoreGradeMapping;
 use Adilis\SeoOptimizer\Utils\CurlBatch;
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\RobotsTxt;
 
 /**
  * Real-time SEO analyzer for the front-office panel.
@@ -77,6 +80,9 @@ class FrontPageAnalyzer
         // Run all observers on this single page
         $observerResults = $this->runObservers();
 
+        // The audits interpret the observer results (severity, message): the panel reuses them
+        $auditRows = $this->collectAuditRows($observerResults);
+
         // Build sections from observer results + direct HTML analysis
         $performance = $this->buildPerformanceSection(
             $observerResults['page_load_time'] ?? [],
@@ -86,33 +92,14 @@ class FrontPageAnalyzer
         $headings = $this->buildHeadingsSection($observerResults['heading_hierarchy'] ?? []);
         $content = $this->buildContentSection($observerResults['text_ratio'] ?? []);
         $keywords = $this->buildKeywordsSection($observerResults['keyword_check'] ?? []);
-        $images = $this->buildImagesSection($observerResults['missing_alt'] ?? []);
-        $links = $this->buildLinksSection($observerResults);
+        $images = $this->buildImagesSection($auditRows['missing_alt'] ?? []);
+        $links = $this->buildLinksSection($observerResults, $auditRows);
         $structuredData = $this->buildStructuredDataSection($observerResults['structured_data'] ?? []);
         $indexation = $this->buildIndexationSection();
+        $social = $this->buildSocialSection();
 
-        // Build keyword checks for scoring
-        $keywordChecks = [];
-        if (isset($keywords['keywords'])) {
-            foreach ($keywords['keywords'] as $kw) {
-                foreach ($kw['details'] as $d) {
-                    $keywordChecks[] = $d;
-                }
-            }
-        }
-
-        // Score = weighted average of per-category scores
-        $score = $this->computeScore([
-            ['weight' => 5,  'checks' => $performance['checks'] ?? []],
-            ['weight' => 20, 'checks' => $meta['checks'] ?? []],
-            ['weight' => 10, 'checks' => $headings['checks'] ?? []],
-            ['weight' => 5,  'checks' => $content['checks'] ?? []],
-            ['weight' => 10, 'checks' => $keywordChecks],
-            ['weight' => 8,  'checks' => $images['checks'] ?? []],
-            ['weight' => 10, 'checks' => $links['checks'] ?? []],
-            ['weight' => 8,  'checks' => $structuredData['checks'] ?? []],
-            ['weight' => 14, 'checks' => $indexation['checks'] ?? []],
-        ]);
+        // Same score as the full audit
+        $score = $this->computeScore($auditRows);
 
         return [
             'url' => $url,
@@ -127,6 +114,7 @@ class FrontPageAnalyzer
             'images' => $images,
             'links' => $links,
             'indexation' => $indexation,
+            'social' => $social,
         ];
     }
 
@@ -157,7 +145,10 @@ class FrontPageAnalyzer
         $observers[] = new StructuredDataObserver();
 
         // Heavy observers (make HTTP HEAD requests on each link/asset found)
-        $observers[] = new PageWeightObserver();
+        if (PageSpeedScore::forUrl($this->url) === null) {
+            // Lighthouse replaces the weight of the pages it analyzed
+            $observers[] = new PageWeightObserver();
+        }
         $observers[] = new BrokenLinksObserver();
         $observers[] = new RedirectedLinksObserver();
 
@@ -295,8 +286,28 @@ class FrontPageAnalyzer
             'weight_details' => $weightDetails,
             'lighthouse' => $lighthouse,
             'lighthouse_severity' => $lighthouse === null ? 'good' : PageSpeedScore::severity($lighthouse),
+            'lighthouse_metrics' => $lighthouse === null ? [] : $this->buildLighthouseMetrics(),
             'checks' => $checks,
         ];
+    }
+
+    /**
+     * @return array<int, array{label: string, display: string, severity: string}>
+     */
+    private function buildLighthouseMetrics(): array
+    {
+        $labels = [
+            'lcp' => Message::tr('LCP'),
+            'tbt' => Message::tr('TBT'),
+            'cls' => Message::tr('CLS'),
+        ];
+
+        $metrics = [];
+        foreach (PageSpeedScore::metricsForUrl($this->url) as $key => $metric) {
+            $metrics[] = ['label' => $labels[$key], 'display' => $metric['display'], 'severity' => $metric['severity']];
+        }
+
+        return $metrics;
     }
 
     /**
@@ -448,25 +459,25 @@ class FrontPageAnalyzer
     }
 
     /**
-     * @param array $observerData From MissingAltAttributeObserver
+     * @param array $rows Rows of AuditMissingAlt for this page
      * @return array
      */
-    private function buildImagesSection(array $observerData): array
+    private function buildImagesSection(array $rows): array
     {
         $images = $this->extractor->extractImages();
         $total = count($images);
         $checks = [];
 
-        // MissingAltAttributeObserver: keyed by URL, only present if issues found
-        if (isset($observerData[$this->url])) {
-            $imgData = $observerData[$this->url];
-            if ((int) $imgData['missing_alt'] > 0) {
-                $checks[] = ['status' => 'warning', 'title' => Message::tr('%d image(s) missing alt attribute', $imgData['missing_alt']), 'message' => ''];
+        foreach ($rows as $row) {
+            if ($row['type'] === 'missing_alt' && !isset($checks['missing_alt'])) {
+                $checks['missing_alt'] = ['status' => $row['severity'], 'title' => Message::tr('%d image(s) missing alt attribute', $row['missing_alt']), 'message' => ''];
+            } elseif ($row['type'] === 'empty_alt' && !isset($checks['empty_alt'])) {
+                $checks['empty_alt'] = ['status' => $row['severity'], 'title' => Message::tr('%d image(s) with empty alt', $row['empty_alt']), 'message' => Message::tr('Fine if the images are decorative.')];
             }
-            if ((int) $imgData['empty_alt'] > 0) {
-                $checks[] = ['status' => 'info', 'title' => Message::tr('%d image(s) with empty alt', $imgData['empty_alt']), 'message' => Message::tr('Fine if the images are decorative.')];
-            }
-        } elseif ($total > 0) {
+        }
+        $checks = array_values($checks);
+
+        if (empty($checks) && $total > 0) {
             $checks[] = ['status' => 'good', 'title' => Message::tr('All images have alt attributes'), 'message' => ''];
         }
 
@@ -484,7 +495,7 @@ class FrontPageAnalyzer
         if ($hasWebp && !$hasOld) {
             $checks[] = ['status' => 'good', 'title' => Message::tr('Optimized formats'), 'message' => Message::tr('All images use next-gen formats.')];
         } elseif ($hasOld) {
-            $checks[] = ['status' => 'info', 'title' => $hasWebp ? 'Mixed formats' : 'Classic formats', 'message' => Message::tr('Some images still use JPG/PNG.')];
+            $checks[] = ['status' => 'info', 'title' => $hasWebp ? Message::tr('Mixed formats') : Message::tr('Classic formats'), 'message' => Message::tr('Some images still use JPG/PNG.')];
         }
 
         return ['total' => $total, 'checks' => $checks];
@@ -492,12 +503,11 @@ class FrontPageAnalyzer
 
     /**
      * @param array $allObserverResults All observer results
+     * @param array $auditRows Audit rows for this page, by audit key
      * @return array
      */
-    private function buildLinksSection(array $allObserverResults): array
+    private function buildLinksSection(array $allObserverResults, array $auditRows): array
     {
-        $brokenData = $allObserverResults['broken_links'] ?? [];
-        $redirectedData = $allObserverResults['redirected_links'] ?? [];
         $internalData = $allObserverResults['internal_links'] ?? [];
 
         // InternalLinksObserver: {outgoing: {url => {count, issues[], ...}}, incoming: {url => count}}
@@ -510,21 +520,17 @@ class FrontPageAnalyzer
 
         $checks = [];
 
-        // Internal links — interpret observer raw data (same logic as AuditInternalLinks.formatResults)
-        if ($pageInternalData) {
-            $uniqueCount = (int) $pageInternalData['unique_count'];
-            if ($internal === 0) {
-                $checks[] = ['status' => 'critical', 'title' => Message::tr('No outgoing internal links'), 'message' => ''];
-            } elseif ($uniqueCount < 3) {
-                $checks[] = ['status' => 'warning', 'title' => Message::tr('Only %d unique outgoing internal link(s)', $uniqueCount), 'message' => ''];
-            } else {
-                $checks[] = ['status' => 'good', 'title' => Message::tr('Internal linking'), 'message' => Message::tr('%d unique internal links.', $uniqueCount)];
-            }
-            if ((int) $pageInternalData['empty_anchors'] > 0) {
-                $checks[] = ['status' => 'warning', 'title' => Message::tr('%d link(s) with empty anchor text', $pageInternalData['empty_anchors']), 'message' => ''];
-            }
-        } else {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Internal linking'), 'message' => ''];
+        // Internal links: issues found by AuditInternalLinks
+        $internalRows = $auditRows['internal_links'] ?? [];
+        foreach ($internalRows as $row) {
+            $checks[] = ['status' => $row['severity'], 'title' => Message::translate($row['message']), 'message' => ''];
+        }
+        if (empty($internalRows)) {
+            $checks[] = [
+                'status' => 'good',
+                'title' => Message::tr('Internal linking'),
+                'message' => $pageInternalData ? Message::tr('%d unique internal links.', (int) $pageInternalData['unique_count']) : '',
+            ];
         }
 
         // External links
@@ -532,22 +538,24 @@ class FrontPageAnalyzer
             $checks[] = ['status' => 'info', 'title' => Message::tr('External links'), 'message' => Message::tr('%d external links detected.', $external)];
         }
 
-        // Broken links from observer
-        $brokenCount = count(array_filter($brokenData, function ($e) {
-            return $e['page_url'] === $this->url;
-        }));
-        if ($brokenCount > 0) {
-            $checks[] = ['status' => 'critical', 'title' => Message::tr('%d broken link(s)', $brokenCount), 'message' => Message::tr('HTTP 404 or unreachable.')];
+        // Broken links
+        $broken = $auditRows['broken_links'] ?? [];
+        if (!empty($broken)) {
+            $checks[] = ['status' => $this->worstSeverity($broken), 'title' => Message::tr('%d broken link(s)', count($broken)), 'message' => Message::tr('HTTP 404 or unreachable.')];
         } else {
             $checks[] = ['status' => 'good', 'title' => Message::tr('No broken links'), 'message' => ''];
         }
 
-        // Redirected links from observer
-        $redirectedCount = count(array_filter($redirectedData, function ($e) {
-            return $e['page_url'] === $this->url;
-        }));
-        if ($redirectedCount > 0) {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('%d redirected link(s)', $redirectedCount), 'message' => Message::tr('Update to final URL.')];
+        // Redirected links
+        $redirected = $auditRows['redirected_links'] ?? [];
+        if (!empty($redirected)) {
+            $checks[] = ['status' => $this->worstSeverity($redirected), 'title' => Message::tr('%d redirected link(s)', count($redirected)), 'message' => Message::tr('Update to final URL.')];
+        }
+
+        // Resources and links in HTTP
+        $unsecured = $auditRows['unsecured_links'] ?? [];
+        if (!empty($unsecured)) {
+            $checks[] = ['status' => $this->worstSeverity($unsecured), 'title' => Message::tr('%d link(s) or resource(s) in HTTP', count($unsecured)), 'message' => Message::tr('Switch to HTTPS to avoid mixed content.')];
         }
 
         return ['total' => $total, 'internal' => $internal, 'external' => $external, 'checks' => $checks];
@@ -582,7 +590,13 @@ class FrontPageAnalyzer
         $typeCounts = $pageData['type_counts'];
         $isProduct = $pageData['is_product'];
 
-        if ($isProduct && isset($typeCounts['Product']) && isset($typeCounts['Offer'])) {
+        $productIssue = false;
+        foreach ($pageData['issues'] as $issue) {
+            if (in_array($issue['schema_type'], ['Product', 'Offer'], true)) {
+                $productIssue = true;
+            }
+        }
+        if ($isProduct && !$productIssue && isset($typeCounts['Product']) && isset($typeCounts['Offer'])) {
             $checks[] = ['status' => 'good', 'title' => Message::tr('Product schema complete'), 'message' => Message::tr('Product + Offer present.')];
         }
         if (isset($typeCounts['AggregateRating'])) {
@@ -604,30 +618,53 @@ class FrontPageAnalyzer
     }
 
     /**
-     * Indexation analysis — canonical, robots, hreflang, URL, llms.txt.
-     * No observer for this — direct HTML analysis.
+     * Indexation analysis — HTTP status, canonical, robots (meta, header, robots.txt), hreflang, URL, llms.txt.
+     * No observer for this — direct HTML and header analysis.
      *
      * @return array
      */
     private function buildIndexationSection(): array
     {
         $checks = [];
+        $headers = CurlBatch::fetchHeaders($this->url);
+        $pageNoindex = $this->extractor->isNoindex();
+
+        // The page itself redirects
+        if (!empty($headers) && $headers['redirect_count'] > 0) {
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('Page URL redirects'), 'message' => $headers['effective_url']];
+        }
 
         // Canonical
         $canonical = $this->extractor->extractCanonical();
+        $canonicalIsSelf = true;
         if (!empty($canonical)) {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Canonical URL defined'), 'message' => $canonical];
+            $canonicalIsSelf = $this->normalizeUrl($this->resolveUrl($canonical)) === $this->normalizeUrl($this->url);
+            if ($canonicalIsSelf) {
+                $checks[] = ['status' => 'good', 'title' => Message::tr('Canonical URL defined'), 'message' => $canonical];
+            } else {
+                $checks[] = ['status' => 'warning', 'title' => Message::tr('Canonical URL points to another page'), 'message' => $canonical];
+            }
         } else {
             $checks[] = ['status' => 'warning', 'title' => Message::tr('Canonical URL missing'), 'message' => ''];
         }
 
-        // Meta robots
-        if ($this->extractor->isNoindex()) {
+        // Robots: meta tag, X-Robots-Tag header, robots.txt
+        $headerNoindex = !empty($headers['x_robots_tag'])
+            && (strpos($headers['x_robots_tag'], 'noindex') !== false || strpos($headers['x_robots_tag'], 'none') !== false);
+
+        if ($pageNoindex) {
             $checks[] = ['status' => 'critical', 'title' => Message::tr('Page not indexable'), 'message' => Message::tr('Meta robots noindex detected.')];
+        } elseif ($headerNoindex) {
+            $checks[] = ['status' => 'critical', 'title' => Message::tr('Page not indexable'), 'message' => Message::tr('X-Robots-Tag noindex detected in the HTTP headers.')];
         } elseif ($this->isBlockedByRobotsTxt()) {
             $checks[] = ['status' => 'critical', 'title' => Message::tr('Blocked by robots.txt'), 'message' => ''];
         } else {
             $checks[] = ['status' => 'good', 'title' => Message::tr('Page indexable'), 'message' => Message::tr('No noindex, no robots.txt blocking.')];
+        }
+
+        // Conflicting signals: noindex with a canonical to another page
+        if (($pageNoindex || $headerNoindex) && !empty($canonical) && !$canonicalIsSelf) {
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('Noindex combined with a canonical to another page'), 'message' => Message::tr('Search engines get conflicting signals.')];
         }
 
         // Hreflang
@@ -657,7 +694,10 @@ class FrontPageAnalyzer
         if (file_exists($llmsPath)) {
             $llmsContent = file_get_contents($llmsPath);
             $urlPath = parse_url($this->url, PHP_URL_PATH) ?: '';
-            if (strpos($llmsContent, $urlPath) !== false || strpos($llmsContent, $this->url) !== false) {
+            // The home page path ("/") is in any link: only its full URL counts
+            $inLlms = strpos($llmsContent, $this->url) !== false
+                || (trim($urlPath, '/') !== '' && strpos($llmsContent, $urlPath) !== false);
+            if ($inLlms) {
                 $checks[] = ['status' => 'good', 'title' => Message::tr('Page included in llms.txt'), 'message' => ''];
             } else {
                 $checks[] = ['status' => 'info', 'title' => Message::tr('Page absent from llms.txt'), 'message' => ''];
@@ -665,6 +705,54 @@ class FrontPageAnalyzer
         }
 
         return ['checks' => $checks, 'hreflangs' => $hreflangs];
+    }
+
+    /**
+     * Social and technical tags: Open Graph, Twitter card, language, viewport.
+     *
+     * @return array
+     */
+    private function buildSocialSection(): array
+    {
+        $checks = [];
+
+        $og = $this->extractor->extractPrefixedMetas('property', 'og:');
+        if (empty($og)) {
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('Open Graph tags missing'), 'message' => Message::tr('The page is shared without title or image preview.')];
+        } else {
+            if (!isset($og['og:image'])) {
+                $checks[] = ['status' => 'warning', 'title' => Message::tr('og:image missing'), 'message' => Message::tr('The shared link has no image preview.')];
+            }
+            foreach (['og:title', 'og:description'] as $tag) {
+                if (!isset($og[$tag])) {
+                    $checks[] = ['status' => 'info', 'title' => Message::tr('%s missing', $tag), 'message' => ''];
+                }
+            }
+            if (isset($og['og:image'], $og['og:title'], $og['og:description'])) {
+                $checks[] = ['status' => 'good', 'title' => Message::tr('Open Graph tags complete'), 'message' => ''];
+            }
+        }
+
+        if (empty($this->extractor->extractPrefixedMetas('name', 'twitter:'))) {
+            $checks[] = ['status' => 'info', 'title' => Message::tr('Twitter card missing'), 'message' => Message::tr('X falls back on Open Graph tags when they exist.')];
+        } else {
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Twitter card defined'), 'message' => ''];
+        }
+
+        $lang = $this->extractor->extractHtmlLang();
+        if ($lang === '') {
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('Language of the page missing'), 'message' => Message::tr('Add a lang attribute to the html tag.')];
+        } else {
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Language of the page defined'), 'message' => $lang];
+        }
+
+        if ($this->extractor->extractViewport() === '') {
+            $checks[] = ['status' => 'warning', 'title' => Message::tr('Viewport tag missing'), 'message' => Message::tr('Required for mobile-first indexing.')];
+        } else {
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Viewport tag defined'), 'message' => ''];
+        }
+
+        return ['checks' => $checks];
     }
 
     // ──────────────────────────────────────────────
@@ -678,78 +766,133 @@ class FrontPageAnalyzer
             return false;
         }
 
-        $urlPath = parse_url($this->url, PHP_URL_PATH) ?: '/';
-        $inUserAgentAll = false;
+        $path = parse_url($this->url, PHP_URL_PATH) ?: '/';
+        $query = parse_url($this->url, PHP_URL_QUERY);
 
-        foreach (explode("\n", file_get_contents($robotsPath)) as $line) {
-            $line = trim($line);
-            if (stripos($line, 'user-agent:') === 0) {
-                $inUserAgentAll = (trim(substr($line, 11)) === '*');
-            } elseif ($inUserAgentAll && stripos($line, 'disallow:') === 0) {
-                $rule = trim(substr($line, 9));
-                if (!empty($rule) && strpos($urlPath, $rule) === 0) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return RobotsTxt::isBlocked((string) file_get_contents($robotsPath), $path . ($query ? '?' . $query : ''));
     }
 
     /**
-     * Compute a weighted score from per-category checks.
+     * Absolute URL of a link found in the page (canonical may be relative).
      *
-     * Each category has a weight (0-100) and its own list of checks.
-     * Within a category, the score starts at 100 and is penalised per issue,
-     * but capped at 0 — so one bad category cannot overflow into others.
-     * The final score is the weighted average of all categories.
+     * @param string $href
+     * @return string
+     */
+    private function resolveUrl(string $href): string
+    {
+        if (preg_match('#^https?://#i', $href)) {
+            return $href;
+        }
+
+        $parsed = parse_url($this->url);
+        $base = (isset($parsed['scheme']) ? $parsed['scheme'] : 'https') . '://' . (isset($parsed['host']) ? $parsed['host'] : '');
+        if (strpos($href, '//') === 0) {
+            return (isset($parsed['scheme']) ? $parsed['scheme'] : 'https') . ':' . $href;
+        }
+
+        return $base . '/' . ltrim($href, '/');
+    }
+
+    /**
+     * Comparable form of a URL: no fragment, no trailing slash, lowercase host.
      *
-     * @param array $categories [['weight' => int, 'checks' => array], ...]
+     * @param string $url
+     * @return string
+     */
+    private function normalizeUrl(string $url): string
+    {
+        $url = preg_replace('/#.*$/', '', trim($url));
+        $parsed = parse_url($url);
+        if ($parsed === false || empty($parsed['host'])) {
+            return rtrim($url, '/');
+        }
+
+        return strtolower($parsed['scheme']) . '://' . strtolower($parsed['host'])
+            . (isset($parsed['port']) ? ':' . $parsed['port'] : '')
+            . rtrim(isset($parsed['path']) ? $parsed['path'] : '', '/')
+            . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
+    }
+
+    /**
+     * Rows of every audit for this page, by audit key. Audits that only apply to
+     * indexable pages are left out of a noindex page, as in the full audit.
+     *
+     * @param array<string, array> $observerResults
+     * @return array<string, array>
+     */
+    private function collectAuditRows(array $observerResults): array
+    {
+        $indexable = !$this->extractor->isNoindex();
+        $rows = [];
+
+        foreach (AuditRegistry::getAll() as $audit) {
+            if ($audit->requiresIndexablePage() && !$indexable) {
+                continue;
+            }
+
+            $rows[$audit->getKey()] = array_values(array_filter(
+                $audit->formatResults($observerResults),
+                function ($row) {
+                    // The orphan pages need the whole site: not computable on a single page
+                    return ($row['url'] ?? '') === $this->url && ($row['type'] ?? '') !== 'orphan_page';
+                }
+            ));
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param array $rows
+     * @return string
+     */
+    private function worstSeverity(array $rows): string
+    {
+        $order = ['info' => 1, 'warning' => 2, 'critical' => 3];
+        $worst = 'info';
+        foreach ($rows as $row) {
+            if (isset($order[$row['severity']]) && $order[$row['severity']] > $order[$worst]) {
+                $worst = $row['severity'];
+            }
+        }
+
+        return $worst;
+    }
+
+    /**
+     * Same calculation as SeoScoreCalculator: per audit, 100 minus the penalty of each
+     * issue of the page, then the average weighted by the audit weights.
+     *
+     * @param array<string, array> $auditRows
      * @return array
      */
-    private function computeScore(array $categories): array
+    private function computeScore(array $auditRows): array
     {
         $weightedSum = 0;
         $totalWeight = 0;
 
-        foreach ($categories as $cat) {
-            $weight = (int) $cat['weight'];
-            $checks = $cat['checks'];
-
-            if ($weight === 0 || empty($checks)) {
-                // No checks = perfect score for this category
-                $weightedSum += 100 * $weight;
-                $totalWeight += $weight;
+        foreach (AuditRegistry::getAll() as $audit) {
+            $key = $audit->getKey();
+            if (!isset($auditRows[$key])) {
                 continue;
             }
 
+            $impact = $audit->getScoreImpact();
             $penalty = 0;
-            $hasCritical = false;
-            foreach ($checks as $check) {
-                $status = isset($check['status']) ? $check['status'] : 'good';
-                switch ($status) {
-                    case 'critical':
-                        $penalty += 30;
-                        $hasCritical = true;
-                        break;
-                    case 'warning':
-                        $penalty += 15;
-                        break;
-                    // 'info' checks are informational: no penalty (same as the BO audits)
-                }
+            foreach ($auditRows[$key] as $row) {
+                $penalty += isset($impact[$row['severity']]) ? $impact[$row['severity']] : 0;
             }
 
-            // If all checks are good (no penalties), score is 100
-            $catScore = max(0, 100 - $penalty);
+            $auditScore = [$this->url => max(0, 100 - $penalty)];
+            if ($audit instanceof ScoredAuditInterface) {
+                $auditScore = $audit->overridePageScores($auditScore);
+            }
 
-            $weightedSum += $catScore * $weight;
-            $totalWeight += $weight;
+            $weightedSum += $auditScore[$this->url] * $audit->getScoreWeight();
+            $totalWeight += $audit->getScoreWeight();
         }
 
-        $score = $totalWeight > 0
-            ? round($weightedSum / $totalWeight)
-            : 100;
-
+        $score = $totalWeight > 0 ? round($weightedSum / $totalWeight, 1) : 100;
         $gradeData = ScoreGradeMapping::fromScore($score);
 
         return [

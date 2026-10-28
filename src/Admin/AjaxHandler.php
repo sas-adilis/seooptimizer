@@ -178,7 +178,7 @@ class AjaxHandler
             $countCritical = 0;
             $countWarning = 0;
             $countInfo = 0;
-            $sections = ['meta', 'headings', 'content', 'images', 'links', 'structured_data', 'indexation', 'performance'];
+            $sections = ['meta', 'headings', 'content', 'images', 'links', 'structured_data', 'indexation', 'social', 'performance'];
             foreach ($sections as $section) {
                 if (!isset($analysis[$section]['checks'])) {
                     continue;

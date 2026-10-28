@@ -124,6 +124,49 @@ class CurlBatch
     }
 
     /**
+     * Response headers of a page (HEAD request, redirects followed).
+     *
+     * @param string $url
+     * @param int $timeout
+     * @return array{http_code: int, redirect_count: int, effective_url: string, x_robots_tag: string} Empty on failure
+     */
+    public static function fetchHeaders(string $url, int $timeout = 5): array
+    {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
+
+        $raw = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        curl_close($ch);
+
+        if ($raw === false) {
+            return [];
+        }
+
+        // With redirects, each response has its own block of headers: keep the last one
+        $blocks = preg_split('/\r?\n\r?\n/', trim($raw));
+        $last = (string) end($blocks);
+        $xRobots = [];
+        if (preg_match_all('/^X-Robots-Tag:\s*(.+)$/mi', $last, $matches)) {
+            $xRobots = array_map('trim', $matches[1]);
+        }
+
+        return [
+            'http_code' => (int) $info['http_code'],
+            'redirect_count' => (int) $info['redirect_count'],
+            'effective_url' => (string) $info['url'],
+            'x_robots_tag' => strtolower(implode(', ', $xRobots)),
+        ];
+    }
+
+    /**
      * Get file sizes for multiple URLs in parallel via HEAD requests.
      *
      * @param array $urls

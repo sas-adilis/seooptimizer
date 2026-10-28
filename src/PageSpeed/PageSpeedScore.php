@@ -21,6 +21,9 @@ class PageSpeedScore
     /** @var array<int, array<string, int>> */
     private static $cache = [];
 
+    /** @var array<int, array<string, array>> */
+    private static $metrics = [];
+
     /**
      * @param string $url
      * @param int|null $idShop
@@ -44,6 +47,34 @@ class PageSpeedScore
         return self::load($idShop === null ? (int) \Context::getContext()->shop->id : $idShop);
     }
 
+    /**
+     * Core Web Vitals measured by Lighthouse for a page (LCP, TBT, CLS).
+     *
+     * @param string $url
+     * @param int|null $idShop
+     *
+     * @return array<string, array{display: string, severity: string}> Empty when the page has not been analyzed
+     */
+    public static function metricsForUrl(string $url, ?int $idShop = null): array
+    {
+        $idShop = $idShop === null ? (int) \Context::getContext()->shop->id : $idShop;
+        self::load($idShop);
+
+        $metrics = [];
+        foreach (['lcp', 'tbt', 'cls'] as $key) {
+            $metric = isset(self::$metrics[$idShop][$url][$key]) ? self::$metrics[$idShop][$url][$key] : null;
+            if ($metric === null || $metric['value'] === null || $metric['display'] === '') {
+                continue;
+            }
+            $metrics[$key] = [
+                'display' => $metric['display'],
+                'severity' => $metric['score'] === null ? 'info' : self::severity((int) round($metric['score'] * 100)),
+            ];
+        }
+
+        return $metrics;
+    }
+
     public static function severity(int $score): string
     {
         if ($score >= self::GOOD_FROM) {
@@ -56,6 +87,7 @@ class PageSpeedScore
     public static function reset()
     {
         self::$cache = [];
+        self::$metrics = [];
     }
 
     /**
@@ -67,9 +99,12 @@ class PageSpeedScore
     {
         if (!isset(self::$cache[$idShop])) {
             self::$cache[$idShop] = [];
+            self::$metrics[$idShop] = [];
             foreach (PageSpeedStorage::getAll($idShop) as $row) {
                 if ($row['status'] === PageSpeedStorage::STATUS_DONE && $row['score_performance'] !== null) {
                     self::$cache[$idShop][$row['url']] = (int) $row['score_performance'];
+                    $metrics = $row['metrics_json'] ? json_decode($row['metrics_json'], true) : [];
+                    self::$metrics[$idShop][$row['url']] = is_array($metrics) ? $metrics : [];
                 }
             }
         }

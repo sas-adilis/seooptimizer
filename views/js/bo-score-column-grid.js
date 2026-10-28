@@ -131,8 +131,15 @@ window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.S
         badge.title = 'SEO: ' + grade;
         badge.textContent = grade;
         if (entityId > 0) {
+            // The grid opens the row link on "mouseup" of its cells: stop it before it reaches the cell
+            ['mousedown', 'mouseup'].forEach(function (type) {
+                badge.addEventListener(type, function (e) {
+                    e.stopPropagation();
+                });
+            });
             badge.addEventListener('click', function (e) {
                 e.preventDefault();
+                e.stopPropagation();
                 openAuditPanel(entityId);
             });
         }

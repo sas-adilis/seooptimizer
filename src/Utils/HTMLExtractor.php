@@ -129,6 +129,57 @@ class HTMLExtractor
     }
 
     /**
+     * Extract the social meta tags whose name starts with a prefix.
+     *
+     * @param string $attribute "property" (Open Graph) or "name" (Twitter cards)
+     * @param string $prefix "og:" or "twitter:"
+     *
+     * @return array<string, string> tag => content
+     */
+    public function extractPrefixedMetas(string $attribute, string $prefix): array
+    {
+        $tags = [];
+        $attribute = $attribute === 'property' ? 'property' : 'name';
+        foreach ($this->xpath->query('//meta[@' . $attribute . ']') as $meta) {
+            $name = strtolower(trim($meta->getAttribute($attribute)));
+            $content = trim($meta->getAttribute('content'));
+            if (strpos($name, $prefix) === 0 && $content !== '') {
+                $tags[$name] = $content;
+            }
+        }
+
+        return $tags;
+    }
+
+    /**
+     * Language declared on the <html> element.
+     *
+     * @return string
+     */
+    public function extractHtmlLang(): string
+    {
+        $nodes = $this->xpath->query('//html/@lang');
+
+        return $nodes->length > 0 ? trim($nodes->item(0)->nodeValue) : '';
+    }
+
+    /**
+     * Content of the viewport meta tag.
+     *
+     * @return string
+     */
+    public function extractViewport(): string
+    {
+        foreach ($this->dom->getElementsByTagName('meta') as $meta) {
+            if (strtolower($meta->getAttribute('name')) === 'viewport') {
+                return trim($meta->getAttribute('content'));
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Extract hreflang alternate links.
      *
      * @return array<int, array{lang: string, href: string}>

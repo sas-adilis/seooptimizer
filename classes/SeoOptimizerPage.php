@@ -221,7 +221,7 @@ class SeoOptimizerPage extends ObjectModel
     }
 
     /**
-     * Score of a page: start at 100, deduct per issue.
+     * Fallback score of a page (no complete audit): start at 100, deduct per issue.
      *
      * @param int $critical
      * @param int $warning
@@ -231,6 +231,23 @@ class SeoOptimizerPage extends ObjectModel
     public static function computeScore(int $critical, int $warning, int $info): float
     {
         return max(0.0, min(100.0, 100.0 - $critical * 10 - $warning * 3 - $info * 1));
+    }
+
+    /**
+     * Score of the pages from the audits (same calculation as the dashboard), by URL.
+     * Empty when no audit has been completed: computeScore() is then the fallback.
+     *
+     * @return array<string, float>
+     */
+    private static function getAuditScores(): array
+    {
+        $scores = [];
+        $result = (new \Adilis\SeoOptimizer\Score\SeoScoreCalculator())->compute();
+        foreach ($result['pages'] as $url => $page) {
+            $scores[$url] = (float) $page['score'];
+        }
+
+        return $scores;
     }
 
     /**
@@ -260,7 +277,8 @@ class SeoOptimizerPage extends ObjectModel
         $critical = (int) ($row['cnt_critical'] ?? 0);
         $warning = (int) ($row['cnt_warning'] ?? 0);
         $info = (int) ($row['cnt_info'] ?? 0);
-        $score = self::computeScore($critical, $warning, $info);
+        $auditScores = self::getAuditScores();
+        $score = isset($auditScores[$url]) ? $auditScores[$url] : self::computeScore($critical, $warning, $info);
         $now = date('Y-m-d H:i:s');
 
         Db::getInstance()->execute(
@@ -321,6 +339,8 @@ class SeoOptimizerPage extends ObjectModel
             }
         }
 
+        $auditScores = self::getAuditScores();
+
         // Get all pages
         $pages = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
             'SELECT id_seooptimizer_page, url FROM ' . _DB_PREFIX_ . 'seooptimizer_page
@@ -345,7 +365,7 @@ class SeoOptimizerPage extends ObjectModel
                 $total = (int) $countsMap[$url]['cnt_total'];
             }
 
-            $score = self::computeScore($critical, $warning, $info);
+            $score = isset($auditScores[$url]) ? $auditScores[$url] : self::computeScore($critical, $warning, $info);
 
             $grade = self::scoreToGrade($score);
 
@@ -370,23 +390,9 @@ class SeoOptimizerPage extends ObjectModel
      */
     public static function scoreToGrade(float $score): string
     {
-        if ($score >= 95) {
-            return 'A+';
-        }
-        if ($score >= 85) {
-            return 'A';
-        }
-        if ($score >= 70) {
-            return 'B';
-        }
-        if ($score >= 50) {
-            return 'C';
-        }
-        if ($score >= 30) {
-            return 'D';
-        }
+        $data = \Adilis\SeoOptimizer\Score\ScoreGradeMapping::fromScore($score);
 
-        return 'F';
+        return $data['grade'];
     }
 
     /**
@@ -401,6 +407,7 @@ class SeoOptimizerPage extends ObjectModel
             'B' => 'fair',
             'C' => 'warning',
             'D' => 'poor',
+            'E' => 'critical',
             'F' => 'critical',
         ];
 

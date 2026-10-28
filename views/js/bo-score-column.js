@@ -132,7 +132,9 @@ window.SeoOptimizerTr = window.SeoOptimizerTr || function (s) { return (window.S
         badge.title = SeoOptimizerTr('Score') + ': ' + Math.round(score.score) + '/100';
         badge.textContent = score.grade;
         badge.addEventListener('click', function (e) {
+            // The row of the list is a link to the edit page: stop it
             e.preventDefault();
+            e.stopPropagation();
             openAuditPanel(entityId);
         });
         td.innerHTML = '';

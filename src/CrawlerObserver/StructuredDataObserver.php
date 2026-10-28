@@ -120,6 +120,10 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
             if (isset($typeCounts['AggregateRating'])) {
                 $schemas[] = ['name' => 'AggregateRating', 'found' => true];
             }
+
+            foreach ($this->getProductIssues($jsonLdItems) as $issue) {
+                $issues[] = $issue;
+            }
         }
 
         // JSON-LD validation: check for malformed blocks
@@ -153,6 +157,71 @@ class StructuredDataObserver extends AbstractCrawlerObserver implements CrawlerO
             'issues' => $issues,
             'duplicates' => $duplicates,
         ];
+    }
+
+    /**
+     * Completeness of the Product block declared in JSON-LD (Google merchant listings):
+     * image, price, currency and availability, then brand and identifiers.
+     *
+     * @param array<int, array> $jsonLdItems
+     * @return array<int, array<string, string>>
+     */
+    private function getProductIssues(array $jsonLdItems): array
+    {
+        $product = null;
+        foreach ($jsonLdItems as $item) {
+            $types = isset($item['@type']) ? (array) $item['@type'] : [];
+            foreach ($types as $type) {
+                if (is_string($type) && HTMLExtractor::normalizeSchemaType($type) === 'Product') {
+                    $product = $item;
+                    break 2;
+                }
+            }
+        }
+        if ($product === null) {
+            return [];
+        }
+
+        $missing = [];
+        if (empty($product['image'])) {
+            $missing[] = ['warning', Message::t('Product schema without image')];
+        }
+
+        $offer = isset($product['offers']) && is_array($product['offers']) ? $product['offers'] : [];
+        if (isset($offer[0]) && is_array($offer[0])) {
+            $offer = $offer[0];
+        }
+        if (!empty($offer)) {
+            $spec = isset($offer['priceSpecification']) && is_array($offer['priceSpecification']) ? $offer['priceSpecification'] : [];
+            if (!isset($offer['price']) && !isset($offer['lowPrice']) && !isset($spec['price'])) {
+                $missing[] = ['warning', Message::t('Offer without price')];
+            }
+            if (empty($offer['priceCurrency']) && empty($spec['priceCurrency'])) {
+                $missing[] = ['warning', Message::t('Offer without price currency')];
+            }
+            if (empty($offer['availability'])) {
+                $missing[] = ['info', Message::t('Offer without availability')];
+            }
+        }
+
+        if (empty($product['brand'])) {
+            $missing[] = ['info', Message::t('Product schema without brand')];
+        }
+        if (empty($product['sku']) && empty($product['gtin']) && empty($product['gtin13']) && empty($product['mpn'])) {
+            $missing[] = ['info', Message::t('Product schema without SKU or GTIN')];
+        }
+
+        $issues = [];
+        foreach ($missing as $entry) {
+            $issues[] = [
+                'type' => 'product_incomplete',
+                'severity' => $entry[0],
+                'message' => $entry[1],
+                'schema_type' => 'Product',
+            ];
+        }
+
+        return $issues;
     }
 
     /**

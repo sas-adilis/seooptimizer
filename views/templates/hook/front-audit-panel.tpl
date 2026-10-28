@@ -53,6 +53,13 @@
                             <span class="seoo-fa-perf__label">{l s='Lighthouse' mod='seooptimizer'}</span>
                         </div>
                     {/if}
+                    {foreach $seoo_audit.performance.lighthouse_metrics as $metric}
+                        <div class="seoo-fa-perf__item seoo-fa-perf__item--{$metric.severity|escape:'htmlall':'UTF-8'}">
+                            <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/gauge.svg"}</span>
+                            <span class="seoo-fa-perf__value">{$metric.display|escape:'htmlall':'UTF-8'}</span>
+                            <span class="seoo-fa-perf__label">{$metric.label|escape:'htmlall':'UTF-8'}</span>
+                        </div>
+                    {/foreach}
                     {if $seoo_audit.performance.total_kb !== null}
                         <div class="seoo-fa-perf__item seoo-fa-perf__item--{$seoo_audit.performance.weight_severity|escape:'htmlall':'UTF-8'}">
                             <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/hard-drives.svg"}</span>
@@ -130,11 +137,24 @@
                 {else}
                     {foreach $seoo_audit.keywords.keywords as $kw}
                         <div class="seoo-fa-kw-grid">
-                            {foreach ['title' => 'Title', 'h1' => 'H1', 'url' => 'URL', 'content' => 'Contenu', 'alt_image' => 'Alt image', 'meta_description' => 'Meta desc.'] as $zone_key => $zone_label}
-                                <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.$zone_key}found{else}missing{/if}">
-                                    <span class="seoo-fa-kw-zone__dot"></span> {$zone_label}
-                                </div>
-                            {/foreach}
+                            <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.title}found{else}missing{/if}">
+                                <span class="seoo-fa-kw-zone__dot"></span> {l s='Title' mod='seooptimizer'}
+                            </div>
+                            <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.h1}found{else}missing{/if}">
+                                <span class="seoo-fa-kw-zone__dot"></span> {l s='H1' mod='seooptimizer'}
+                            </div>
+                            <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.url}found{else}missing{/if}">
+                                <span class="seoo-fa-kw-zone__dot"></span> {l s='URL' mod='seooptimizer'}
+                            </div>
+                            <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.content}found{else}missing{/if}">
+                                <span class="seoo-fa-kw-zone__dot"></span> {l s='Content' mod='seooptimizer'}
+                            </div>
+                            <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.alt_image}found{else}missing{/if}">
+                                <span class="seoo-fa-kw-zone__dot"></span> {l s='Image alt' mod='seooptimizer'}
+                            </div>
+                            <div class="seoo-fa-kw-zone seoo-fa-kw-zone--{if $kw.zones.meta_description}found{else}missing{/if}">
+                                <span class="seoo-fa-kw-zone__dot"></span> {l s='Meta description' mod='seooptimizer'}
+                            </div>
                         </div>
                         {foreach $kw.details as $detail}
                             {call name=seoo_check status=$detail.status title=$detail.title message=$detail.message}
@@ -230,6 +250,24 @@
             </div>
             <div class="seoo-fa-section__body" onclick="event.stopPropagation()">
                 {foreach $seoo_audit.indexation.checks as $check}
+                    {call name=seoo_check status=$check.status title=$check.title message=$check.message}
+                {/foreach}
+            </div>
+        </div>
+    {/if}
+
+    {* -- Social & technical tags -- *}
+    {if isset($seoo_audit.social)}
+        <div class="seoo-fa-section" onclick="this.classList.toggle('seoo-fa-section--open')">
+            <div class="seoo-fa-section__header">
+                <span class="seoo-fa-section__title">
+                    <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/link.svg"}</span>
+                    {l s='SOCIAL & TECHNICAL TAGS' mod='seooptimizer'}
+                </span>
+                <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
+            </div>
+            <div class="seoo-fa-section__body" onclick="event.stopPropagation()">
+                {foreach $seoo_audit.social.checks as $check}
                     {call name=seoo_check status=$check.status title=$check.title message=$check.message}
                 {/foreach}
             </div>
