@@ -327,12 +327,16 @@ class FrontPageAnalyzer
             ];
         }
 
-        // If no issues, both title and description are good
-        if (empty($checks)) {
-            $titleLen = mb_strlen($pageData['title'] ?: '');
-            $descLen = mb_strlen($pageData['description'] ?: '');
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Meta title — %d chars', $titleLen), 'message' => ''];
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Meta description — %d chars', $descLen), 'message' => ''];
+        // A field without issue is good, even when the other one has a problem
+        $fieldsWithIssue = [];
+        foreach ($pageData['issues'] as $issue) {
+            $fieldsWithIssue[isset($issue['field']) ? $issue['field'] : ''] = true;
+        }
+        if (!isset($fieldsWithIssue['title'])) {
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Meta title — %d chars', mb_strlen($pageData['title'] ?: '')), 'message' => ''];
+        }
+        if (!isset($fieldsWithIssue['description'])) {
+            $checks[] = ['status' => 'good', 'title' => Message::tr('Meta description — %d chars', mb_strlen($pageData['description'] ?: '')), 'message' => ''];
         }
 
         return [
@@ -393,6 +397,9 @@ class FrontPageAnalyzer
         $ratio = $pageData ? $pageData['text_ratio'] : 0;
         $message = Message::tr('%d words (%s%% text)', $wordCount, $ratio);
 
+        $thresholdLow = (int) \Configuration::get('SEOO_TEXT_THRESHOLD_LOW') ?: 100;
+        $thresholdGood = (int) \Configuration::get('SEOO_TEXT_THRESHOLD_GOOD') ?: 300;
+
         $checks = [];
         $checks[] = ['status' => $severity, 'title' => $message, 'message' => ''];
 
@@ -401,8 +408,9 @@ class FrontPageAnalyzer
             'status' => $severity,
             'label' => $message,
             'message' => '',
-            'threshold_low' => (int) \Configuration::get('SEOO_TEXT_THRESHOLD_LOW') ?: 100,
-            'threshold_good' => (int) \Configuration::get('SEOO_TEXT_THRESHOLD_GOOD') ?: 300,
+            'threshold_low' => $thresholdLow,
+            'threshold_good' => $thresholdGood,
+            'bar_max' => max(500, $thresholdGood * 2),
             'checks' => $checks,
         ];
     }
@@ -479,6 +487,25 @@ class FrontPageAnalyzer
 
         if (empty($checks) && $total > 0) {
             $checks[] = ['status' => 'good', 'title' => Message::tr('All images have alt attributes'), 'message' => ''];
+        }
+
+        // Dimensions and lazy loading (layout shift, loading time): informative only
+        $noDimensions = 0;
+        $notLazy = 0;
+        foreach ($images as $position => $img) {
+            if ($img['width'] === '' || $img['height'] === '') {
+                ++$noDimensions;
+            }
+            // The first images are in the first screen: they must not be lazy-loaded
+            if ($position >= 2 && $img['loading'] !== 'lazy') {
+                ++$notLazy;
+            }
+        }
+        if ($noDimensions > 0) {
+            $checks[] = ['status' => 'info', 'title' => Message::tr('%d image(s) without width/height', $noDimensions), 'message' => Message::tr('Declaring the dimensions avoids layout shifts (CLS).')];
+        }
+        if ($notLazy > 0) {
+            $checks[] = ['status' => 'info', 'title' => Message::tr('%d image(s) without lazy loading', $notLazy), 'message' => Message::tr('Add loading="lazy" to the images below the fold.')];
         }
 
         // Image format check (not covered by observer — FO-only bonus check)
@@ -672,6 +699,9 @@ class FrontPageAnalyzer
         if (!empty($hreflangs)) {
             $langs = implode(' ', array_map(function ($h) { return $h['lang'] . ' ✓'; }, $hreflangs));
             $checks[] = ['status' => 'good', 'title' => Message::tr('Hreflang'), 'message' => $langs];
+            foreach ($this->getHreflangIssues($hreflangs) as $issue) {
+                $checks[] = $issue;
+            }
         }
 
         // Clean URL
@@ -705,6 +735,46 @@ class FrontPageAnalyzer
         }
 
         return ['checks' => $checks, 'hreflangs' => $hreflangs];
+    }
+
+    /**
+     * Consistency of the hreflang annotations of the page itself (the return links
+     * from the other pages are not checked).
+     *
+     * @param array<int, array{lang: string, href: string}> $hreflangs
+     * @return array<int, array<string, string>>
+     */
+    private function getHreflangIssues(array $hreflangs): array
+    {
+        $issues = [];
+        $langs = [];
+        $hasSelf = false;
+        $hasDefault = false;
+
+        foreach ($hreflangs as $hreflang) {
+            $lang = strtolower($hreflang['lang']);
+            if ($lang === 'x-default') {
+                $hasDefault = true;
+            } elseif (!preg_match('/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/', $lang)) {
+                $issues[] = ['status' => 'warning', 'title' => Message::tr('Invalid hreflang code'), 'message' => $hreflang['lang']];
+            }
+            if (isset($langs[$lang])) {
+                $issues[] = ['status' => 'warning', 'title' => Message::tr('Hreflang declared several times'), 'message' => $hreflang['lang']];
+            }
+            $langs[$lang] = true;
+            if ($this->normalizeUrl($this->resolveUrl($hreflang['href'])) === $this->normalizeUrl($this->url)) {
+                $hasSelf = true;
+            }
+        }
+
+        if (!$hasSelf) {
+            $issues[] = ['status' => 'warning', 'title' => Message::tr('Hreflang without self-reference'), 'message' => Message::tr('Each page must list itself among its alternate versions.')];
+        }
+        if (!$hasDefault) {
+            $issues[] = ['status' => 'info', 'title' => Message::tr('Hreflang x-default missing'), 'message' => Message::tr('Recommended to define the fallback version.')];
+        }
+
+        return $issues;
     }
 
     /**

@@ -297,6 +297,7 @@ class HTMLExtractor
                 'alt' => trim($img->getAttribute('alt')),
                 'width' => $img->getAttribute('width'),
                 'height' => $img->getAttribute('height'),
+                'loading' => strtolower($img->getAttribute('loading')),
             ];
         }
         return $images;

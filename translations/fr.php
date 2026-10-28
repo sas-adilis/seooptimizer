@@ -839,3 +839,13 @@ $_MODULE['<{seooptimizer}prestashop>seooptimizer_c6611fef6351bb3064d77c73bde22f3
 $_MODULE['<{seooptimizer}prestashop>seooptimizer_28419748941818f00c3b4a9f8536546b'] = 'Schema Product sans marque';
 $_MODULE['<{seooptimizer}prestashop>seooptimizer_5ce9086b95b13d3df73a5dd571302c76'] = 'Schema Product sans SKU ni GTIN';
 $_MODULE['<{seooptimizer}prestashop>front-audit-panel_857e853165bc272b30d61f10f8363913'] = 'BALISES SOCIALES ET TECHNIQUES';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_b73ac1530440690f8aac4f2a2f67591f'] = '%d image(s) sans width/height';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_574c6ad4dbea3929f29fe74148a2636c'] = 'Déclarer les dimensions évite les décalages de mise en page (CLS).';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_70ad6d34cd85bf25c7f2c7dd584ff87c'] = '%d image(s) sans chargement différé';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_7b4ea5beecd8936f7784ba2c809402c0'] = 'Ajouter loading="lazy" aux images sous la ligne de flottaison.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_dd1cd4faf2d260b0e503f3aea4a814df'] = 'Code hreflang invalide';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_42ff893cf01dce14aa4c29e4970cdbc8'] = 'Hreflang déclaré plusieurs fois';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_d2b5d691e1b25d112eca80566154b304'] = 'Hreflang sans auto-référence';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_8fd8e85031e56a13a79b684368871cdc'] = 'Chaque page doit figurer parmi ses propres versions alternatives.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_83846283cf33ca06a36ec0a01b8f0912'] = 'Hreflang x-default absent';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_46583722fd048c4eaecd7586314bcd59'] = 'Recommandé pour définir la version par défaut.';

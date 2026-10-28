@@ -176,10 +176,10 @@
                 <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
             </div>
             <div class="seoo-fa-section__body" onclick="event.stopPropagation()">
-                {assign var='bar_pct' value=min(100, ($seoo_audit.content.word_count / 500) * 100)|intval}
+                {assign var='bar_pct' value=min(100, ($seoo_audit.content.word_count / $seoo_audit.content.bar_max) * 100)|intval}
                 {assign var='bar_color' value=($seoo_audit.content.status == 'good') ? '#22c55e' : '#f59e0b'}
                 <div class="seoo-fa-bar"><div class="seoo-fa-bar__fill" style="width:{$bar_pct}%;background:{$bar_color}"></div></div>
-                <div class="seoo-fa-bar__labels"><span>0</span><span>{$seoo_audit.content.threshold_low|intval}</span><span>{$seoo_audit.content.threshold_good|intval}</span><span>500+</span></div>
+                <div class="seoo-fa-bar__labels"><span>0</span><span>{$seoo_audit.content.threshold_low|intval}</span><span>{$seoo_audit.content.threshold_good|intval}</span><span>{$seoo_audit.content.bar_max|intval}+</span></div>
                 {foreach $seoo_audit.content.checks as $check}
                     {call name=seoo_check status=$check.status title=$check.title message=$check.message}
                 {/foreach}
