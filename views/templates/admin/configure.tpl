@@ -88,6 +88,35 @@
                     </div>
                 </div>
 
+                {if $seoo_history.global}
+                    <div class="seoo-screen">
+                        <div class="seoo-panel-intro">
+                            <div class="seoo-panel-intro__content">
+                                <h3 class="seoo-panel-intro__title"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/chart-bar.svg"}</span> {l s='Score evolution' mod='seooptimizer'}</h3>
+                                <p class="seoo-panel-intro__desc">{l s='Evolution of the SEO score of the site and of each audit, at every audit.' mod='seooptimizer'}</p>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="seoo-history">
+                                        <div class="seoo-history__title">{l s='SEO Score' mod='seooptimizer'}</div>
+                                        {$seoo_history.global nofilter}
+                                    </div>
+                                </div>
+                                {foreach $seoo_history.audits as $history_audit}
+                                    <div class="col-md-3 col-sm-6">
+                                        <div class="seoo-history">
+                                            <div class="seoo-history__title">{$history_audit.title|escape:'htmlall':'UTF-8'}</div>
+                                            {$history_audit.chart nofilter}
+                                        </div>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+
                 {if $seoo_scores.pages|count > 0}
                     <div class="seoo-screen">
                         <div class="seoo-panel-intro">

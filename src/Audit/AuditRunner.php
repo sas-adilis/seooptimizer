@@ -7,6 +7,9 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\CrawlerObserver\LinkStatusCache;
+use Adilis\SeoOptimizer\Score\HistoryRecorder;
+use Adilis\SeoOptimizer\Storage\AuditHistoryStorage;
+use Adilis\SeoOptimizer\Utils\HistoryChart;
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
 use Adilis\SeoOptimizer\Utils\Message;
 use Adilis\SeoOptimizer\Utils\JsonResponse;
@@ -135,6 +138,7 @@ class AuditRunner
             'audit_items' => [],
             'audit_kpis' => $kpis,
             'audit_score' => $auditScore,
+            'audit_history_chart' => $this->renderHistoryChart(),
             'audit_status' => $run ? $run['status'] : 'none',
             'audit_is_complete' => $run && $run['status'] === 'complete',
             'audit_is_interrupted' => $run && $run['status'] === 'running',
@@ -259,6 +263,7 @@ class AuditRunner
             }
             unset($item);
             AuditRunStorage::upsert($auditKey, $this->state);
+            HistoryRecorder::recordAudits([$auditKey]);
             $this->returnJson('done');
         }
 
@@ -358,8 +363,25 @@ class AuditRunner
         }
 
         AuditRunStorage::upsert($auditKey, $this->state);
+        if ($this->state['status'] === 'complete') {
+            HistoryRecorder::recordAudits([$auditKey]);
+        }
 
         $this->returnJson($this->state['status'] === 'complete' ? 'done' : 'success');
+    }
+
+    /**
+     * Evolution of the average score of the audit, empty without enough history.
+     *
+     * @return string
+     */
+    private function renderHistoryChart(): string
+    {
+        try {
+            return HistoryChart::render(AuditHistoryStorage::getSeries($this->audit->getKey()));
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ use Adilis\SeoOptimizer\Audit\AuditInterface;
 use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Audit\AuditRunner;
 use Adilis\SeoOptimizer\CrawlerObserver\LinkStatusCache;
+use Adilis\SeoOptimizer\Score\HistoryRecorder;
 use Adilis\SeoOptimizer\Audit\KpiMapper;
 use Adilis\SeoOptimizer\Utils\CurlBatch;
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
@@ -290,6 +291,7 @@ class FullAuditRunner
 
         // Rebuild page overview counters from results
         \SeoOptimizerPage::rebuildAllCounters();
+        HistoryRecorder::recordAudits();
     }
 
     /**

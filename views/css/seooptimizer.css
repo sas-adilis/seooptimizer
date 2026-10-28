@@ -327,6 +327,16 @@ textarea {
   margin-top: 16px;
 }
 
+/* Score history */
+.seoo-history {
+  margin-bottom: 16px;
+}
+
+.seoo-history__title {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
 .seoo-report__thead {
   display: grid;
   gap: 0;

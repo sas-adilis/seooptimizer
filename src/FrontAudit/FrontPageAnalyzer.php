@@ -8,7 +8,6 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\Audit\AuditKeywordCheck;
 use Adilis\SeoOptimizer\Audit\AuditRegistry;
-use Adilis\SeoOptimizer\Audit\ScoredAuditInterface;
 use Adilis\SeoOptimizer\CrawlerObserver\BrokenLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\HeadingHierarchyObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\IndexationObserver;
@@ -26,7 +25,10 @@ use Adilis\SeoOptimizer\CrawlerObserver\StructuredDataObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\TextRatioObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\UnsecuredLinksAuditObserver;
 use Adilis\SeoOptimizer\Score\ScoreGradeMapping;
+use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
+use Adilis\SeoOptimizer\Storage\AuditHistoryStorage;
 use Adilis\SeoOptimizer\Utils\CurlBatch;
+use Adilis\SeoOptimizer\Utils\HistoryChart;
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
 
 /**
@@ -45,6 +47,9 @@ class FrontPageAnalyzer
 
     /** @var HTMLExtractor */
     private $extractor;
+
+    /** @var array Score summary of the page (overall and per audit), see SeoScoreCalculator::summarizePage() */
+    private $summary = [];
 
     /**
      * @param string $url
@@ -106,6 +111,8 @@ class FrontPageAnalyzer
         return [
             'url' => $url,
             'score' => $score,
+            'summary' => $this->summary,
+            'history' => $this->buildHistory(),
             'performance' => $performance,
             'google_preview' => $this->buildGooglePreview($meta),
             'meta' => $meta,
@@ -292,6 +299,28 @@ class FrontPageAnalyzer
             'lighthouse_severity' => $lighthouse === null ? 'good' : PageSpeedScore::severity($lighthouse),
             'lighthouse_metrics' => $lighthouse === null ? [] : $this->buildLighthouseMetrics(),
             'checks' => $checks,
+        ];
+    }
+
+    /**
+     * Evolution of the overall score of the page (chart and change since the previous audit).
+     * Without history (table missing, no audit yet) the section is not displayed.
+     *
+     * @return array{chart: string, delta: string}
+     */
+    private function buildHistory(): array
+    {
+        try {
+            $series = AuditHistoryStorage::getSeries(AuditHistoryStorage::ALL, $this->url);
+        } catch (\Throwable $e) {
+            return ['chart' => '', 'delta' => ''];
+        }
+
+        $delta = HistoryChart::delta($series);
+
+        return [
+            'chart' => HistoryChart::render($series),
+            'delta' => $delta === null ? '' : Message::tr('%s since %s', $delta['label'], $delta['since']),
         ];
     }
 
@@ -722,43 +751,18 @@ class FrontPageAnalyzer
     }
 
     /**
-     * Same calculation as SeoScoreCalculator: per audit, 100 minus the penalty of each
-     * issue of the page, then the average weighted by the audit weights.
+     * Same calculation as SeoScoreCalculator (see summarizePage()).
      *
      * @param array<string, array> $auditRows
      * @return array
      */
     private function computeScore(array $auditRows): array
     {
-        $weightedSum = 0;
-        $totalWeight = 0;
-
-        foreach (AuditRegistry::getAll() as $audit) {
-            $key = $audit->getKey();
-            if (!isset($auditRows[$key])) {
-                continue;
-            }
-
-            $impact = $audit->getScoreImpact();
-            $penalty = 0;
-            foreach ($auditRows[$key] as $row) {
-                $penalty += isset($impact[$row['severity']]) ? $impact[$row['severity']] : 0;
-            }
-
-            $auditScore = [$this->url => max(0, 100 - $penalty)];
-            if ($audit instanceof ScoredAuditInterface) {
-                $auditScore = $audit->overridePageScores($auditScore);
-            }
-
-            $weightedSum += $auditScore[$this->url] * $audit->getScoreWeight();
-            $totalWeight += $audit->getScoreWeight();
-        }
-
-        $score = $totalWeight > 0 ? round($weightedSum / $totalWeight, 1) : 100;
-        $gradeData = ScoreGradeMapping::fromScore($score);
+        $this->summary = (new SeoScoreCalculator())->summarizePage($this->url, $auditRows);
+        $gradeData = ScoreGradeMapping::fromScore($this->summary['score']);
 
         return [
-            'score' => $score,
+            'score' => $this->summary['score'],
             'grade' => $gradeData['grade'],
             'color' => $gradeData['color'],
         ];

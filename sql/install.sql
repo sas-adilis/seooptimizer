@@ -121,3 +121,19 @@ CREATE TABLE IF NOT EXISTS `PREFIX_seooptimizer_link_status` (
     PRIMARY KEY (`url_hash`),
     KEY `date_upd` (`date_upd`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_seooptimizer_history` (
+    `id_seooptimizer_history` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 1,
+    `audit_key` VARCHAR(64) NOT NULL,
+    `url_hash` CHAR(32) NOT NULL,
+    `url` VARCHAR(2083) NOT NULL DEFAULT '',
+    `score` DECIMAL(4,1) UNSIGNED NOT NULL DEFAULT 0,
+    `count_critical` SMALLINT(5) UNSIGNED NOT NULL DEFAULT 0,
+    `count_warning` SMALLINT(5) UNSIGNED NOT NULL DEFAULT 0,
+    `count_info` SMALLINT(5) UNSIGNED NOT NULL DEFAULT 0,
+    `date_audit` DATE NOT NULL,
+    PRIMARY KEY (`id_seooptimizer_history`),
+    UNIQUE KEY `snapshot` (`id_shop`, `audit_key`, `url_hash`, `date_audit`),
+    KEY `date_audit` (`date_audit`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4;

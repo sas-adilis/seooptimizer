@@ -51,6 +51,12 @@
 
         <div class="panel-body">
             <div class="seoo-report" id="{$audit_key|escape:'htmlall':'UTF-8'}_report">
+                {if $audit_history_chart}
+                    <div class="seoo-history">
+                        <div class="seoo-history__title">{l s='Score evolution' mod='seooptimizer'}</div>
+                        {$audit_history_chart nofilter}
+                    </div>
+                {/if}
                 <div class="seoo-report__kpis">
                     {if isset($audit_score) && $audit_score.grade != '-'}
                         <div class="seoo-report__kpi seoo-report__kpi--score seoo-report__kpi--score-{$audit_score.grade_color|escape:'htmlall':'UTF-8'}"

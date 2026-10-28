@@ -6,6 +6,8 @@ use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Audit\AuditRunner;
 use Adilis\SeoOptimizer\Pages\PagesAggregator;
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
+use Adilis\SeoOptimizer\Storage\AuditHistoryStorage;
+use Adilis\SeoOptimizer\Utils\HistoryChart;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -117,6 +119,7 @@ class ConfigurePage
 
         $smarty->assign([
             'seoo_scores' => $seoScores,
+            'seoo_history' => $this->getHistory($seoScores),
             'seoo_export_redirections_url' => $context->link->getAdminLink(
                 'AdminModules',
                 true,
@@ -127,6 +130,31 @@ class ConfigurePage
         ]);
 
         return $smarty->fetch($this->module->getLocalPath() . 'views/templates/admin/configure.tpl');
+    }
+
+    /**
+     * Evolution charts of the dashboard: the global score, then each audit.
+     *
+     * @param array $seoScores Result of SeoScoreCalculator::compute()
+     * @return array{global: string, audits: array<string, array{title: string, chart: string}>}
+     */
+    private function getHistory(array $seoScores): array
+    {
+        $history = ['global' => '', 'audits' => []];
+
+        try {
+            $history['global'] = HistoryChart::render(AuditHistoryStorage::getSeries(AuditHistoryStorage::ALL));
+            foreach ($seoScores['audits'] as $key => $audit) {
+                $chart = HistoryChart::render(AuditHistoryStorage::getSeries($key));
+                if ($chart !== '') {
+                    $history['audits'][$key] = ['title' => $audit['title'], 'chart' => $chart];
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->log('history not displayed: ' . $e->getMessage());
+        }
+
+        return $history;
     }
 
     /**

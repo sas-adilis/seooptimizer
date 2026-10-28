@@ -6,6 +6,7 @@ use Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedAuditSync;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedClient;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedSampler;
+use Adilis\SeoOptimizer\Score\HistoryRecorder;
 use Adilis\SeoOptimizer\Storage\PageSpeedStorage;
 use Adilis\SeoOptimizer\Utils\JsonResponse;
 use Adilis\SeoOptimizer\Utils\Message;
@@ -159,6 +160,10 @@ class AjaxHandler
             $analysis = $analyzer->analyze($url);
             if (isset($analysis['error'])) {
                 continue;
+            }
+
+            if (!empty($analysis['summary'])) {
+                HistoryRecorder::recordPage($url, $analysis['summary']);
             }
 
             $score = isset($analysis['score']) ? $analysis['score'] : ['score' => 0, 'grade' => '-', 'color' => 'gray'];

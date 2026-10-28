@@ -28,6 +28,18 @@
         </div>
     </div>
 
+    {* -- Evolution -- *}
+    {if isset($seoo_audit.history) && $seoo_audit.history.chart}
+        <div class="seoo-fa-section seoo-fa-section--open seoo-fa-section--no-toggle">
+            <div class="seoo-fa-section__body">
+                <div class="seoo-fa-check__title">
+                    {l s='Score evolution' mod='seooptimizer'}{if $seoo_audit.history.delta} — {$seoo_audit.history.delta|escape:'htmlall':'UTF-8'}{/if}
+                </div>
+                {$seoo_audit.history.chart nofilter}
+            </div>
+        </div>
+    {/if}
+
     {* -- Performance -- *}
     {if isset($seoo_audit.performance) && $seoo_audit.performance.checks|count > 0}
         <div class="seoo-fa-section seoo-fa-section--open seoo-fa-section--no-toggle">

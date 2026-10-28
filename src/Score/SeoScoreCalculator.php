@@ -121,6 +121,59 @@ class SeoScoreCalculator
     }
 
     /**
+     * Score of one page from the rows (issues) that each audit found on it: per audit, 100
+     * minus the penalty of each issue, then the average weighted by the audit weights.
+     * An audit without rows entry did not apply to the page and is left out.
+     *
+     * @param string $url
+     * @param array<string, array> $rowsByAudit Audit key => rows of the page
+     * @return array{score: float, audits: array<string, array{score: float, critical: int, warning: int, info: int}>}
+     */
+    public function summarizePage(string $url, array $rowsByAudit): array
+    {
+        $weightedSum = 0;
+        $totalWeight = 0;
+        $audits = [];
+
+        foreach ($this->audits as $audit) {
+            $key = $audit->getKey();
+            if (!isset($rowsByAudit[$key])) {
+                continue;
+            }
+
+            $impact = $audit->getScoreImpact();
+            $penalty = 0;
+            $counts = ['critical' => 0, 'warning' => 0, 'info' => 0];
+            foreach ($rowsByAudit[$key] as $row) {
+                $severity = isset($row['severity']) ? $row['severity'] : '';
+                $penalty += isset($impact[$severity]) ? $impact[$severity] : 0;
+                if (isset($counts[$severity])) {
+                    ++$counts[$severity];
+                }
+            }
+
+            $score = [$url => max(0, 100 - $penalty)];
+            if ($audit instanceof ScoredAuditInterface) {
+                $score = $audit->overridePageScores($score);
+            }
+
+            $audits[$key] = [
+                'score' => (float) $score[$url],
+                'critical' => $counts['critical'],
+                'warning' => $counts['warning'],
+                'info' => $counts['info'],
+            ];
+            $weightedSum += $score[$url] * $audit->getScoreWeight();
+            $totalWeight += $audit->getScoreWeight();
+        }
+
+        return [
+            'score' => $totalWeight > 0 ? round($weightedSum / $totalWeight, 1) : 100.0,
+            'audits' => $audits,
+        ];
+    }
+
+    /**
      * @param AuditInterface $audit
      * @return array
      */

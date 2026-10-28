@@ -859,3 +859,8 @@ $_MODULE['<{seooptimizer}prestashop>seooptimizer_d20cb21987160e0c3d7a81a52e404d8
 $_MODULE['<{seooptimizer}prestashop>seooptimizer_744a688ee2dae779e8dd27a53709f39d'] = 'Problèmes d\'indexation';
 $_MODULE['<{seooptimizer}prestashop>configure_da0d18febbbe9cd4e54b68aa72f1d231'] = 'Indexation';
 $_MODULE['<{seooptimizer}prestashop>configure_ceaf35571d25f0e3ade4a14599197136'] = 'Balises sociales et techniques';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_272cde90f78d374d7b1b3f0102e93c47'] = '%s depuis le %s';
+$_MODULE['<{seooptimizer}prestashop>audit_f45f8a9f996444b6ac9a0ef5046cff9c'] = 'Évolution de la note';
+$_MODULE['<{seooptimizer}prestashop>configure_f45f8a9f996444b6ac9a0ef5046cff9c'] = 'Évolution de la note';
+$_MODULE['<{seooptimizer}prestashop>configure_247e02e24a31572af0a4cfb935fcf5c7'] = 'Évolution de la note SEO du site et de chaque audit, à chaque audit.';
+$_MODULE['<{seooptimizer}prestashop>front-audit-panel_f45f8a9f996444b6ac9a0ef5046cff9c'] = 'Évolution de la note';

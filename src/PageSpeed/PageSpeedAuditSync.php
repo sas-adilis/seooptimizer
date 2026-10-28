@@ -3,6 +3,7 @@
 namespace Adilis\SeoOptimizer\PageSpeed;
 
 use Adilis\SeoOptimizer\Audit\AuditPageWeight;
+use Adilis\SeoOptimizer\Score\HistoryRecorder;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
@@ -38,5 +39,6 @@ class PageSpeedAuditSync
         AuditResultStorage::insertBatch($key, $rows);
 
         \SeoOptimizerPage::rebuildAllCounters();
+        HistoryRecorder::recordAudits([$key]);
     }
 }
