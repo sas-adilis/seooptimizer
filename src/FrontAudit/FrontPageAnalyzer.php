@@ -306,22 +306,47 @@ class FrontPageAnalyzer
      * Evolution of the overall score of the page (chart and change since the previous audit).
      * Without history (table missing, no audit yet) the section is not displayed.
      *
-     * @return array{chart: string, delta: string}
+     * @return array{chart: string, delta: string, audits: array<int, array{title: string, chart: string, delta: string}>}
      */
     private function buildHistory(): array
     {
+        $history = ['chart' => '', 'delta' => '', 'audits' => []];
+
         try {
             $series = AuditHistoryStorage::getSeries(AuditHistoryStorage::ALL, $this->url);
+            $auditsSeries = AuditHistoryStorage::getAuditsSeries($this->url);
         } catch (\Throwable $e) {
-            return ['chart' => '', 'delta' => ''];
+            return $history;
         }
 
+        $history['chart'] = HistoryChart::render($series);
+        $history['delta'] = $this->formatDelta($series);
+
+        // One chart per audit, in the order of the audits
+        foreach (AuditRegistry::getAll() as $audit) {
+            $key = $audit->getKey();
+            $chart = isset($auditsSeries[$key]) ? HistoryChart::render($auditsSeries[$key]) : '';
+            if ($chart !== '') {
+                $history['audits'][] = [
+                    'title' => $audit->getTitle(),
+                    'chart' => $chart,
+                    'delta' => $this->formatDelta($auditsSeries[$key]),
+                ];
+            }
+        }
+
+        return $history;
+    }
+
+    /**
+     * @param array<int, array{date: string, score: float}> $series
+     * @return string
+     */
+    private function formatDelta(array $series): string
+    {
         $delta = HistoryChart::delta($series);
 
-        return [
-            'chart' => HistoryChart::render($series),
-            'delta' => $delta === null ? '' : Message::tr('%s since %s', $delta['label'], $delta['since']),
-        ];
+        return $delta === null ? '' : Message::tr('%s since %s', $delta['label'], $delta['since']);
     }
 
     /**

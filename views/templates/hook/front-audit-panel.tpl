@@ -40,6 +40,27 @@
         </div>
     {/if}
 
+    {* -- Evolution by audit -- *}
+    {if isset($seoo_audit.history) && $seoo_audit.history.audits|count > 0}
+        <div class="seoo-fa-section" onclick="this.classList.toggle('seoo-fa-section--open')">
+            <div class="seoo-fa-section__header">
+                <span class="seoo-fa-section__title">
+                    <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/chart-bar.svg"}</span>
+                    {l s='EVOLUTION BY AUDIT' mod='seooptimizer'}
+                </span>
+                <span class="seoo-fa-section__toggle">{include file="module:seooptimizer/views/icons/caret-down.svg"}</span>
+            </div>
+            <div class="seoo-fa-section__body" onclick="event.stopPropagation()">
+                {foreach $seoo_audit.history.audits as $history_audit}
+                    <div class="seoo-fa-check__title">
+                        {$history_audit.title|escape:'htmlall':'UTF-8'}{if $history_audit.delta} — {$history_audit.delta|escape:'htmlall':'UTF-8'}{/if}
+                    </div>
+                    {$history_audit.chart nofilter}
+                {/foreach}
+            </div>
+        </div>
+    {/if}
+
     {* -- Performance -- *}
     {if isset($seoo_audit.performance) && $seoo_audit.performance.checks|count > 0}
         <div class="seoo-fa-section seoo-fa-section--open seoo-fa-section--no-toggle">

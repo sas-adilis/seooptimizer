@@ -864,3 +864,4 @@ $_MODULE['<{seooptimizer}prestashop>audit_f45f8a9f996444b6ac9a0ef5046cff9c'] = '
 $_MODULE['<{seooptimizer}prestashop>configure_f45f8a9f996444b6ac9a0ef5046cff9c'] = 'Évolution de la note';
 $_MODULE['<{seooptimizer}prestashop>configure_247e02e24a31572af0a4cfb935fcf5c7'] = 'Évolution de la note SEO du site et de chaque audit, à chaque audit.';
 $_MODULE['<{seooptimizer}prestashop>front-audit-panel_f45f8a9f996444b6ac9a0ef5046cff9c'] = 'Évolution de la note';
+$_MODULE['<{seooptimizer}prestashop>front-audit-panel_f9d0dc40c9d1be00de50927fb3273e1c'] = 'ÉVOLUTION PAR AUDIT';

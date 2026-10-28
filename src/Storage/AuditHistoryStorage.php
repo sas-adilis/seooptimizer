@@ -91,6 +91,33 @@ class AuditHistoryStorage
     }
 
     /**
+     * Scores of every audit for a page, oldest first.
+     *
+     * @param string $url
+     * @param int $days
+     * @param int|null $idShop
+     * @return array<string, array<int, array{date: string, score: float}>> Audit key => series
+     */
+    public static function getAuditsSeries(string $url, int $days = 180, ?int $idShop = null): array
+    {
+        $rows = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS(
+            'SELECT audit_key, date_audit, score FROM ' . _DB_PREFIX_ . 'seooptimizer_history
+            WHERE id_shop = ' . self::shopId($idShop) . '
+            AND audit_key != "' . pSQL(self::ALL) . '"
+            AND url_hash = "' . pSQL(md5($url)) . '"
+            AND date_audit >= "' . pSQL(date('Y-m-d', strtotime('-' . (int) $days . ' days'))) . '"
+            ORDER BY date_audit ASC'
+        );
+
+        $series = [];
+        foreach ($rows ?: [] as $row) {
+            $series[$row['audit_key']][] = ['date' => $row['date_audit'], 'score' => (float) $row['score']];
+        }
+
+        return $series;
+    }
+
+    /**
      * @param int|null $idShop
      * @return int
      */
