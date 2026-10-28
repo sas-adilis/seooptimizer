@@ -26,7 +26,7 @@ class UnsecuredLinksAuditObserver extends AbstractCrawlerObserver implements Cra
      * @param string $content
      * @param HTMLExtractor|null $extractor
      */
-    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
+    public function observeAfterRequest(string $url, string $content, ?HTMLExtractor $extractor = null)
     {
         $extractor = $extractor ?: new HTMLExtractor($content);
         $dom = $extractor->getDOM();

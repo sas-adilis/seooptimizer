@@ -68,7 +68,8 @@ class AuditRunStorage
         );
 
         if ($existing) {
-            // On UPDATE: skip urls_json to avoid rewriting 100KB+ on every batch
+            // On UPDATE: urls_json is rewritten only on demand ('save_urls'), to avoid
+            // writing 100KB+ on every batch
             $row = [
                 'status' => $data['status'] ?? 'running',
                 'total_urls' => (int) ($data['total_urls'] ?? 0),
@@ -77,6 +78,9 @@ class AuditRunStorage
                 'custom_kpis_json' => isset($data['custom_kpis']) ? json_encode($data['custom_kpis']) : null,
                 'date_upd' => $now,
             ];
+            if (!empty($data['save_urls']) && isset($data['urls'])) {
+                $row['urls_json'] = json_encode($data['urls']);
+            }
             \Db::getInstance()->update('seooptimizer_audit_run', $row, 'id_seooptimizer_audit_run = ' . (int) $existing);
             return (int) $existing;
         }

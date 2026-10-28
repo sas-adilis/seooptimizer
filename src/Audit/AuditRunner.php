@@ -232,7 +232,8 @@ class AuditRunner
                 'custom_kpis' => [],
             ];
 
-            AuditRunStorage::upsert($auditKey, $this->state);
+            // A new run replaces the list of URLs of the previous one
+            AuditRunStorage::upsert($auditKey, $this->state + ['save_urls' => true]);
             $this->returnJson('success');
         }
 
@@ -283,11 +284,13 @@ class AuditRunner
                 // Unreachable page: reported by the observers able to, otherwise left out of the score
                 if (!self::reportUnreachable($observers, $url)) {
                     self::markSkipped($this->state['urls'], $offset + $batchIndex, $auditKey);
+                    $this->state['save_urls'] = true;
                 }
             } else {
                 // Skip non-indexable pages for SEO content audits
                 if ($requiresIndexable && !self::isPageIndexable($content)) {
                     self::markSkipped($this->state['urls'], $offset + $batchIndex, $auditKey);
+                    $this->state['save_urls'] = true;
                     // Still count as crawled but don't analyze
                     if (isset($this->state['items'][$type])) {
                         $this->state['items'][$type]['crawled']++;

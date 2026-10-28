@@ -105,6 +105,7 @@ class FullAuditRunner
             AuditResultStorage::deleteByAuditKey($audit->getKey());
             AuditRunStorage::upsert($audit->getKey(), [
                 'status' => 'running',
+                'save_urls' => true,
                 'urls' => $urls,
                 'total_urls' => count($urls),
                 'crawled' => 0,
@@ -126,7 +127,7 @@ class FullAuditRunner
             $this->state['audit_custom_kpis'][$audit->getKey()] = [];
         }
 
-        AuditRunStorage::upsert(self::CACHE_KEY, $this->state);
+        AuditRunStorage::upsert(self::CACHE_KEY, $this->state + ['save_urls' => true]);
     }
 
     /**
@@ -170,6 +171,7 @@ class FullAuditRunner
                 foreach ($auditObservers as $auditKey => $data) {
                     if (!AuditRunner::reportUnreachable($data['observers'], $url)) {
                         AuditRunner::markSkipped($this->state['urls'], $urlIndex, $auditKey);
+                        $this->state['save_urls'] = true;
                     }
                 }
             } else {
@@ -185,6 +187,7 @@ class FullAuditRunner
                     // Skip SEO content audits on non-indexable pages
                     if ($audit->requiresIndexablePage() && !$isIndexable) {
                         AuditRunner::markSkipped($this->state['urls'], $urlIndex, $audit->getKey());
+                        $this->state['save_urls'] = true;
                         continue;
                     }
 
@@ -273,6 +276,7 @@ class FullAuditRunner
 
             AuditRunStorage::upsert($auditKey, [
                 'status' => 'complete',
+                'save_urls' => true,
                 'urls' => $this->state['urls'],
                 'total_urls' => $this->state['total_urls'],
                 'crawled' => $this->state['crawled'] ?? $this->state['total_urls'],

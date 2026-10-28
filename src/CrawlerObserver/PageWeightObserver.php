@@ -62,7 +62,7 @@ class PageWeightObserver extends AbstractCrawlerObserver implements CrawlerObser
      * @param string $url
      * @param string $content
      */
-    public function observeAfterRequest(string $url, string $content, HTMLExtractor $extractor = null)
+    public function observeAfterRequest(string $url, string $content, ?HTMLExtractor $extractor = null)
     {
         $extractor = $extractor ?: new HTMLExtractor($content);
         $htmlSize = strlen($content);
