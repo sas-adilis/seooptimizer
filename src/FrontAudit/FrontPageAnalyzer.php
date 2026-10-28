@@ -11,6 +11,7 @@ use Adilis\SeoOptimizer\Audit\AuditRegistry;
 use Adilis\SeoOptimizer\Audit\ScoredAuditInterface;
 use Adilis\SeoOptimizer\CrawlerObserver\BrokenLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\HeadingHierarchyObserver;
+use Adilis\SeoOptimizer\CrawlerObserver\IndexationObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\InternalLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\KeywordCheckObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\MetaTagsObserver;
@@ -20,13 +21,13 @@ use Adilis\SeoOptimizer\CrawlerObserver\PageWeightObserver;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedScore;
 use Adilis\SeoOptimizer\Utils\Message;
 use Adilis\SeoOptimizer\CrawlerObserver\RedirectedLinksObserver;
+use Adilis\SeoOptimizer\CrawlerObserver\SocialTagsObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\StructuredDataObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\TextRatioObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\UnsecuredLinksAuditObserver;
 use Adilis\SeoOptimizer\Score\ScoreGradeMapping;
 use Adilis\SeoOptimizer\Utils\CurlBatch;
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
-use Adilis\SeoOptimizer\Utils\RobotsTxt;
 
 /**
  * Real-time SEO analyzer for the front-office panel.
@@ -95,8 +96,9 @@ class FrontPageAnalyzer
         $images = $this->buildImagesSection($auditRows['missing_alt'] ?? []);
         $links = $this->buildLinksSection($observerResults, $auditRows);
         $structuredData = $this->buildStructuredDataSection($observerResults['structured_data'] ?? []);
-        $indexation = $this->buildIndexationSection();
-        $social = $this->buildSocialSection();
+        $indexation = $this->buildChecksSection($observerResults['indexation'] ?? []);
+        $indexation['hreflangs'] = isset($observerResults['indexation'][$url]['hreflangs']) ? $observerResults['indexation'][$url]['hreflangs'] : [];
+        $social = $this->buildChecksSection($observerResults['social_tags'] ?? []);
 
         // Same score as the full audit
         $score = $this->computeScore($auditRows);
@@ -143,6 +145,8 @@ class FrontPageAnalyzer
         $observers[] = new UnsecuredLinksAuditObserver();
         $observers[] = new InternalLinksObserver();
         $observers[] = new StructuredDataObserver();
+        $observers[] = new IndexationObserver();
+        $observers[] = new SocialTagsObserver();
 
         // Heavy observers (make HTTP HEAD requests on each link/asset found)
         if (PageSpeedScore::forUrl($this->url) === null) {
@@ -645,181 +649,23 @@ class FrontPageAnalyzer
     }
 
     /**
-     * Indexation analysis — HTTP status, canonical, robots (meta, header, robots.txt), hreflang, URL, llms.txt.
-     * No observer for this — direct HTML and header analysis.
+     * Section made of the checks of an observer (indexation, social tags): the problems are
+     * the ones of the audit, the checks that pass are displayed too.
      *
+     * @param array $observerData Results of the observer, by URL
      * @return array
      */
-    private function buildIndexationSection(): array
+    private function buildChecksSection(array $observerData): array
     {
         $checks = [];
-        $headers = CurlBatch::fetchHeaders($this->url);
-        $pageNoindex = $this->extractor->isNoindex();
-
-        // The page itself redirects
-        if (!empty($headers) && $headers['redirect_count'] > 0) {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('Page URL redirects'), 'message' => $headers['effective_url']];
-        }
-
-        // Canonical
-        $canonical = $this->extractor->extractCanonical();
-        $canonicalIsSelf = true;
-        if (!empty($canonical)) {
-            $canonicalIsSelf = $this->normalizeUrl($this->resolveUrl($canonical)) === $this->normalizeUrl($this->url);
-            if ($canonicalIsSelf) {
-                $checks[] = ['status' => 'good', 'title' => Message::tr('Canonical URL defined'), 'message' => $canonical];
-            } else {
-                $checks[] = ['status' => 'warning', 'title' => Message::tr('Canonical URL points to another page'), 'message' => $canonical];
+        if (isset($observerData[$this->url])) {
+            foreach ($observerData[$this->url]['checks'] as $check) {
+                $checks[] = [
+                    'status' => $check['severity'],
+                    'title' => Message::translate($check['message']),
+                    'message' => Message::translate($check['detail']),
+                ];
             }
-        } else {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('Canonical URL missing'), 'message' => ''];
-        }
-
-        // Robots: meta tag, X-Robots-Tag header, robots.txt
-        $headerNoindex = !empty($headers['x_robots_tag'])
-            && (strpos($headers['x_robots_tag'], 'noindex') !== false || strpos($headers['x_robots_tag'], 'none') !== false);
-
-        if ($pageNoindex) {
-            $checks[] = ['status' => 'critical', 'title' => Message::tr('Page not indexable'), 'message' => Message::tr('Meta robots noindex detected.')];
-        } elseif ($headerNoindex) {
-            $checks[] = ['status' => 'critical', 'title' => Message::tr('Page not indexable'), 'message' => Message::tr('X-Robots-Tag noindex detected in the HTTP headers.')];
-        } elseif ($this->isBlockedByRobotsTxt()) {
-            $checks[] = ['status' => 'critical', 'title' => Message::tr('Blocked by robots.txt'), 'message' => ''];
-        } else {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Page indexable'), 'message' => Message::tr('No noindex, no robots.txt blocking.')];
-        }
-
-        // Conflicting signals: noindex with a canonical to another page
-        if (($pageNoindex || $headerNoindex) && !empty($canonical) && !$canonicalIsSelf) {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('Noindex combined with a canonical to another page'), 'message' => Message::tr('Search engines get conflicting signals.')];
-        }
-
-        // Hreflang
-        $hreflangs = $this->extractor->extractHreflangs();
-        if (!empty($hreflangs)) {
-            $langs = implode(' ', array_map(function ($h) { return $h['lang'] . ' ✓'; }, $hreflangs));
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Hreflang'), 'message' => $langs];
-            foreach ($this->getHreflangIssues($hreflangs) as $issue) {
-                $checks[] = $issue;
-            }
-        }
-
-        // Clean URL
-        $parsed = parse_url($this->url);
-        $issues = [];
-        if (!empty($parsed['query'])) {
-            $issues[] = Message::tr('dynamic parameters');
-        }
-        if (mb_strlen(isset($parsed['path']) ? $parsed['path'] : '') > 115) {
-            $issues[] = Message::tr('URL too long');
-        }
-        if (empty($issues)) {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Clean URL'), 'message' => Message::tr('Length OK (%d chars).', mb_strlen($this->url))];
-        } else {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('URL needs improvement'), 'message' => ucfirst(implode(', ', $issues)) . '.'];
-        }
-
-        // LLMS.txt
-        $llmsPath = _PS_ROOT_DIR_ . '/llms.txt';
-        if (file_exists($llmsPath)) {
-            $llmsContent = file_get_contents($llmsPath);
-            $urlPath = parse_url($this->url, PHP_URL_PATH) ?: '';
-            // The home page path ("/") is in any link: only its full URL counts
-            $inLlms = strpos($llmsContent, $this->url) !== false
-                || (trim($urlPath, '/') !== '' && strpos($llmsContent, $urlPath) !== false);
-            if ($inLlms) {
-                $checks[] = ['status' => 'good', 'title' => Message::tr('Page included in llms.txt'), 'message' => ''];
-            } else {
-                $checks[] = ['status' => 'info', 'title' => Message::tr('Page absent from llms.txt'), 'message' => ''];
-            }
-        }
-
-        return ['checks' => $checks, 'hreflangs' => $hreflangs];
-    }
-
-    /**
-     * Consistency of the hreflang annotations of the page itself (the return links
-     * from the other pages are not checked).
-     *
-     * @param array<int, array{lang: string, href: string}> $hreflangs
-     * @return array<int, array<string, string>>
-     */
-    private function getHreflangIssues(array $hreflangs): array
-    {
-        $issues = [];
-        $langs = [];
-        $hasSelf = false;
-        $hasDefault = false;
-
-        foreach ($hreflangs as $hreflang) {
-            $lang = strtolower($hreflang['lang']);
-            if ($lang === 'x-default') {
-                $hasDefault = true;
-            } elseif (!preg_match('/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/', $lang)) {
-                $issues[] = ['status' => 'warning', 'title' => Message::tr('Invalid hreflang code'), 'message' => $hreflang['lang']];
-            }
-            if (isset($langs[$lang])) {
-                $issues[] = ['status' => 'warning', 'title' => Message::tr('Hreflang declared several times'), 'message' => $hreflang['lang']];
-            }
-            $langs[$lang] = true;
-            if ($this->normalizeUrl($this->resolveUrl($hreflang['href'])) === $this->normalizeUrl($this->url)) {
-                $hasSelf = true;
-            }
-        }
-
-        if (!$hasSelf) {
-            $issues[] = ['status' => 'warning', 'title' => Message::tr('Hreflang without self-reference'), 'message' => Message::tr('Each page must list itself among its alternate versions.')];
-        }
-        if (!$hasDefault) {
-            $issues[] = ['status' => 'info', 'title' => Message::tr('Hreflang x-default missing'), 'message' => Message::tr('Recommended to define the fallback version.')];
-        }
-
-        return $issues;
-    }
-
-    /**
-     * Social and technical tags: Open Graph, Twitter card, language, viewport.
-     *
-     * @return array
-     */
-    private function buildSocialSection(): array
-    {
-        $checks = [];
-
-        $og = $this->extractor->extractPrefixedMetas('property', 'og:');
-        if (empty($og)) {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('Open Graph tags missing'), 'message' => Message::tr('The page is shared without title or image preview.')];
-        } else {
-            if (!isset($og['og:image'])) {
-                $checks[] = ['status' => 'warning', 'title' => Message::tr('og:image missing'), 'message' => Message::tr('The shared link has no image preview.')];
-            }
-            foreach (['og:title', 'og:description'] as $tag) {
-                if (!isset($og[$tag])) {
-                    $checks[] = ['status' => 'info', 'title' => Message::tr('%s missing', $tag), 'message' => ''];
-                }
-            }
-            if (isset($og['og:image'], $og['og:title'], $og['og:description'])) {
-                $checks[] = ['status' => 'good', 'title' => Message::tr('Open Graph tags complete'), 'message' => ''];
-            }
-        }
-
-        if (empty($this->extractor->extractPrefixedMetas('name', 'twitter:'))) {
-            $checks[] = ['status' => 'info', 'title' => Message::tr('Twitter card missing'), 'message' => Message::tr('X falls back on Open Graph tags when they exist.')];
-        } else {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Twitter card defined'), 'message' => ''];
-        }
-
-        $lang = $this->extractor->extractHtmlLang();
-        if ($lang === '') {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('Language of the page missing'), 'message' => Message::tr('Add a lang attribute to the html tag.')];
-        } else {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Language of the page defined'), 'message' => $lang];
-        }
-
-        if ($this->extractor->extractViewport() === '') {
-            $checks[] = ['status' => 'warning', 'title' => Message::tr('Viewport tag missing'), 'message' => Message::tr('Required for mobile-first indexing.')];
-        } else {
-            $checks[] = ['status' => 'good', 'title' => Message::tr('Viewport tag defined'), 'message' => ''];
         }
 
         return ['checks' => $checks];
@@ -828,60 +674,6 @@ class FrontPageAnalyzer
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
-
-    private function isBlockedByRobotsTxt(): bool
-    {
-        $robotsPath = _PS_ROOT_DIR_ . '/robots.txt';
-        if (!file_exists($robotsPath)) {
-            return false;
-        }
-
-        $path = parse_url($this->url, PHP_URL_PATH) ?: '/';
-        $query = parse_url($this->url, PHP_URL_QUERY);
-
-        return RobotsTxt::isBlocked((string) file_get_contents($robotsPath), $path . ($query ? '?' . $query : ''));
-    }
-
-    /**
-     * Absolute URL of a link found in the page (canonical may be relative).
-     *
-     * @param string $href
-     * @return string
-     */
-    private function resolveUrl(string $href): string
-    {
-        if (preg_match('#^https?://#i', $href)) {
-            return $href;
-        }
-
-        $parsed = parse_url($this->url);
-        $base = (isset($parsed['scheme']) ? $parsed['scheme'] : 'https') . '://' . (isset($parsed['host']) ? $parsed['host'] : '');
-        if (strpos($href, '//') === 0) {
-            return (isset($parsed['scheme']) ? $parsed['scheme'] : 'https') . ':' . $href;
-        }
-
-        return $base . '/' . ltrim($href, '/');
-    }
-
-    /**
-     * Comparable form of a URL: no fragment, no trailing slash, lowercase host.
-     *
-     * @param string $url
-     * @return string
-     */
-    private function normalizeUrl(string $url): string
-    {
-        $url = preg_replace('/#.*$/', '', trim($url));
-        $parsed = parse_url($url);
-        if ($parsed === false || empty($parsed['host'])) {
-            return rtrim($url, '/');
-        }
-
-        return strtolower($parsed['scheme']) . '://' . strtolower($parsed['host'])
-            . (isset($parsed['port']) ? ':' . $parsed['port'] : '')
-            . rtrim(isset($parsed['path']) ? $parsed['path'] : '', '/')
-            . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
-    }
 
     /**
      * Rows of every audit for this page, by audit key. Audits that only apply to

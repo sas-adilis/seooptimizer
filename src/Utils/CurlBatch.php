@@ -11,6 +11,21 @@ class CurlBatch
     /** @var array<string, int> Time to first byte (ms) of the last fetchPage() call, per URL */
     private static $timings = [];
 
+    /** @var array<string, array> Response information of the last fetchPage() call, per URL */
+    private static $pageInfo = [];
+
+    /**
+     * HTTP information collected by the last fetchPage() call for this URL: final status,
+     * number of redirections, final URL and X-Robots-Tag header (lowercase).
+     *
+     * @param string $url
+     * @return array{http_code: int, redirect_count: int, effective_url: string, x_robots_tag: string} Empty if the URL has not been fetched
+     */
+    public static function getPageInfo(string $url): array
+    {
+        return isset(self::$pageInfo[$url]) ? self::$pageInfo[$url] : [];
+    }
+
     /**
      * Time to first byte (ms) measured by the last fetchPage() call for this URL.
      * The value is consumed: a second call returns null until the URL is fetched again.
@@ -111,9 +126,31 @@ class CurlBatch
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
 
+        // Headers of the last response only (each redirection starts a new block)
+        $headers = '';
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($handle, $line) use (&$headers) {
+            if (stripos($line, 'HTTP/') === 0) {
+                $headers = '';
+            }
+            $headers .= $line;
+
+            return strlen($line);
+        });
+
         $content = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         self::$timings[$url] = (int) round(curl_getinfo($ch, CURLINFO_STARTTRANSFER_TIME) * 1000);
+
+        $xRobots = [];
+        if (preg_match_all('/^X-Robots-Tag:\s*(.+)$/mi', $headers, $matches)) {
+            $xRobots = array_map('trim', $matches[1]);
+        }
+        self::$pageInfo[$url] = [
+            'http_code' => (int) $httpCode,
+            'redirect_count' => (int) curl_getinfo($ch, CURLINFO_REDIRECT_COUNT),
+            'effective_url' => (string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
+            'x_robots_tag' => strtolower(implode(', ', $xRobots)),
+        ];
         curl_close($ch);
 
         if ($content === false || $httpCode >= 400) {
@@ -121,49 +158,6 @@ class CurlBatch
         }
 
         return $content;
-    }
-
-    /**
-     * Response headers of a page (HEAD request, redirects followed).
-     *
-     * @param string $url
-     * @param int $timeout
-     * @return array{http_code: int, redirect_count: int, effective_url: string, x_robots_tag: string} Empty on failure
-     */
-    public static function fetchHeaders(string $url, int $timeout = 5): array
-    {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_NOBODY, true);
-        curl_setopt($ch, CURLOPT_HEADER, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; SeoOptimizerAudit/1.0)');
-
-        $raw = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
-
-        if ($raw === false) {
-            return [];
-        }
-
-        // With redirects, each response has its own block of headers: keep the last one
-        $blocks = preg_split('/\r?\n\r?\n/', trim($raw));
-        $last = (string) end($blocks);
-        $xRobots = [];
-        if (preg_match_all('/^X-Robots-Tag:\s*(.+)$/mi', $last, $matches)) {
-            $xRobots = array_map('trim', $matches[1]);
-        }
-
-        return [
-            'http_code' => (int) $info['http_code'],
-            'redirect_count' => (int) $info['redirect_count'],
-            'effective_url' => (string) $info['url'],
-            'x_robots_tag' => strtolower(implode(', ', $xRobots)),
-        ];
     }
 
     /**

@@ -34,6 +34,8 @@ class AuditRegistry
                 new AuditTextRatio(),
                 new AuditKeywordCheck(),
                 new AuditStructuredData(),
+                new AuditIndexation(),
+                new AuditSocialTags(),
             ];
         }
 

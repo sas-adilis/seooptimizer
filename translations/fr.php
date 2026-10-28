@@ -849,3 +849,13 @@ $_MODULE['<{seooptimizer}prestashop>seooptimizer_d2b5d691e1b25d112eca80566154b30
 $_MODULE['<{seooptimizer}prestashop>seooptimizer_8fd8e85031e56a13a79b684368871cdc'] = 'Chaque page doit figurer parmi ses propres versions alternatives.';
 $_MODULE['<{seooptimizer}prestashop>seooptimizer_83846283cf33ca06a36ec0a01b8f0912'] = 'Hreflang x-default absent';
 $_MODULE['<{seooptimizer}prestashop>seooptimizer_46583722fd048c4eaecd7586314bcd59'] = 'Recommandé pour définir la version par défaut.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_4b503751690cb65744194f3bb9400ecb'] = 'Paramètres dynamiques, URL trop longue.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_1814106969c1996afbaa9c39b263cc07'] = 'Paramètres dynamiques.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_922f3db7888102c75eaaed030e2d21df'] = 'URL trop longue.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_ceaf35571d25f0e3ade4a14599197136'] = 'Balises sociales et techniques';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_1fafe0fa548258327fef251e169927b2'] = 'Parcourt toutes les pages et contrôle les balises Open Graph et Twitter Card, qui déterminent l\'aspect d\'un lien partagé, ainsi que la langue de la page et la balise viewport nécessaire à l\'indexation mobile-first.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_26e517bcc4e7bcd1ab2e0c61406de794'] = 'Problèmes de balises';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_d20cb21987160e0c3d7a81a52e404d8a'] = 'Parcourt toutes les pages et contrôle les signaux qui décident de leur indexation : noindex (balise meta ou en-tête HTTP), robots.txt, URL canonique, redirection, hreflang et qualité de l\'URL. Une page qui ne peut pas être indexée ne se positionnera jamais.';
+$_MODULE['<{seooptimizer}prestashop>seooptimizer_744a688ee2dae779e8dd27a53709f39d'] = 'Problèmes d\'indexation';
+$_MODULE['<{seooptimizer}prestashop>configure_da0d18febbbe9cd4e54b68aa72f1d231'] = 'Indexation';
+$_MODULE['<{seooptimizer}prestashop>configure_ceaf35571d25f0e3ade4a14599197136'] = 'Balises sociales et techniques';

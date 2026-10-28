@@ -66,6 +66,8 @@ class ConfigurePage
             'audit_internal_links' => '',
             'audit_text_ratio' => '',
             'audit_keyword_check' => '',
+            'audit_indexation' => '',
+            'audit_social_tags' => '',
         ]);
 
         foreach ($this->getContentClasses() as $class) {

@@ -26,6 +26,8 @@
                             <li><a href="#tab-audit-internal-links" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/link.svg"}</span> {l s='Internal links' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-text-ratio" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/text-aa.svg"}</span> {l s='Content length' mod='seooptimizer'}</a></li>
                             <li><a href="#tab-audit-keyword-check" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/crosshair.svg"}</span> {l s='Keyword check' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-indexation" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/eye.svg"}</span> {l s='Indexation' mod='seooptimizer'}</a></li>
+                            <li><a href="#tab-audit-social-tags" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/share-network.svg"}</span> {l s='Social and technical tags' mod='seooptimizer'}</a></li>
                         </ul>
                     </li>
                     <li><a href="#tab-pages" role="button" data-toggle="collapse"><span class="seoo-icon">{include file="module:seooptimizer/views/icons/file-text.svg"}</span> {l s='Pages' mod='seooptimizer'}</a></li>
@@ -233,5 +235,7 @@
         <div id="tab-audit-internal-links" class="tab collapse">{$audit_internal_links}</div>
         <div id="tab-audit-text-ratio" class="tab collapse">{$audit_text_ratio}</div>
         <div id="tab-audit-keyword-check" class="tab collapse">{$audit_keyword_check}</div>
+        <div id="tab-audit-indexation" class="tab collapse">{$audit_indexation}</div>
+        <div id="tab-audit-social-tags" class="tab collapse">{$audit_social_tags}</div>
     </div>
 </div>
