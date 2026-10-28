@@ -76,3 +76,8 @@
 .seoo-psi .seoo-psi-progress {
     margin-bottom: 16px;
 }
+
+.seoo-psi .seoo-psi-help ul {
+    margin: 0;
+    padding-left: 18px;
+}

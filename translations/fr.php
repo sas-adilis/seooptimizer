@@ -202,8 +202,12 @@ $_MODULE['<{seooptimizer}prestashop>pagespeed_193cfc9be3b995831c6af2fea6650e60']
 $_MODULE['<{seooptimizer}prestashop>pagespeed_2d13df6f8b5e4c5af9f87e0dc39df69d'] = 'En attente';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_3c1cb17af22bdbfb75326921f776803b'] = 'Reprendre l\'analyse';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_3ec365dd533ddb7ef3d1c111186ce872'] = 'Détails';
+$_MODULE['<{seooptimizer}prestashop>pagespeed_3ff6eb9f5657ce6b0da88c30645e6ffe'] = 'Une page non analysée garde la note calculée par l\'audit « Poids des pages ». Sa note n\'est pas estimée à partir des pages analysées.';
+$_MODULE['<{seooptimizer}prestashop>pagespeed_4d23cc0f7726fa362eec4831d62d05c2'] = 'Une page analysée ici reçoit sa note de performance Lighthouse comme note pour l\'audit « Poids des pages », à la place de celle calculée à partir de son poids (90 et plus : bon, 50 à 89 : à améliorer, moins de 50 : mauvais). Cette note compte aussi dans la note de la page dans la vue d\'ensemble des pages et dans les listings du back-office, et remplace le contrôle du poids dans le panneau d\'audit du front-office.';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_517467aaf4d530c2630876293d9c8e98'] = 'Une clé API PageSpeed Insights est requise.';
+$_MODULE['<{seooptimizer}prestashop>pagespeed_525277982038dc7cb3c7cae087b4ae7e'] = 'Comment la note Lighthouse est prise en compte';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_6a2fb3f8bdf71fd7524a93eeff943be5'] = 'Données utilisateurs réels (Chrome UX Report)';
+$_MODULE['<{seooptimizer}prestashop>pagespeed_7962f22c8af28715d5eb63c56f1ad94f'] = 'Les résultats sont appliqués à la fin de chaque analyse, à condition que l\'audit « Poids des pages » ait été lancé au moins une fois. Une nouvelle analyse remplace les résultats précédents.';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_7b5c6bf4dcdd08c3af2585c7ffefd707'] = 'Aucune analyse pour le moment. Cliquez sur « Lancer l\'analyse » pour commencer.';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_7e6db79adab58008e53c513ef0eeaca1'] = 'PageSpeed (Lighthouse)';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_83eead5d21b0ebf72f6401dbc146175d'] = 'Temps de réponse du serveur';
@@ -212,6 +216,7 @@ $_MODULE['<{seooptimizer}prestashop>pagespeed_8c489d0946f66d17d73f26366a4bf620']
 $_MODULE['<{seooptimizer}prestashop>pagespeed_902b0d55fddef6f8d651fe1035b7d4bd'] = 'Erreur';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_9446a98ad14416153cc4d45ab8b531bf'] = 'Performance';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_a5c3806983e13548dbcec801735178bc'] = 'Dernière analyse :';
+$_MODULE['<{seooptimizer}prestashop>pagespeed_a793ab41fab622e8473e010105436be5'] = 'Seule la note de Performance est prise en compte. L\'accessibilité, les bonnes pratiques et le SEO sont affichés à titre informatif, car les autres audits les couvrent déjà.';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_b5742bcaa95fccffba20be919d0785ff'] = 'Cumulative Layout Shift';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_b8f6764f0946de94baaeab680952fd10'] = 'PageSpeed';
 $_MODULE['<{seooptimizer}prestashop>pagespeed_bd755ddca23d0dd8dd406a450df4400f'] = 'Lancer l\'analyse';

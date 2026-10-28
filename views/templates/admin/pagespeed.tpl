@@ -27,6 +27,15 @@
                 <a href="#tab-settings" role="button" data-toggle="collapse">{l s='Enter your key in the Configuration tab.' mod='seooptimizer'}</a>
             </div>
         {else}
+            <div class="alert alert-info seoo-psi-help">
+                <p><strong>{l s='How the Lighthouse score is used' mod='seooptimizer'}</strong></p>
+                <ul>
+                    <li>{l s='Only the Performance score is taken into account. Accessibility, best practices and SEO are shown for information, because the other audits already cover them.' mod='seooptimizer'}</li>
+                    <li>{l s='A page analyzed here gets its Lighthouse performance score as its score for the "Page weight" audit, instead of the one computed from its weight (90 and above: good, 50 to 89: to improve, below 50: poor). This score also counts in the page grade of the pages overview and of the back-office listings, and replaces the page weight check in the front-office audit panel.' mod='seooptimizer'}</li>
+                    <li>{l s='A page that was not analyzed keeps the score computed by the "Page weight" audit. Its score is not estimated from the analyzed pages.' mod='seooptimizer'}</li>
+                    <li>{l s='The results are applied at the end of each analysis, provided the "Page weight" audit has been run at least once. A new analysis replaces the previous results.' mod='seooptimizer'}</li>
+                </ul>
+            </div>
             <div class="seoo-psi-progress" id="seoo-psi-progress" hidden>
                 <div class="progress">
                     <div class="progress-bar progress-bar-striped active" id="seoo-psi-bar" role="progressbar" style="width: 0%">0%</div>
