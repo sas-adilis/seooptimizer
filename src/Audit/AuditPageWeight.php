@@ -7,8 +7,9 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Adilis\SeoOptimizer\CrawlerObserver\PageWeightObserver;
+use Adilis\SeoOptimizer\PageSpeed\PageSpeedScore;
 
-class AuditPageWeight implements AuditInterface
+class AuditPageWeight implements AuditInterface, ScoredAuditInterface
 {
     public function getKey(): string
     {
@@ -22,7 +23,7 @@ class AuditPageWeight implements AuditInterface
 
     public function getDescription(): string
     {
-        return 'Measures the total weight of each page including HTML, images, CSS and JavaScript. Heavy pages slow down loading and hurt SEO. Thresholds are configurable in the Configuration tab.';
+        return 'Measures the total weight of each page including HTML, images, CSS and JavaScript. Heavy pages slow down loading and hurt SEO. Thresholds are configurable in the Configuration tab. When a page has been analyzed by Lighthouse (PageSpeed tab), its Lighthouse performance score replaces this measure.';
     }
 
     public function getIcon(): string
@@ -85,37 +86,19 @@ class AuditPageWeight implements AuditInterface
     {
         $results = [];
         $entries = $observerResults['page_weight'] ?? [];
-        $thresholdLight = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_LIGHT') ?: 1024;
-        $thresholdHeavy = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_HEAVY') ?: 3072;
-
         foreach ($entries as $entry) {
-            $totalKb = $entry['total_kb'];
-
-            if ($totalKb <= $thresholdLight) {
-                $severity = 'good';
-                $statusLabel = 'Light';
-            } elseif ($totalKb <= $thresholdHeavy) {
-                $severity = 'warning';
-                $statusLabel = 'Moderate';
-            } else {
-                $severity = 'critical';
-                $statusLabel = 'Heavy';
-            }
-
-            $results[] = [
+            $results[] = $this->resolveStatus([
                 'url' => $entry['url'],
                 'type' => 'page_weight',
-                'severity' => $severity,
-                'message' => $this->formatSize($totalKb),
-                'total_display' => $this->formatSize($totalKb),
+                'message' => $this->formatSize($entry['total_kb']),
+                'total_display' => $this->formatSize($entry['total_kb']),
                 'html_display' => $this->formatSize($entry['html_kb']),
                 'images_display' => $this->formatSize($entry['images_kb']),
                 'css_display' => $this->formatSize($entry['css_kb']),
                 'js_display' => $this->formatSize($entry['js_kb']),
                 'assets_count' => $entry['assets_count'],
-                'status_label' => $statusLabel,
-                'total_kb' => $totalKb,
-            ];
+                'total_kb' => $entry['total_kb'],
+            ]);
         }
 
         // Sort by total weight descending (heaviest first)
@@ -127,9 +110,60 @@ class AuditPageWeight implements AuditInterface
     }
 
     /**
-     * @param int $kb
-     * @return string
+     * Severity and status of a result: from the Lighthouse score when the page was analyzed
+     * by PageSpeed Insights, otherwise from the measured weight.
+     *
+     * @param array $row Result with at least url and total_kb
+     *
+     * @return array
      */
+    public function resolveStatus(array $row): array
+    {
+        $lighthouse = PageSpeedScore::forUrl($row['url']);
+        if ($lighthouse !== null) {
+            $row['severity'] = PageSpeedScore::severity($lighthouse);
+            $row['status_label'] = 'Lighthouse ' . $lighthouse . '/100';
+            $row['lighthouse'] = $lighthouse;
+
+            return $row;
+        }
+
+        unset($row['lighthouse']);
+        $thresholdLight = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_LIGHT') ?: 1024;
+        $thresholdHeavy = (int) \Configuration::get('SEOO_WEIGHT_THRESHOLD_HEAVY') ?: 3072;
+
+        if ($row['total_kb'] <= $thresholdLight) {
+            $row['severity'] = 'good';
+            $row['status_label'] = 'Light';
+        } elseif ($row['total_kb'] <= $thresholdHeavy) {
+            $row['severity'] = 'warning';
+            $row['status_label'] = 'Moderate';
+        } else {
+            $row['severity'] = 'critical';
+            $row['status_label'] = 'Heavy';
+        }
+
+        return $row;
+    }
+
+    /**
+     * The Lighthouse score replaces the score derived from the weight, for the pages analyzed.
+     *
+     * @param array<string, int|float> $scores
+     *
+     * @return array<string, int|float>
+     */
+    public function overridePageScores(array $scores): array
+    {
+        foreach (PageSpeedScore::getAll() as $url => $score) {
+            if (isset($scores[$url])) {
+                $scores[$url] = $score;
+            }
+        }
+
+        return $scores;
+    }
+
     public function getScoreImpact(): array
     {
         return [

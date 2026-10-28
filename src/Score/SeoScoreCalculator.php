@@ -8,6 +8,7 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\Audit\AuditInterface;
 use Adilis\SeoOptimizer\Audit\AuditRegistry;
+use Adilis\SeoOptimizer\Audit\ScoredAuditInterface;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
@@ -191,6 +192,10 @@ class SeoScoreCalculator
                 }
             }
             $scores[$url] = max(0, 100 - $penalty);
+        }
+
+        if ($audit instanceof ScoredAuditInterface) {
+            $scores = $audit->overridePageScores($scores);
         }
 
         return $scores;

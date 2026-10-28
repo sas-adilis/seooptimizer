@@ -46,6 +46,13 @@
                             <span class="seoo-fa-perf__label">{l s='Server response' mod='seooptimizer'}</span>
                         </div>
                     {/if}
+                    {if $seoo_audit.performance.lighthouse !== null}
+                        <div class="seoo-fa-perf__item seoo-fa-perf__item--{$seoo_audit.performance.lighthouse_severity|escape:'htmlall':'UTF-8'}">
+                            <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/gauge.svg"}</span>
+                            <span class="seoo-fa-perf__value">{$seoo_audit.performance.lighthouse|intval}/100</span>
+                            <span class="seoo-fa-perf__label">{l s='Lighthouse' mod='seooptimizer'}</span>
+                        </div>
+                    {/if}
                     {if $seoo_audit.performance.total_kb !== null}
                         <div class="seoo-fa-perf__item seoo-fa-perf__item--{$seoo_audit.performance.weight_severity|escape:'htmlall':'UTF-8'}">
                             <span class="seoo-fa-icon-svg">{include file="module:seooptimizer/views/icons/hard-drives.svg"}</span>

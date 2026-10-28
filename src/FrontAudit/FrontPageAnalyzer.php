@@ -15,6 +15,7 @@ use Adilis\SeoOptimizer\CrawlerObserver\MetaTagsObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\MissingAltAttributeObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\PageLoadTimeObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\PageWeightObserver;
+use Adilis\SeoOptimizer\PageSpeed\PageSpeedScore;
 use Adilis\SeoOptimizer\CrawlerObserver\RedirectedLinksObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\StructuredDataObserver;
 use Adilis\SeoOptimizer\CrawlerObserver\TextRatioObserver;
@@ -244,8 +245,18 @@ class FrontPageAnalyzer
             ];
         }
 
+        // Lighthouse, when the page has been analyzed, replaces the page weight check
+        $lighthouse = PageSpeedScore::forUrl($this->url);
+        if ($lighthouse !== null) {
+            $checks[] = [
+                'status' => PageSpeedScore::severity($lighthouse),
+                'title' => sprintf('Lighthouse performance: %d/100', $lighthouse),
+                'message' => '',
+            ];
+        }
+
         // Page weight check
-        if ($totalKb !== null) {
+        if ($totalKb !== null && $lighthouse === null) {
             if ($totalKb < 1024) {
                 $formatted = $totalKb . ' KB';
             } else {
@@ -281,6 +292,8 @@ class FrontPageAnalyzer
             'total_kb' => $totalKb,
             'weight_severity' => $weightSeverity,
             'weight_details' => $weightDetails,
+            'lighthouse' => $lighthouse,
+            'lighthouse_severity' => $lighthouse === null ? 'good' : PageSpeedScore::severity($lighthouse),
             'checks' => $checks,
         ];
     }

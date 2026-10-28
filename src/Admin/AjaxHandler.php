@@ -3,6 +3,7 @@
 namespace Adilis\SeoOptimizer\Admin;
 
 use Adilis\SeoOptimizer\FrontAudit\FrontPageAnalyzer;
+use Adilis\SeoOptimizer\PageSpeed\PageSpeedAuditSync;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedClient;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedSampler;
 use Adilis\SeoOptimizer\Storage\PageSpeedStorage;
@@ -297,8 +298,14 @@ class AjaxHandler
             PageSpeedStorage::saveResult((int) $page['id_seooptimizer_pagespeed'], $result);
         }
 
+        $finished = PageSpeedStorage::getNextPending() === null;
+        if ($finished) {
+            // Scores of the sample feed the "Performance (Lighthouse)" audit and the pages scores
+            PageSpeedAuditSync::sync();
+        }
+
         $this->jsonExit([
-            'status' => PageSpeedStorage::getNextPending() === null ? 'done' : 'success',
+            'status' => $finished ? 'done' : 'success',
             'progress' => PageSpeedStorage::getProgress(),
             'url' => $page['url'],
             'error' => isset($result['error']) ? $result['error'] : '',
