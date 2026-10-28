@@ -110,13 +110,15 @@
 
                         // Update badge counts
                         var cells = $row.find('td');
-                        $(cells[2]).html(page.critical > 0
+                        $(cells[1]).html('<span class="seoo-grade-badge seoo-grade-badge--' + page.grade_color + '">' + page.grade + '</span>');
+                        $(cells[3]).html('<strong>' + page.score + '</strong>');
+                        $(cells[4]).html(page.critical > 0
                             ? '<span class="seoo-pages__badge seoo-pages__badge--critical">' + page.critical + '</span>'
                             : '<span class="seoo-pages__badge seoo-pages__badge--none">0</span>');
-                        $(cells[3]).html(page.warning > 0
+                        $(cells[5]).html(page.warning > 0
                             ? '<span class="seoo-pages__badge seoo-pages__badge--warning">' + page.warning + '</span>'
                             : '<span class="seoo-pages__badge seoo-pages__badge--none">0</span>');
-                        $(cells[4]).html(page.total > 0
+                        $(cells[6]).html(page.total > 0
                             ? '<strong>' + page.total + '</strong>'
                             : '<span style="color:#16a34a;">0</span>');
 
@@ -139,7 +141,7 @@
                             if ($detail.length) {
                                 $detail.find('.seoo-pages__issues').html(html);
                             } else {
-                                $row.after('<tr class="seoo-pages__detail-row" data-detail-for="' + url + '" style="display:none;"><td colspan="6"><div class="seoo-pages__issues">' + html + '</div></td></tr>');
+                                $row.after('<tr class="seoo-pages__detail-row" data-detail-for="' + url + '" style="display:none;"><td colspan="8"><div class="seoo-pages__issues">' + html + '</div></td></tr>');
                             }
 
                             // Show chevron if not already there

@@ -8,6 +8,7 @@ if (!defined('_PS_VERSION_')) {
 
 use Adilis\SeoOptimizer\Score\SeoScoreCalculator;
 use Adilis\SeoOptimizer\Utils\Message;
+use Adilis\SeoOptimizer\Utils\JsonResponse;
 use Adilis\SeoOptimizer\SitemapIndexer\SitemapIndexer;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
@@ -583,7 +584,7 @@ class AuditRunner
             $auditScore = $scoreCalculator->computeForAudit($this->audit);
         }
 
-        echo json_encode([
+        JsonResponse::send([
             'status' => $status,
             'audit' => [
                 'key' => $this->audit->getKey(),
@@ -597,6 +598,6 @@ class AuditRunner
                 'score' => $auditScore,
             ],
         ]);
-        exit;
+
     }
 }

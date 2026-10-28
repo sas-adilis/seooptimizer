@@ -99,6 +99,9 @@ class SinglePageAuditor
             AuditResultStorage::insertBatch($auditKey, $newResults);
         }
 
+        // The page counters, score and grade are read from the pages table
+        \SeoOptimizerPage::rebuildCountersForUrl($url);
+
         // Re-read aggregated data
         $freshAggregator = new PagesAggregator();
         $pageData = $freshAggregator->getPageData($url);

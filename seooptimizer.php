@@ -175,6 +175,8 @@ class SeoOptimizer extends Module
     {
         // Dispatch AJAX calls
         if ((int) Tools::getValue('ajax')) {
+            // Buffered so that a stray notice cannot break the JSON answers (see JsonResponse)
+            ob_start();
             $action = Tools::getValue('action');
             if (!empty($action)) {
                 $ajax = new AjaxHandler($this);

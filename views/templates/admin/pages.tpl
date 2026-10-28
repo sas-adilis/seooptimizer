@@ -120,7 +120,7 @@
                                 </td>
                                 <td class="text-right">
                                     <button type="button" class="btn btn-default btn-sm seoo-pages__reaudit-btn" data-url="{$page.url|escape:'htmlall':'UTF-8'}" title="{l s='Re-audit this page' mod='seooptimizer'}">
-                                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrow-counter-clockwise.svg"}</span>&nbsp;{l s='ReRe-audit' mod='seooptimizer'}
+                                        <span class="seoo-icon">{include file="module:seooptimizer/views/icons/arrow-counter-clockwise.svg"}</span>&nbsp;{l s='Re-audit' mod='seooptimizer'}
                                     </button>
                                 </td>
                             </tr>

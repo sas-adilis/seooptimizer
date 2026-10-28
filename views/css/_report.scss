@@ -49,6 +49,10 @@
     border: 1px solid #e8e8e8;
 }
 
+.seoo-report__kpis + .seoo-report__table {
+    margin-top: 16px;
+}
+
 .seoo-report__thead {
     display: grid;
     gap: 0;

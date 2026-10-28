@@ -33,7 +33,12 @@
 }
 
 .seoo-audit__results {
-    margin-top: 0;
+    margin-top: 16px;
+}
+
+/* Error shown in the progress table of an audit */
+.seoo-audit__error-msg {
+    margin: 16px 20px;
 }
 
 .seoo-audit__results-header {

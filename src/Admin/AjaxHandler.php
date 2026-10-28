@@ -7,6 +7,7 @@ use Adilis\SeoOptimizer\PageSpeed\PageSpeedAuditSync;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedClient;
 use Adilis\SeoOptimizer\PageSpeed\PageSpeedSampler;
 use Adilis\SeoOptimizer\Storage\PageSpeedStorage;
+use Adilis\SeoOptimizer\Utils\JsonResponse;
 use Adilis\SeoOptimizer\Utils\Message;
 
 if (!defined('_PS_VERSION_')) {
@@ -465,7 +466,6 @@ class AjaxHandler
      */
     private function jsonExit(array $payload)
     {
-        echo json_encode($payload);
-        exit;
+        JsonResponse::send($payload);
     }
 }

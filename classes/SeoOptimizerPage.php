@@ -221,6 +221,64 @@ class SeoOptimizerPage extends ObjectModel
     }
 
     /**
+     * Score of a page: start at 100, deduct per issue.
+     *
+     * @param int $critical
+     * @param int $warning
+     * @param int $info
+     * @return float
+     */
+    public static function computeScore(int $critical, int $warning, int $info): float
+    {
+        return max(0.0, min(100.0, 100.0 - $critical * 10 - $warning * 3 - $info * 1));
+    }
+
+    /**
+     * Rebuild the audit counters, score and grade of one page from the audit_result table.
+     *
+     * @param string $url
+     * @param int|null $idShop
+     */
+    public static function rebuildCountersForUrl(string $url, ?int $idShop = null)
+    {
+        if ($idShop === null) {
+            $idShop = (int) Context::getContext()->shop->id;
+        }
+
+        $row = Db::getInstance()->getRow(
+            'SELECT
+                SUM(IF(severity = "critical", 1, 0)) AS cnt_critical,
+                SUM(IF(severity = "warning", 1, 0)) AS cnt_warning,
+                SUM(IF(severity NOT IN ("critical", "warning", "good"), 1, 0)) AS cnt_info,
+                COUNT(*) AS cnt_total
+            FROM ' . _DB_PREFIX_ . 'seooptimizer_audit_result
+            WHERE id_shop = ' . (int) $idShop . '
+            AND url = "' . pSQL($url, true) . '"
+            AND severity != "good"'
+        );
+
+        $critical = (int) ($row['cnt_critical'] ?? 0);
+        $warning = (int) ($row['cnt_warning'] ?? 0);
+        $info = (int) ($row['cnt_info'] ?? 0);
+        $score = self::computeScore($critical, $warning, $info);
+        $now = date('Y-m-d H:i:s');
+
+        Db::getInstance()->execute(
+            'UPDATE ' . _DB_PREFIX_ . 'seooptimizer_page SET
+            count_critical = ' . $critical . ',
+            count_warning = ' . $warning . ',
+            count_info = ' . $info . ',
+            count_total = ' . ($critical + $warning + $info) . ',
+            score = ' . round($score, 1) . ',
+            grade = "' . pSQL(self::scoreToGrade($score)) . '",
+            date_audit = "' . pSQL($now) . '",
+            date_upd = "' . pSQL($now) . '"
+            WHERE url = "' . pSQL($url, true) . '"
+            AND id_shop = ' . (int) $idShop
+        );
+    }
+
+    /**
      * Rebuild audit counters for all pages from audit_result table.
      *
      * @param int|null $idShop
@@ -287,12 +345,7 @@ class SeoOptimizerPage extends ObjectModel
                 $total = (int) $countsMap[$url]['cnt_total'];
             }
 
-            // Calculate score: start at 100, deduct per issue
-            $score = 100.0;
-            $score -= $critical * 10;
-            $score -= $warning * 3;
-            $score -= $info * 1;
-            $score = max(0.0, min(100.0, $score));
+            $score = self::computeScore($critical, $warning, $info);
 
             $grade = self::scoreToGrade($score);
 

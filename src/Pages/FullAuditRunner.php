@@ -12,6 +12,7 @@ use Adilis\SeoOptimizer\Audit\AuditRunner;
 use Adilis\SeoOptimizer\Audit\KpiMapper;
 use Adilis\SeoOptimizer\Utils\CurlBatch;
 use Adilis\SeoOptimizer\Utils\HTMLExtractor;
+use Adilis\SeoOptimizer\Utils\JsonResponse;
 use Adilis\SeoOptimizer\Storage\AuditResultStorage;
 use Adilis\SeoOptimizer\Storage\AuditRunStorage;
 
@@ -298,7 +299,7 @@ class FullAuditRunner
      */
     private function returnJson(string $status)
     {
-        echo json_encode([
+        JsonResponse::send([
             'status' => $status,
             'audit' => [
                 'total_urls' => $this->state['total_urls'] ?? 0,
@@ -309,6 +310,6 @@ class FullAuditRunner
                 'items' => AuditRunner::translateItems($this->state['items'] ?? []),
             ],
         ]);
-        exit;
+
     }
 }
